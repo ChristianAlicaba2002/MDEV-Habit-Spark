@@ -38,6 +38,7 @@ dependencies:
   firebase_auth: ^6.3.0
   cloud_firestore: ^6.2.0
   flutter_svg: ^2.0.10
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:
