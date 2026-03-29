@@ -35,7 +35,7 @@ class HabitItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 140,
+        height: 100,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: habit.isDone 
@@ -44,13 +44,13 @@ class HabitItem extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: (habit.isDone ? Colors.grey : colors[0]).withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              spreadRadius: 1,
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -58,13 +58,13 @@ class HabitItem extends StatelessWidget {
           children: [
             // Background decorative icon
             Positioned(
-              right: -20,
-              bottom: -20,
+              right: -15,
+              bottom: -15,
               child: Opacity(
-                opacity: 0.2,
+                opacity: 0.15,
                 child: Icon(
                   habit.isDone ? Icons.check_circle : Icons.circle_outlined,
-                  size: 120,
+                  size: 80,
                   color: Colors.white,
                 ),
               ),
@@ -72,7 +72,7 @@ class HabitItem extends StatelessWidget {
             
             // Content
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -81,46 +81,16 @@ class HabitItem extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          _getHabitIcon(),
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                      Icon(
+                        _getHabitIcon(),
+                        color: Colors.white,
+                        size: 20,
                       ),
                       if (habit.isDone)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                'Done',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.white,
+                          size: 18,
                         ),
                     ],
                   ),
@@ -130,7 +100,7 @@ class HabitItem extends StatelessWidget {
                     habit.name,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                     maxLines: 2,

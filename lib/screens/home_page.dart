@@ -322,26 +322,7 @@ class _HomePageState extends State<HomePage> {
                     crossFadeState: _isExpanded
                         ? CrossFadeState.showFirst
                         : CrossFadeState.showSecond,
-                    firstChild: GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.1,
-                      ),
-                      itemCount: habits.length,
-                      itemBuilder: (context, index) {
-                        final habit = habits[index];
-                        return HabitItem(
-                          habit: habit,
-                          index: index,
-                          onTap: () => _habitService.toggleHabit(
-                            habit.id,
-                            habit.isDone,
-                          ),
-                        );
-                      },
-                    ),
+                    firstChild: _buildHabitGrid(habits),
                     secondChild: SizedBox(
                       width: double.infinity,
                       child: Center(
@@ -384,6 +365,44 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildHabitGrid(List<Habit> habits) {
+    return ListView.builder(
+      itemCount: (habits.length / 3).ceil(),
+      itemBuilder: (context, rowIndex) {
+        final startIndex = rowIndex * 3;
+        final endIndex = (startIndex + 3).clamp(0, habits.length);
+        final rowHabits = habits.sublist(startIndex, endIndex);
+        
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              for (int i = 0; i < rowHabits.length; i++)
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      right: i < rowHabits.length - 1 ? 12 : 0,
+                    ),
+                    child: HabitItem(
+                      habit: rowHabits[i],
+                      index: startIndex + i,
+                      onTap: () => _habitService.toggleHabit(
+                        rowHabits[i].id,
+                        rowHabits[i].isDone,
+                      ),
+                    ),
+                  ),
+                ),
+              // Add empty space if row has less than 3 items
+              for (int i = rowHabits.length; i < 3; i++)
+                const Expanded(child: SizedBox()),
+            ],
+          ),
+        );
+      },
     );
   }
 
