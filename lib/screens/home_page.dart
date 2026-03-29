@@ -23,6 +23,20 @@ class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
   int _selectedIndex = 0;
+  bool _isExpanded = true; // Track expand/collapse state
+
+  @override
+  void initState() {
+    super.initState();
+    _seedHabitsIfNeeded();
+  }
+
+  Future<void> _seedHabitsIfNeeded() async {
+    final userId = _authService.currentUser?.uid;
+    if (userId != null) {
+      await _habitService.seedDefaultHabits(userId);
+    }
+  }
 
   void _showAddHabitDialog() {
     final controller = TextEditingController();
@@ -51,8 +65,21 @@ class _HomePageState extends State<HomePage> {
               if (controller.text.isNotEmpty) {
                 final userId = _authService.currentUser?.uid;
                 if (userId != null) {
-                  await _habitService.addHabit(userId, controller.text);
-                  if (context.mounted) Navigator.pop(context);
+                  try {
+                    await _habitService.addHabit(userId, controller.text);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Habit added successfully!')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e')),
+                      );
+                    }
+                  }
                 }
               }
             },
@@ -165,6 +192,24 @@ class _HomePageState extends State<HomePage> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            if (snapshot.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: ${snapshot.error}'),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => setState(() {}),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             final habits = snapshot.data ?? [];
             final completedCount = habits.where((h) => h.isDone).length;
             final totalCount = habits.length;
@@ -241,11 +286,29 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Today\'s Habits', style: AppTextStyles.heading4),
-              Text(
-                '$completedCount/$totalCount',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      _isExpanded ? 'COLLAPSE' : 'EXPAND',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -254,18 +317,42 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: habits.isEmpty
                 ? _buildEmptyState()
-                : ListView.builder(
-                    itemCount: habits.length,
-                    itemBuilder: (context, index) {
-                      final habit = habits[index];
-                      return HabitItem(
-                        habit: habit,
-                        onTap: () => _habitService.toggleHabit(
-                          habit.id,
-                          habit.isDone,
+                : AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 300),
+                    crossFadeState: _isExpanded
+                        ? CrossFadeState.showFirst
+                        : CrossFadeState.showSecond,
+                    firstChild: GridView.builder(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.1,
+                      ),
+                      itemCount: habits.length,
+                      itemBuilder: (context, index) {
+                        final habit = habits[index];
+                        return HabitItem(
+                          habit: habit,
+                          index: index,
+                          onTap: () => _habitService.toggleHabit(
+                            habit.id,
+                            habit.isDone,
+                          ),
+                        );
+                      },
+                    ),
+                    secondChild: SizedBox(
+                      width: double.infinity,
+                      child: Center(
+                        child: Text(
+                          'Tap EXPAND to view habits',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
           ),
         ],

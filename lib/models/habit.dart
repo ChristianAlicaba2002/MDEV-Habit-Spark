@@ -18,7 +18,9 @@ class Habit {
       id: id,
       name: map['name'] ?? '',
       isDone: map['isDone'] ?? false,
-      createdAt: (map['createdAt'] as dynamic).toDate(),
+      createdAt: map['createdAt'] != null 
+          ? (map['createdAt'] as dynamic).toDate() 
+          : DateTime.now(),
       userId: map['userId'] ?? '',
     );
   }

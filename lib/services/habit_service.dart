@@ -9,12 +9,15 @@ class HabitService {
     return _firestore
         .collection('habits')
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final habits = snapshot.docs.map((doc) {
         return Habit.fromMap(doc.data(), doc.id);
       }).toList();
+      
+      // Sort by createdAt in memory instead of in query
+      habits.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return habits;
     });
   }
 
@@ -23,7 +26,7 @@ class HabitService {
     await _firestore.collection('habits').add({
       'name': habitName,
       'isDone': false,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': Timestamp.fromDate(DateTime.now()),
       'userId': userId,
     });
   }
@@ -53,5 +56,31 @@ class HabitService {
     }
 
     await batch.commit();
+  }
+
+  // Seed default running habits for new users
+  Future<void> seedDefaultHabits(String userId) async {
+    final existingHabits = await _firestore
+        .collection('habits')
+        .where('userId', isEqualTo: userId)
+        .limit(1)
+        .get();
+
+    // Only seed if user has no habits
+    if (existingHabits.docs.isEmpty) {
+      final defaultHabits = [
+        'Easy Run',
+        'Tempo',
+        'Intervals',
+        'Hills',
+        'Long Run',
+        'Race',
+        'parkrun',
+      ];
+
+      for (var habitName in defaultHabits) {
+        await addHabit(userId, habitName);
+      }
+    }
   }
 }
