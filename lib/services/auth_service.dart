@@ -40,6 +40,15 @@ class AuthService {
     throw 'Google sign-in is not configured yet';
   }
 
+  // Reset password
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
