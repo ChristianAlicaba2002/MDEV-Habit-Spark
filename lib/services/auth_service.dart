@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:habit_spark/models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -38,25 +39,9 @@ class AuthService {
   }
 
   // Save user data to Firestore
-  Future<void> saveUserData({
-    required String uid,
-    required String firstName,
-    required String middleName,
-    required String lastName,
-    required String email,
-    required String gender,
-    required String address,
-  }) async {
+  Future<void> saveUserModel(UserModel user) async {
     try {
-      await _firestore.collection('users').doc(uid).set({
-        'firstName': firstName,
-        'middleName': middleName,
-        'lastName': lastName,
-        'email': email,
-        'gender': gender,
-        'address': address,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await _firestore.collection('users').doc(user.uuid).set(user.toMap());
     } catch (e) {
       throw 'Failed to save user data: $e';
     }
