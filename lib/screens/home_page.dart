@@ -99,6 +99,26 @@ class HomePage extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
+              // Stats Cards Row
+              Row(
+                children: [
+                  // Current Streak Card
+                  Expanded(
+                    child: _buildStreakCard(),
+                  ),
+                  const SizedBox(width: 16),
+                  // Completed Habits Card
+                  Expanded(
+                    child: _buildCompletedCard(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Progress Bar Card
+              _buildProgressCard(),
+              const SizedBox(height: 24),
+
               // Dashboard Cards
               Expanded(
                 child: GridView.count(
@@ -136,6 +156,200 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStreakCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.local_fire_department,
+                color: Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Current Streak',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '7',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Text(
+            'days',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.check_circle,
+                color: Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Completed',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '12',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Text(
+            'habits today',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProgressCard() {
+    const completedHabits = 12;
+    const totalHabits = 15;
+    final percentage = (completedHabits / totalHabits * 100).toInt();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 2,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Today\'s Progress',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              Text(
+                '$percentage%',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: completedHabits / totalHabits,
+              minHeight: 12,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                percentage >= 80
+                    ? Colors.green
+                    : percentage >= 50
+                        ? Colors.orange
+                        : Colors.red,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$completedHabits of $totalHabits habits completed',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
       ),
     );
   }
