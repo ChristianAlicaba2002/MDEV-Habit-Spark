@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/screens/home_page.dart';
+import 'package:habit_spark/models/user_model.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -25,6 +28,12 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _obscureConfirmPassword = true;
   String _selectedGender = 'Male';
   int _currentStep = 0;
+
+  String hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
 
   @override
   void dispose() {
@@ -84,27 +93,35 @@ class _SignUpPageState extends State<SignUpPage> {
       );
 
       if (userCredential != null) {
-        await _authService.saveUserData(
-          uid: userCredential.user!.uid,
+        final userModel = UserModel(
+          uuid: userCredential.user!.uid,
           firstName: _firstNameController.text.trim(),
-          middleName: _middleNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
+          birthDate: _birthDateController.text,
           email: _emailController.text.trim(),
-          gender: _selectedGender,
-          address: _addressController.text.trim(),
+          password: hashPassword(_passwordController.text),
+          photoUrl: "",
+          createdAt: DateTime.now().toIso8601String(),
         );
+
+        try {
+          await _authService.saveUserModel(userModel);
+        } catch (e) {
+          await userCredential.user!.delete();
+          throw 'Firestore Error: Please check your Database Rules in Firebase Console. Account rolled back. $e';
+        }
       }
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -157,9 +174,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 // Form Content
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: _buildStepContent(),
-                  ),
+                  child: SingleChildScrollView(child: _buildStepContent()),
                 ),
 
                 // Next/Sign Up Button
@@ -315,9 +330,7 @@ class _SignUpPageState extends State<SignUpPage> {
           controller: _firstNameController,
           decoration: InputDecoration(
             labelText: 'First Name',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -331,9 +344,7 @@ class _SignUpPageState extends State<SignUpPage> {
           controller: _middleNameController,
           decoration: InputDecoration(
             labelText: 'Middle Name (Optional)',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
         const SizedBox(height: 16),
@@ -341,9 +352,7 @@ class _SignUpPageState extends State<SignUpPage> {
           controller: _lastNameController,
           decoration: InputDecoration(
             labelText: 'Last Name',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -366,9 +375,7 @@ class _SignUpPageState extends State<SignUpPage> {
           decoration: InputDecoration(
             labelText: 'Birth Date',
             suffixIcon: const Icon(Icons.calendar_today_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -382,9 +389,7 @@ class _SignUpPageState extends State<SignUpPage> {
           controller: _addressController,
           decoration: InputDecoration(
             labelText: 'Address',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -398,15 +403,13 @@ class _SignUpPageState extends State<SignUpPage> {
           value: _selectedGender,
           decoration: InputDecoration(
             labelText: 'Gender',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           items: ['Male', 'Female', 'Other', 'Prefer not to say']
-              .map((gender) => DropdownMenuItem(
-                    value: gender,
-                    child: Text(gender),
-                  ))
+              .map(
+                (gender) =>
+                    DropdownMenuItem(value: gender, child: Text(gender)),
+              )
               .toList(),
           onChanged: (value) {
             setState(() => _selectedGender = value!);
@@ -424,9 +427,7 @@ class _SignUpPageState extends State<SignUpPage> {
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
             labelText: 'Email',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -454,9 +455,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 setState(() => _obscurePassword = !_obscurePassword);
               },
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -481,13 +480,12 @@ class _SignUpPageState extends State<SignUpPage> {
                     : Icons.visibility_off_outlined,
               ),
               onPressed: () {
-                setState(() =>
-                    _obscureConfirmPassword = !_obscureConfirmPassword);
+                setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                );
               },
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -509,9 +507,7 @@ class _SignUpPageState extends State<SignUpPage> {
         setState(() => _currentStep++);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please fill in all required fields'),
-          ),
+          const SnackBar(content: Text('Please fill in all required fields')),
         );
       }
     } else {
