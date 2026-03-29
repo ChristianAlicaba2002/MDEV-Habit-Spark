@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/screens/home_page.dart';
 import 'package:habit_spark/models/user_model.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -26,6 +28,12 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _obscureConfirmPassword = true;
   String _selectedGender = 'Male';
   int _currentStep = 0;
+
+  String hashPassword(String password) {
+    final bytes = utf8.encode(password);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
 
   @override
   void dispose() {
@@ -91,7 +99,7 @@ class _SignUpPageState extends State<SignUpPage> {
           lastName: _lastNameController.text.trim(),
           birthDate: _birthDateController.text,
           email: _emailController.text.trim(),
-          password: _passwordController.text,
+          password: hashPassword(_passwordController.text),
           photoUrl: "",
           createdAt: DateTime.now().toIso8601String(),
         );
