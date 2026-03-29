@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
+import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
+import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/widgets/app_header.dart';
+import 'package:habit_spark/widgets/greeting_header.dart';
+import 'package:habit_spark/widgets/streak_card.dart';
+import 'package:habit_spark/widgets/completed_card.dart';
+import 'package:habit_spark/widgets/progress_card.dart';
+import 'package:habit_spark/widgets/habit_item.dart';
+import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,32 +20,24 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Sample habits data
-  final List<Map<String, dynamic>> _habits = [
-    {'name': 'Morning Exercise', 'done': false},
-    {'name': 'Read for 30 minutes', 'done': true},
-    {'name': 'Drink 8 glasses of water', 'done': false},
-    {'name': 'Meditate', 'done': true},
-    {'name': 'Learn something new', 'done': false},
-  ];
-
-  void _toggleHabit(int index) {
-    setState(() {
-      _habits[index]['done'] = !_habits[index]['done'];
-    });
-  }
+  final AuthService _authService = AuthService();
+  final HabitService _habitService = HabitService();
+  int _selectedIndex = 0;
 
   void _showAddHabitDialog() {
     final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Add New Habit'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Enter habit name',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           autofocus: true,
         ),
@@ -45,16 +47,17 @@ class _HomePageState extends State<HomePage> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (controller.text.isNotEmpty) {
-                setState(() {
-                  _habits.add({'name': controller.text, 'done': false});
-                });
-                Navigator.pop(context);
+                final userId = _authService.currentUser?.uid;
+                if (userId != null) {
+                  await _habitService.addHabit(userId, controller.text);
+                  if (context.mounted) Navigator.pop(context);
+                }
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
             ),
             child: const Text('Add'),
@@ -64,256 +67,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return 'Good Morning';
-    } else if (hour < 17) {
-      return 'Good Afternoon';
-    } else {
-      return 'Good Evening';
-    }
-  }
-
-  String _getGreetingEmoji() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return '☀️';
-    } else if (hour < 17) {
-      return '🌤️';
-    } else {
-      return '🌙';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final authService = AuthService();
-    final user = authService.currentUser;
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with logout
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Habit Spark',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      // Notifications Icon
-                      Stack(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications_outlined),
-                            color: Colors.black,
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('No new notifications'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            },
-                          ),
-                          // Notification badge
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: const Text(
-                                '3',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 8),
-                      // Profile Icon
-                      GestureDetector(
-                        onTap: () {
-                          _showProfileMenu(context);
-                        },
-                        child: CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.deepPurple,
-                          child: Text(
-                            (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-
-              // Dynamic Greeting
-              Row(
-                children: [
-                  Text(
-                    _getGreetingEmoji(),
-                    style: const TextStyle(fontSize: 32),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getGreeting(),
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        user?.email?.split('@')[0] ?? 'User',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
-
-              // Stats Cards Row
-              Row(
-                children: [
-                  // Current Streak Card
-                  Expanded(
-                    child: _buildStreakCard(),
-                  ),
-                  const SizedBox(width: 16),
-                  // Completed Habits Card
-                  Expanded(
-                    child: _buildCompletedCard(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Progress Bar Card
-              _buildProgressCard(),
-              const SizedBox(height: 24),
-
-              // Today's Habits Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Today\'s Habits',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                  Text(
-                    '${_habits.where((h) => h['done']).length}/${_habits.length}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Habits List
-              Expanded(
-                child: _habits.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_circle_outline,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No habits yet',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap + to add your first habit',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _habits.length,
-                        itemBuilder: (context, index) {
-                          final habit = _habits[index];
-                          return _buildHabitItem(
-                            habit['name'],
-                            habit['done'],
-                            () => _toggleHabit(index),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddHabitDialog,
-        backgroundColor: Colors.black,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
-  }
-
-  void _showProfileMenu(BuildContext context) {
-    final authService = AuthService();
-    final user = authService.currentUser;
+  void _showProfileMenu() {
+    final user = _authService.currentUser;
 
     showModalBottomSheet(
       context: context,
@@ -325,10 +80,9 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Profile Header
             CircleAvatar(
               radius: 40,
-              backgroundColor: Colors.deepPurple,
+              backgroundColor: AppColors.secondary,
               child: Text(
                 (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
                 style: const TextStyle(
@@ -341,23 +95,16 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
             Text(
               user?.email ?? 'Unknown',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               'Member since ${DateTime.now().year}',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: AppTextStyles.bodySmall,
             ),
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
-            // Menu Items
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('Edit Profile'),
@@ -379,26 +126,14 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('Help & Support'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Help - Coming soon')),
-                );
-              },
-            ),
-            const SizedBox(height: 8),
-            // Logout Button
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
+              leading: const Icon(Icons.logout, color: AppColors.error),
               title: const Text(
                 'Logout',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: AppColors.error),
               ),
               onTap: () async {
                 Navigator.pop(context);
-                await authService.signOut();
+                await _authService.signOut();
                 if (context.mounted) {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -413,250 +148,177 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHabitItem(String name, bool done, VoidCallback onTap) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+  @override
+  Widget build(BuildContext context) {
+    final user = _authService.currentUser;
+    final userId = user?.uid ?? '';
+    final userName = user?.email?.split('@')[0] ?? 'User';
+    final userInitial = user?.email?.substring(0, 1).toUpperCase() ?? 'U';
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: StreamBuilder<List<Habit>>(
+          stream: _habitService.getHabitsStream(userId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final habits = snapshot.data ?? [];
+            final completedCount = habits.where((h) => h.isDone).length;
+            final totalCount = habits.length;
+
+            return _selectedIndex == 0
+                ? _buildDashboard(
+                    userName, userInitial, habits, completedCount, totalCount)
+                : _buildStatsPage();
+          },
+        ),
+      ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: _showAddHabitDialog,
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            activeIcon: Icon(Icons.bar_chart),
+            label: 'Stats',
           ),
         ],
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: done ? Colors.green : Colors.transparent,
-            border: Border.all(
-              color: done ? Colors.green : Colors.grey[400]!,
-              width: 2,
-            ),
-          ),
-          child: done
-              ? const Icon(
-                  Icons.check,
-                  size: 18,
-                  color: Colors.white,
-                )
-              : null,
-        ),
-        title: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 300),
-          style: TextStyle(
-            fontSize: 16,
-            color: done ? Colors.grey[500] : Colors.black,
-            decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
-            decorationThickness: 2,
-          ),
-          child: Text(name),
-        ),
-        trailing: Icon(
-          done ? Icons.check_circle : Icons.circle_outlined,
-          color: done ? Colors.green : Colors.grey[400],
-        ),
       ),
     );
   }
 
-  Widget _buildStreakCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildDashboard(String userName, String userInitial, List<Habit> habits,
+      int completedCount, int totalCount) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          AppHeader(
+            onNotificationTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No new notifications')),
+              );
+            },
+            onProfileTap: _showProfileMenu,
+            notificationCount: 3,
+            userInitial: userInitial,
+          ),
+          const SizedBox(height: 32),
+          GreetingHeader(userName: userName),
+          const SizedBox(height: 40),
           Row(
             children: [
-              const Icon(
-                Icons.local_fire_department,
-                color: Colors.white,
-                size: 28,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Current Streak',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              const Expanded(child: StreakCard(streakDays: 7)),
+              const SizedBox(width: 16),
+              Expanded(child: CompletedCard(completedCount: completedCount)),
             ],
           ),
-          const SizedBox(height: 12),
-          const Text(
-            '7',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
+          const SizedBox(height: 24),
+          ProgressCard(
+            completedHabits: completedCount,
+            totalHabits: totalCount,
           ),
-          const Text(
-            'days',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompletedCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF56CCF2), Color(0xFF2F80ED)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.check_circle,
-                color: Colors.white,
-                size: 28,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Completed',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            '12',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Text(
-            'habits today',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressCard() {
-    const completedHabits = 12;
-    const totalHabits = 15;
-    final percentage = (completedHabits / totalHabits * 100).toInt();
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Today\'s Progress',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
+              const Text('Today\'s Habits', style: AppTextStyles.heading4),
               Text(
-                '$percentage%',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                '$completedCount/$totalCount',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: completedHabits / totalHabits,
-              minHeight: 12,
-              backgroundColor: Colors.grey[200],
-              valueColor: AlwaysStoppedAnimation<Color>(
-                percentage >= 80
-                    ? Colors.green
-                    : percentage >= 50
-                        ? Colors.orange
-                        : Colors.red,
-              ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: habits.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    itemCount: habits.length,
+                    itemBuilder: (context, index) {
+                      final habit = habits[index];
+                      return HabitItem(
+                        habit: habit,
+                        onTap: () => _habitService.toggleHabit(
+                          habit.id,
+                          habit.isDone,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.add_circle_outline,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No habits yet',
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '$completedHabits of $totalHabits habits completed',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            'Tap + to add your first habit',
+            style: AppTextStyles.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsPage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bar_chart,
+            size: 64,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Statistics',
+            style: AppTextStyles.heading2,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Coming soon',
+            style: AppTextStyles.bodySmall,
           ),
         ],
       ),
