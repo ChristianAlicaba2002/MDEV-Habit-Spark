@@ -2,8 +2,67 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // Sample habits data
+  final List<Map<String, dynamic>> _habits = [
+    {'name': 'Morning Exercise', 'done': false},
+    {'name': 'Read for 30 minutes', 'done': true},
+    {'name': 'Drink 8 glasses of water', 'done': false},
+    {'name': 'Meditate', 'done': true},
+    {'name': 'Learn something new', 'done': false},
+  ];
+
+  void _toggleHabit(int index) {
+    setState(() {
+      _habits[index]['done'] = !_habits[index]['done'];
+    });
+  }
+
+  void _showAddHabitDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add New Habit'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Enter habit name',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                setState(() {
+                  _habits.add({'name': controller.text, 'done': false});
+                });
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -119,42 +178,136 @@ class HomePage extends StatelessWidget {
               _buildProgressCard(),
               const SizedBox(height: 24),
 
-              // Dashboard Cards
+              // Today's Habits Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Today\'s Habits',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    '${_habits.where((h) => h['done']).length}/${_habits.length}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Habits List
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _buildDashboardCard(
-                      icon: Icons.local_fire_department,
-                      title: 'Habits',
-                      count: '0',
-                      color: Colors.orange,
-                    ),
-                    _buildDashboardCard(
-                      icon: Icons.check_circle,
-                      title: 'Completed',
-                      count: '0',
-                      color: Colors.green,
-                    ),
-                    _buildDashboardCard(
-                      icon: Icons.trending_up,
-                      title: 'Streak',
-                      count: '0 days',
-                      color: Colors.blue,
-                    ),
-                    _buildDashboardCard(
-                      icon: Icons.emoji_events,
-                      title: 'Achievements',
-                      count: '0',
-                      color: Colors.purple,
-                    ),
-                  ],
-                ),
+                child: _habits.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_circle_outline,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No habits yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Tap + to add your first habit',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _habits.length,
+                        itemBuilder: (context, index) {
+                          final habit = _habits[index];
+                          return _buildHabitItem(
+                            habit['name'],
+                            habit['done'],
+                            () => _toggleHabit(index),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddHabitDialog,
+        backgroundColor: Colors.black,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildHabitItem(String name, bool done, VoidCallback onTap) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: done ? Colors.green : Colors.transparent,
+            border: Border.all(
+              color: done ? Colors.green : Colors.grey[400]!,
+              width: 2,
+            ),
+          ),
+          child: done
+              ? const Icon(
+                  Icons.check,
+                  size: 18,
+                  color: Colors.white,
+                )
+              : null,
+        ),
+        title: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 300),
+          style: TextStyle(
+            fontSize: 16,
+            color: done ? Colors.grey[500] : Colors.black,
+            decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
+            decorationThickness: 2,
+          ),
+          child: Text(name),
+        ),
+        trailing: Icon(
+          done ? Icons.check_circle : Icons.circle_outlined,
+          color: done ? Colors.green : Colors.grey[400],
         ),
       ),
     );
@@ -350,65 +503,6 @@ class HomePage extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDashboardCard({
-    required IconData icon,
-    required String title,
-    required String count,
-    required Color color,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              count,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
