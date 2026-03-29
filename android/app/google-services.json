@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "82887882958",
+    "project_id": "habitspark-6ace3",
+    "storage_bucket": "habitspark-6ace3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:82887882958:android:0caa94f09a5dcef34d389f",
+        "android_client_info": {
+          "package_name": "com.example.habit_spark"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "82887882958-27fpd2m9uunr603u0j7ll61per2pi5ak.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxGvkTmMpsjGzGJyUfnKi5dYFvKUOXefs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "82887882958-27fpd2m9uunr603u0j7ll61per2pi5ak.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "82887882958-3rerei6jstb00k2ol8socqakc3bvvav6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.habitSpark"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
