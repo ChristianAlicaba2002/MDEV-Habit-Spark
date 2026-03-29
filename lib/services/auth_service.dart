@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -32,6 +34,31 @@ class AuthService {
       );
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  // Save user data to Firestore
+  Future<void> saveUserData({
+    required String uid,
+    required String firstName,
+    required String middleName,
+    required String lastName,
+    required String email,
+    required String gender,
+    required String address,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(uid).set({
+        'firstName': firstName,
+        'middleName': middleName,
+        'lastName': lastName,
+        'email': email,
+        'gender': gender,
+        'address': address,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw 'Failed to save user data: $e';
     }
   }
 
