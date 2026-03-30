@@ -6,66 +6,128 @@ import 'package:habit_spark/models/habit.dart';
 class HabitItem extends StatelessWidget {
   final Habit habit;
   final VoidCallback onTap;
+  final int index;
 
   const HabitItem({
     super.key,
     required this.habit,
     required this.onTap,
+    this.index = 0,
   });
+
+  // Different gradient colors for variety
+  List<Color> _getGradientColors() {
+    final gradients = [
+      [const Color(0xFF84FAB0), const Color(0xFF8FD3F4)], // Green to Blue
+      [const Color(0xFFFA709A), const Color(0xFFFEE140)], // Pink to Yellow
+      [const Color(0xFFFF9A56), const Color(0xFFFF6A88)], // Orange to Red
+      [const Color(0xFF667EEA), const Color(0xFF764BA2)], // Blue to Purple
+      [const Color(0xFFF093FB), const Color(0xFFF5576C)], // Purple to Pink
+      [const Color(0xFF4FACFE), const Color(0xFF00F2FE)], // Blue to Cyan
+    ];
+    return gradients[index % gradients.length];
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    final colors = _getGradientColors();
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 100,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: habit.isDone 
+                ? [Colors.grey[400]!, Colors.grey[500]!] 
+                : colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: habit.isDone ? AppColors.success : Colors.transparent,
-            border: Border.all(
-              color: habit.isDone ? AppColors.success : Colors.grey[400]!,
-              width: 2,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: (habit.isDone ? Colors.grey : colors[0]).withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
-          ),
-          child: habit.isDone
-              ? const Icon(
-                  Icons.check,
-                  size: 18,
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Background decorative icon
+            Positioned(
+              right: -15,
+              bottom: -15,
+              child: Opacity(
+                opacity: 0.15,
+                child: Icon(
+                  habit.isDone ? Icons.check_circle : Icons.circle_outlined,
+                  size: 80,
                   color: Colors.white,
-                )
-              : null,
-        ),
-        title: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 300),
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: habit.isDone ? AppColors.textSecondary : AppColors.textPrimary,
-            decoration: habit.isDone ? TextDecoration.lineThrough : TextDecoration.none,
-            decorationThickness: 2,
-          ),
-          child: Text(habit.name),
-        ),
-        trailing: Icon(
-          habit.isDone ? Icons.check_circle : Icons.circle_outlined,
-          color: habit.isDone ? AppColors.success : Colors.grey[400],
+                ),
+              ),
+            ),
+            
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Icon and status
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(
+                        _getHabitIcon(),
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      if (habit.isDone)
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                    ],
+                  ),
+                  
+                  // Habit name
+                  Text(
+                    habit.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  IconData _getHabitIcon() {
+    // Simple icon mapping based on habit name keywords
+    final name = habit.name.toLowerCase();
+    if (name.contains('run') || name.contains('jog')) return Icons.directions_run;
+    if (name.contains('read')) return Icons.menu_book;
+    if (name.contains('water') || name.contains('drink')) return Icons.water_drop;
+    if (name.contains('exercise') || name.contains('workout')) return Icons.fitness_center;
+    if (name.contains('meditate') || name.contains('yoga')) return Icons.self_improvement;
+    if (name.contains('sleep')) return Icons.bedtime;
+    if (name.contains('eat') || name.contains('meal')) return Icons.restaurant;
+    if (name.contains('study') || name.contains('learn')) return Icons.school;
+    if (name.contains('walk')) return Icons.directions_walk;
+    if (name.contains('code') || name.contains('program')) return Icons.code;
+    return Icons.check_circle_outline;
   }
 }
