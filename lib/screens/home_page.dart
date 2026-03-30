@@ -183,7 +183,7 @@ class _HomePageState extends State<HomePage> {
     final userInitial = user?.email?.substring(0, 1).toUpperCase() ?? 'U';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF1A1A1A), // Dark background
       body: SafeArea(
         child: StreamBuilder<List<Habit>>(
           stream: _habitService.getHabitsStream(userId),
@@ -285,7 +285,14 @@ class _HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Today\'s Habits', style: AppTextStyles.heading4),
+              const Text(
+                'Today\'s Habits',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
               GestureDetector(
                 onTap: () {
                   setState(() {
@@ -297,7 +304,7 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       _isExpanded ? 'COLLAPSE' : 'EXPAND',
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.primary,
+                        color: Colors.white70,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
@@ -329,7 +336,7 @@ class _HomePageState extends State<HomePage> {
                         child: Text(
                           'Tap EXPAND to view habits',
                           style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
+                            color: Colors.white60,
                           ),
                         ),
                       ),
@@ -355,13 +362,15 @@ class _HomePageState extends State<HomePage> {
           Text(
             'No habits yet',
             style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
+              color: Colors.white70,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Tap + to add your first habit',
-            style: AppTextStyles.bodySmall,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: Colors.white60,
+            ),
           ),
         ],
       ),

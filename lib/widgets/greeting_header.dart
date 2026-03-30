@@ -43,11 +43,18 @@ class GreetingHeader extends StatelessWidget {
           children: [
             Text(
               _getGreeting(),
-              style: AppTextStyles.heading2,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             Text(
               userName,
-              style: AppTextStyles.bodySmall,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.white60,
+              ),
             ),
           ],
         ),
