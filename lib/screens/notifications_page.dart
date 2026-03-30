@@ -159,35 +159,66 @@ class _NotificationsPageState extends State<NotificationsPage> {
           final notifications = snapshot.data ?? [];
 
           if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_none,
-                    size: 80,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No notifications yet',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 18,
+            return RefreshIndicator(
+              onRefresh: () async {
+                // Trigger a refresh by waiting a bit
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              color: Colors.white,
+              backgroundColor: Colors.grey[800],
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height - 200,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.notifications_none,
+                          size: 80,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No notifications yet',
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Pull down to refresh',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: notifications.length,
-            itemBuilder: (context, index) {
-              final notification = notifications[index];
-              return _buildNotificationItem(notification);
+          return RefreshIndicator(
+            onRefresh: () async {
+              // Trigger a refresh by waiting a bit
+              await Future.delayed(const Duration(milliseconds: 500));
             },
+            color: Colors.white,
+            backgroundColor: Colors.grey[800],
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: notifications.length,
+              itemBuilder: (context, index) {
+                final notification = notifications[index];
+                return _buildNotificationItem(notification);
+              },
+            ),
           );
         },
       ),
