@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
+import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
+import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/widgets/app_header.dart';
 import 'package:habit_spark/widgets/greeting_header.dart';
@@ -22,6 +24,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
+  final NotificationService _notificationService = NotificationService();
   int _selectedIndex = 0;
   bool _isExpanded = true; // Track expand/collapse state
 
@@ -216,7 +219,7 @@ class _HomePageState extends State<HomePage> {
 
             return _selectedIndex == 0
                 ? _buildDashboard(
-                    userName, userInitial, habits, completedCount, totalCount)
+                    userName, userInitial, userId, habits, completedCount, totalCount)
                 : _buildStatsPage();
           },
         ),
@@ -249,22 +252,31 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDashboard(String userName, String userInitial, List<Habit> habits,
-      int completedCount, int totalCount) {
+  Widget _buildDashboard(String userName, String userInitial, String userId,
+      List<Habit> habits, int completedCount, int totalCount) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppHeader(
-            onNotificationTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No new notifications')),
+          StreamBuilder<int>(
+            stream: _notificationService.getUnreadCountStream(userId),
+            builder: (context, snapshot) {
+              final unreadCount = snapshot.data ?? 0;
+              return AppHeader(
+                onNotificationTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsPage(),
+                    ),
+                  );
+                },
+                onProfileTap: _showProfileMenu,
+                notificationCount: unreadCount,
+                userInitial: userInitial,
               );
             },
-            onProfileTap: _showProfileMenu,
-            notificationCount: 3,
-            userInitial: userInitial,
           ),
           const SizedBox(height: 32),
           GreetingHeader(userName: userName),
