@@ -32,11 +32,20 @@ class _HomePageState extends State<HomePage> {
   final StreakService _streakService = StreakService();
   int _selectedIndex = 0;
   bool _isExpanded = true; // Track expand/collapse state
+  int _currentHabitPage = 0; // Track current page in habits breakdown carousel
+  late PageController _habitPageController;
 
   @override
   void initState() {
     super.initState();
+    _habitPageController = PageController(viewportFraction: 0.85);
     _initializeUserData();
+  }
+
+  @override
+  void dispose() {
+    _habitPageController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeUserData() async {
@@ -715,12 +724,48 @@ class _HomePageState extends State<HomePage> {
               }
 
               return Column(
-                children: habits.map((habit) {
-                  return _buildHabitProgressItem(habit);
-                }).toList(),
+                children: [
+                  SizedBox(
+                    height: 180,
+                    child: PageView.builder(
+                      controller: _habitPageController,
+                      physics: const BouncingScrollPhysics(),
+                      scrollDirection: Axis.horizontal,
+                      padEnds: false,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentHabitPage = index;
+                        });
+                      },
+                      itemCount: habits.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            left: index == 0 ? 0 : 8,
+                            right: index == habits.length - 1 ? 0 : 8,
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => HabitDetailPage(habit: habits[index]),
+                                ),
+                              );
+                            },
+                            child: _buildHabitProgressCard(habits[index], index),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPageIndicator(habits.length),
+                ],
               );
             },
           ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -844,67 +889,113 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHabitProgressItem(Habit habit) {
+  Widget _buildHabitProgressCard(Habit habit, int index) {
+    // Gradient colors for cards
+    final gradients = [
+      [const Color(0xFFFF6B6B), const Color(0xFFFF8E53)],
+      [const Color(0xFF4ECDC4), const Color(0xFF44A08D)],
+      [const Color(0xFFFFD93D), const Color(0xFFFF6B6B)],
+      [const Color(0xFF6C5CE7), const Color(0xFFA29BFE)],
+      [const Color(0xFFFF6B9D), const Color(0xFFC44569)],
+      [const Color(0xFF00D2FF), const Color(0xFF3A7BD5)],
+    ];
+    
+    final gradient = gradients[index % gradients.length];
+    
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
+        gradient: LinearGradient(
+          colors: gradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: habit.isDone
-                  ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                  : Colors.white.withOpacity(0.05),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              habit.isDone ? Icons.check_circle : Icons.circle_outlined,
-              color: habit.isDone ? const Color(0xFF4ECDC4) : Colors.white60,
-              size: 24,
-            ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: gradient[0].withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    habit.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    habit.isDone ? Icons.check_circle : Icons.circle_outlined,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  habit.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  habit.isDone ? 'Completed today' : 'Not completed yet',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  habit.isDone ? 'Completed today' : 'Not completed yet',
+                  'Tap to view details',
                   style: TextStyle(
-                    color: habit.isDone 
-                        ? const Color(0xFF4ECDC4)
-                        : Colors.white60,
+                    color: Colors.white.withOpacity(0.7),
                     fontSize: 12,
                   ),
                 ),
               ],
             ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: Colors.white.withOpacity(0.3),
-            size: 20,
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildPageIndicator(int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: _currentHabitPage == index ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: _currentHabitPage == index
+                ? const Color(0xFF4ECDC4)
+                : Colors.white.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 
