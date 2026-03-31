@@ -42,6 +42,51 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Start/Complete Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: Implement start running functionality
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        widget.habit.isDone 
+                            ? 'Habit already completed today!' 
+                            : 'Starting ${widget.habit.name}...',
+                      ),
+                      backgroundColor: widget.habit.isDone 
+                          ? Colors.green 
+                          : const Color(0xFF4ECDC4),
+                    ),
+                  );
+                },
+                icon: Icon(
+                  widget.habit.isDone ? Icons.check_circle : Icons.play_arrow,
+                  size: 28,
+                ),
+                label: Text(
+                  widget.habit.isDone ? 'Completed' : 'Start ${widget.habit.name}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: widget.habit.isDone 
+                      ? Colors.green 
+                      : const Color(0xFF4ECDC4),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            
             // Stats Cards
             Row(
               children: [

@@ -35,14 +35,6 @@ class HabitItem extends StatelessWidget {
     
     return GestureDetector(
       onTap: onTap,
-      onLongPress: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => HabitDetailPage(habit: habit),
-          ),
-        );
-      },
       child: Container(
         height: 100,
         decoration: BoxDecoration(
