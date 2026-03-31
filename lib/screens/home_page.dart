@@ -359,7 +359,7 @@ class _HomePageState extends State<HomePage> {
                     crossFadeState: _isExpanded
                         ? CrossFadeState.showFirst
                         : CrossFadeState.showSecond,
-                    firstChild: _buildHabitGrid(habits),
+                    firstChild: _buildHabitGrid(habits, userId),
                     secondChild: SizedBox(
                       width: double.infinity,
                       child: Center(
@@ -407,7 +407,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHabitGrid(List<Habit> habits) {
+  Widget _buildHabitGrid(List<Habit> habits, String userId) {
     return ListView.builder(
       itemCount: (habits.length / 3).ceil(),
       itemBuilder: (context, rowIndex) {
