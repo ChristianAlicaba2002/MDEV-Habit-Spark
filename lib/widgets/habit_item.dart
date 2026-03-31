@@ -36,7 +36,7 @@ class HabitItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 100,
+        height: 90,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: habit.isDone 
