@@ -582,26 +582,363 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildStatsPage() {
-    return Center(
+    final user = _authService.currentUser;
+    final userId = user?.uid ?? '';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.bar_chart,
-            size: 64,
-            color: Colors.grey[400],
+          // Page Title
+          const Text(
+            'Progress Analytics',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Streak Stats
+          StreamBuilder<Map<String, dynamic>>(
+            stream: _streakService.getStreakStream(userId),
+            builder: (context, snapshot) {
+              final streakData = snapshot.data ?? {};
+              final currentStreak = streakData['currentStreak'] ?? 0;
+              final longestStreak = streakData['longestStreak'] ?? 0;
+
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Current Streak',
+                          '$currentStreak',
+                          'days',
+                          Icons.local_fire_department,
+                          const Color(0xFFFF6B6B),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Longest Streak',
+                          '$longestStreak',
+                          'days',
+                          Icons.emoji_events,
+                          const Color(0xFFFFD93D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+
+          // Habits Overview
+          StreamBuilder<List<Habit>>(
+            stream: _habitService.getHabitsStream(userId),
+            builder: (context, snapshot) {
+              final habits = snapshot.data ?? [];
+              final totalHabits = habits.length;
+              final completedToday = habits.where((h) => h.isDone).length;
+              final completionRate = totalHabits > 0
+                  ? ((completedToday / totalHabits) * 100).toStringAsFixed(0)
+                  : '0';
+
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Total Habits',
+                          '$totalHabits',
+                          'habits',
+                          Icons.list_alt,
+                          const Color(0xFF4ECDC4),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Today\'s Rate',
+                          '$completionRate%',
+                          'completed',
+                          Icons.trending_up,
+                          const Color(0xFF95E1D3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+
+          // Weekly Progress Section
+          const Text(
+            'This Week',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 16),
+          _buildWeeklyProgress(userId),
+          const SizedBox(height: 32),
+
+          // Habits Breakdown
+          const Text(
+            'Habits Breakdown',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          StreamBuilder<List<Habit>>(
+            stream: _habitService.getHabitsStream(userId),
+            builder: (context, snapshot) {
+              final habits = snapshot.data ?? [];
+              
+              if (habits.isEmpty) {
+                return _buildEmptyHabitsState();
+              }
+
+              return Column(
+                children: habits.map((habit) {
+                  return _buildHabitProgressItem(habit);
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsCard(
+    String title,
+    String value,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 12),
           Text(
-            'Statistics',
-            style: AppTextStyles.heading2,
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              color: Colors.white60,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Coming soon',
-            style: AppTextStyles.bodySmall,
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyProgress(String userId) {
+    final now = DateTime.now();
+    final weekDays = List.generate(7, (index) {
+      return now.subtract(Duration(days: 6 - index));
+    });
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: weekDays.map((day) {
+          final dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1];
+          final isToday = day.day == now.day && day.month == now.month;
+          
+          return Column(
+            children: [
+              Text(
+                dayName,
+                style: TextStyle(
+                  color: isToday ? const Color(0xFF4ECDC4) : Colors.white60,
+                  fontSize: 12,
+                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isToday 
+                      ? const Color(0xFF4ECDC4)
+                      : Colors.white.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isToday 
+                        ? const Color(0xFF4ECDC4)
+                        : Colors.white.withOpacity(0.2),
+                    width: 2,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    '${day.day}',
+                    style: TextStyle(
+                      color: isToday ? Colors.white : Colors.white60,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildHabitProgressItem(Habit habit) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: habit.isDone
+                  ? const Color(0xFF4ECDC4).withOpacity(0.2)
+                  : Colors.white.withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              habit.isDone ? Icons.check_circle : Icons.circle_outlined,
+              color: habit.isDone ? const Color(0xFF4ECDC4) : Colors.white60,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  habit.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  habit.isDone ? 'Completed today' : 'Not completed yet',
+                  style: TextStyle(
+                    color: habit.isDone 
+                        ? const Color(0xFF4ECDC4)
+                        : Colors.white60,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: Colors.white.withOpacity(0.3),
+            size: 20,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyHabitsState() {
+    return Container(
+      padding: const EdgeInsets.all(48),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.insights,
+              size: 64,
+              color: Colors.white.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No habits yet',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Create habits to see your progress analytics',
+              style: TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
