@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
+import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/models/habit.dart';
@@ -25,19 +26,24 @@ class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
   final NotificationService _notificationService = NotificationService();
+  final StreakService _streakService = StreakService();
   int _selectedIndex = 0;
   bool _isExpanded = true; // Track expand/collapse state
 
   @override
   void initState() {
     super.initState();
-    _seedHabitsIfNeeded();
+    _initializeUserData();
   }
 
-  Future<void> _seedHabitsIfNeeded() async {
+  Future<void> _initializeUserData() async {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
       await _habitService.seedDefaultHabits(userId);
+      // Initialize streak data if it doesn't exist
+      await _streakService.getUserStreak(userId);
+      // Check streak status on login
+      await _streakService.checkStreakOnLogin(userId);
     }
   }
 
@@ -283,7 +289,15 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 40),
           Row(
             children: [
-              const Expanded(child: StreakCard(streakDays: 7)),
+              Expanded(
+                child: StreamBuilder<Map<String, dynamic>>(
+                  stream: _streakService.getStreakStream(userId),
+                  builder: (context, streakSnapshot) {
+                    final streakDays = streakSnapshot.data?['currentStreak'] ?? 0;
+                    return StreakCard(streakDays: streakDays);
+                  },
+                ),
+              ),
               const SizedBox(width: 16),
               Expanded(child: CompletedCard(completedCount: completedCount)),
             ],
@@ -341,7 +355,7 @@ class _HomePageState extends State<HomePage> {
                     crossFadeState: _isExpanded
                         ? CrossFadeState.showFirst
                         : CrossFadeState.showSecond,
-                    firstChild: _buildHabitGrid(habits),
+                    firstChild: _buildHabitGrid(habits, userId),
                     secondChild: SizedBox(
                       width: double.infinity,
                       child: Center(
@@ -389,7 +403,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHabitGrid(List<Habit> habits) {
+  Widget _buildHabitGrid(List<Habit> habits, String userId) {
     return ListView.builder(
       itemCount: (habits.length / 3).ceil(),
       itemBuilder: (context, rowIndex) {
@@ -413,6 +427,7 @@ class _HomePageState extends State<HomePage> {
                       onTap: () => _habitService.toggleHabit(
                         rowHabits[i].id,
                         rowHabits[i].isDone,
+                        userId,
                       ),
                     ),
                   ),
