@@ -119,14 +119,22 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1A1A1A),
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
             // Profile Photo with border
             Container(
               decoration: BoxDecoration(
@@ -155,6 +163,19 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 16),
+            
+            // User Name
+            Text(
+              '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim().isEmpty 
+                  ? user?.email?.split('@')[0] ?? 'User'
+                  : '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
             
             // Joined date
             Text(
@@ -269,6 +290,8 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 16),
           ],
+        ),
+          ),
         ),
       ),
     );
