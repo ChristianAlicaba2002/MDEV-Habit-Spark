@@ -34,15 +34,18 @@ class StreakCard extends StatelessWidget {
               Icon(
                 Icons.local_fire_department,
                 color: Colors.white,
-                size: 28,
+                size: 24,
               ),
-              SizedBox(width: 8),
-              Text(
-                'Current Streak',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+              SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  'Current Streak',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

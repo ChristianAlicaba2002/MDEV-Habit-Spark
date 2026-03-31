@@ -368,23 +368,50 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Stats',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) => setState(() => _selectedIndex = index),
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.textSecondary,
+          selectedFontSize: 11,
+          unselectedFontSize: 10,
+          iconSize: 20,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(Icons.home_outlined),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(Icons.home),
+              ),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(Icons.bar_chart_outlined),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(Icons.bar_chart),
+              ),
+              label: 'Stats',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -399,140 +426,149 @@ class _HomePageState extends State<HomePage> {
         final verticalSpacing = constraints.maxWidth < 360 ? 20.0 : 24.0;
         
         return SingleChildScrollView(
-          padding: EdgeInsets.only(
-            left: horizontalPadding,
-            right: horizontalPadding,
+          padding: const EdgeInsets.only(
             top: 8.0,
             bottom: 24.0,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StreamBuilder<int>(
-                stream: _notificationService.getUnreadCountStream(userId),
-                builder: (context, notificationSnapshot) {
-                  final unreadCount = notificationSnapshot.data ?? 0;
-                  
-                  return StreamBuilder<UserModel?>(
-                    stream: _authService.getUserDataStream(userId),
-                    builder: (context, userSnapshot) {
-                      final photoUrl = userSnapshot.data?.photoUrl;
-                      
-                      return AppHeader(
-                        onNotificationTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const NotificationsPage(),
-                            ),
-                          );
-                        },
-                        onProfileTap: _showProfileMenu,
-                        notificationCount: unreadCount,
-                        userInitial: userInitial,
-                        photoUrl: photoUrl,
-                      );
-                    },
-                  );
-                },
-              ),
-              SizedBox(height: verticalSpacing + 8),
-              GreetingHeader(userName: userName),
-              SizedBox(height: verticalSpacing + 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: StreamBuilder<Map<String, dynamic>>(
-                      stream: _streakService.getStreakStream(userId),
-                      builder: (context, streakSnapshot) {
-                        final streakDays = streakSnapshot.data?['currentStreak'] ?? 0;
-                        return StreakCard(streakDays: streakDays);
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                child: StreamBuilder<int>(
+                  stream: _notificationService.getUnreadCountStream(userId),
+                  builder: (context, notificationSnapshot) {
+                    final unreadCount = notificationSnapshot.data ?? 0;
+                    
+                    return StreamBuilder<UserModel?>(
+                      stream: _authService.getUserDataStream(userId),
+                      builder: (context, userSnapshot) {
+                        final photoUrl = userSnapshot.data?.photoUrl;
+                        
+                        return AppHeader(
+                          onNotificationTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NotificationsPage(),
+                              ),
+                            );
+                          },
+                          onProfileTap: _showProfileMenu,
+                          notificationCount: unreadCount,
+                          userInitial: userInitial,
+                          photoUrl: photoUrl,
+                        );
                       },
-                    ),
-                  ),
-                  SizedBox(width: cardSpacing),
-                  Expanded(child: CompletedCard(completedCount: completedCount)),
-                ],
+                    );
+                  },
+                ),
               ),
-              SizedBox(height: verticalSpacing),
-              ProgressCard(
-                completedHabits: completedCount,
-                totalHabits: totalCount,
-              ),
-              SizedBox(height: verticalSpacing),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Today\'s Habits',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: verticalSpacing + 8),
+                    GreetingHeader(userName: userName),
+                    SizedBox(height: verticalSpacing + 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: StreamBuilder<Map<String, dynamic>>(
+                            stream: _streakService.getStreakStream(userId),
+                            builder: (context, streakSnapshot) {
+                              final streakDays = streakSnapshot.data?['currentStreak'] ?? 0;
+                              return StreakCard(streakDays: streakDays);
+                            },
+                          ),
+                        ),
+                        SizedBox(width: cardSpacing),
+                        Expanded(child: CompletedCard(completedCount: completedCount)),
+                      ],
                     ),
-                  ),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isExpanded = !_isExpanded;
-                          });
-                        },
-                        child: Row(
+                    SizedBox(height: verticalSpacing),
+                    ProgressCard(
+                      completedHabits: completedCount,
+                      totalHabits: totalCount,
+                    ),
+                    SizedBox(height: verticalSpacing),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Today\'s Habits',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Row(
                           children: [
-                            Text(
-                              _isExpanded ? 'COLLAPSE' : 'EXPAND',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isExpanded = !_isExpanded;
+                                });
+                              },
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _isExpanded ? 'COLLAPSE' : 'EXPAND',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                              color: AppColors.primary,
-                              size: 20,
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: _showAddHabitDialog,
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                                size: 28,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: _showAddHabitDialog,
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 28,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              habits.isEmpty
-                  ? _buildEmptyState()
-                  : AnimatedSize(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      child: _isExpanded
-                          ? _buildHabitList(habits, userId)
-                          : const SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: Center(
-                                child: Text(
-                                  'Tap EXPAND to view habits',
-                                  style: TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
+                    habits.isEmpty
+                        ? _buildEmptyState()
+                        : AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            child: _isExpanded
+                                ? _buildHabitList(habits, userId)
+                                : const SizedBox(
+                                    width: double.infinity,
+                                    height: 50,
+                                    child: Center(
+                                      child: Text(
+                                        'Tap EXPAND to view habits',
+                                        style: TextStyle(
+                                          color: Colors.white60,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -581,31 +617,27 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.only(bottom: 12),
           child: Row(
             children: [
-              for (int i = 0; i < rowHabits.length; i++)
+              for (int i = 0; i < 3; i++) ...[
                 Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: i < rowHabits.length - 1 ? 12 : 0,
-                    ),
-                    child: RepaintBoundary(
-                      child: HabitItem(
-                        habit: rowHabits[i],
-                        index: startIndex + i,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => HabitDetailPage(habit: rowHabits[i]),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
+                  child: i < rowHabits.length
+                      ? RepaintBoundary(
+                          child: HabitItem(
+                            habit: rowHabits[i],
+                            index: startIndex + i,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => HabitDetailPage(habit: rowHabits[i]),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : const SizedBox(),
                 ),
-              // Add empty space if row has less than 3 items
-              for (int i = rowHabits.length; i < 3; i++)
-                const Expanded(child: SizedBox()),
+                if (i < 2) const SizedBox(width: 12),
+              ],
             ],
           ),
         ),
