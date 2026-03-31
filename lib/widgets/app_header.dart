@@ -8,6 +8,7 @@ class AppHeader extends StatelessWidget {
   final VoidCallback? onCalendarTap;
   final int notificationCount;
   final String userInitial;
+  final String? photoUrl;
 
   const AppHeader({
     super.key,
@@ -16,6 +17,7 @@ class AppHeader extends StatelessWidget {
     this.onCalendarTap,
     required this.notificationCount,
     required this.userInitial,
+    this.photoUrl,
   });
 
   @override
@@ -107,14 +109,19 @@ class AppHeader extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 22,
                       backgroundColor: AppColors.secondary,
-                      child: Text(
-                        userInitial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
+                      backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty)
+                          ? NetworkImage(photoUrl!)
+                          : null,
+                      child: (photoUrl == null || photoUrl!.isEmpty)
+                          ? Text(
+                              userInitial,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                 ],
