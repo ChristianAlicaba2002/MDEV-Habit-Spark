@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/services/notification_service.dart';
+import 'package:habit_spark/services/streak_service.dart';
 
 class HabitService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final NotificationService _notificationService = NotificationService();
+  final StreakService _streakService = StreakService();
 
   // Get habits stream for a user
   Stream<List<Habit>> getHabitsStream(String userId) {
@@ -32,10 +36,49 @@ class HabitService {
   }
 
   // Toggle habit completion
-  Future<void> toggleHabit(String habitId, bool currentStatus) async {
+  Future<void> toggleHabit(String habitId, bool currentStatus, String userId) async {
     await _firestore.collection('habits').doc(habitId).update({
       'isDone': !currentStatus,
     });
+    
+    // If habit is being marked as done, check for achievements
+    if (!currentStatus) {
+      await _checkHabitCompletion(userId, habitId);
+    }
+  }
+  
+  // Check habit completion and trigger notifications
+  Future<void> _checkHabitCompletion(String userId, String habitId) async {
+    // Get the habit that was just completed
+    final habitDoc = await _firestore.collection('habits').doc(habitId).get();
+    final habitName = habitDoc.data()?['name'] ?? 'habit';
+    
+    // Send achievement notification for completing a habit
+    await _notificationService.createAchievementNotification(
+      userId,
+      'You completed "$habitName"! Great job! 🎉',
+    );
+    
+    // Check if all habits are completed
+    final allHabits = await _firestore
+        .collection('habits')
+        .where('userId', isEqualTo: userId)
+        .get();
+    
+    final allCompleted = allHabits.docs.every((doc) => doc.data()['isDone'] == true);
+    
+    // If all habits completed, send goal completion notification and update streak
+    if (allCompleted && allHabits.docs.isNotEmpty) {
+      await _notificationService.createNotification(
+        userId: userId,
+        title: '🎯 Goal Completed!',
+        message: 'Amazing! You\'ve completed all your habits for today!',
+        type: 'achievement',
+      );
+      
+      // Update streak
+      await _streakService.updateStreak(userId, true);
+    }
   }
 
   // Delete a habit

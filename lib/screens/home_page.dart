@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
+import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/models/habit.dart';
@@ -25,6 +26,7 @@ class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
   final NotificationService _notificationService = NotificationService();
+  final StreakService _streakService = StreakService();
   int _selectedIndex = 0;
   bool _isExpanded = true; // Track expand/collapse state
 
@@ -32,12 +34,20 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _seedHabitsIfNeeded();
+    _checkStreakOnLogin();
   }
 
   Future<void> _seedHabitsIfNeeded() async {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
       await _habitService.seedDefaultHabits(userId);
+    }
+  }
+  
+  Future<void> _checkStreakOnLogin() async {
+    final userId = _authService.currentUser?.uid;
+    if (userId != null) {
+      await _streakService.checkStreakOnLogin(userId);
     }
   }
 
@@ -283,7 +293,15 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 40),
           Row(
             children: [
-              const Expanded(child: StreakCard(streakDays: 7)),
+              Expanded(
+                child: StreamBuilder<Map<String, dynamic>>(
+                  stream: _streakService.getStreakStream(userId),
+                  builder: (context, streakSnapshot) {
+                    final streakDays = streakSnapshot.data?['currentStreak'] ?? 0;
+                    return StreakCard(streakDays: streakDays);
+                  },
+                ),
+              ),
               const SizedBox(width: 16),
               Expanded(child: CompletedCard(completedCount: completedCount)),
             ],
@@ -413,6 +431,7 @@ class _HomePageState extends State<HomePage> {
                       onTap: () => _habitService.toggleHabit(
                         rowHabits[i].id,
                         rowHabits[i].isDone,
+                        userId,
                       ),
                     ),
                   ),
