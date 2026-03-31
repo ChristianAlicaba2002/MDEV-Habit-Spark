@@ -23,7 +23,7 @@ class AppHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Stack(
         children: [
           // Center - App Logo/Name (absolutely centered)
@@ -48,7 +48,7 @@ class AppHeader extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.calendar_month),
                 color: Colors.white,
-                iconSize: 28,
+                iconSize: 24,
                 onPressed: onCalendarTap ?? () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Calendar - Coming soon')),
@@ -63,35 +63,35 @@ class AppHeader extends StatelessWidget {
                   GestureDetector(
                     onTap: onNotificationTap,
                     child: SizedBox(
-                      width: 44,
-                      height: 44,
+                      width: 38,
+                      height: 38,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
                           Icon(
                             Icons.notifications_outlined,
                             color: Colors.white,
-                            size: 36,
+                            size: 28,
                           ),
                           if (notificationCount > 0)
                             Positioned(
                               right: 2,
                               top: 2,
                               child: Container(
-                                padding: const EdgeInsets.all(5),
+                                padding: const EdgeInsets.all(4),
                                 decoration: const BoxDecoration(
                                   color: AppColors.error,
                                   shape: BoxShape.circle,
                                 ),
                                 constraints: const BoxConstraints(
-                                  minWidth: 20,
-                                  minHeight: 20,
+                                  minWidth: 18,
+                                  minHeight: 18,
                                 ),
                                 child: Text(
                                   '$notificationCount',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 11,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   textAlign: TextAlign.center,
@@ -107,7 +107,7 @@ class AppHeader extends StatelessWidget {
                   GestureDetector(
                     onTap: onProfileTap,
                     child: CircleAvatar(
-                      radius: 22,
+                      radius: 19,
                       backgroundColor: AppColors.secondary,
                       backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty)
                           ? NetworkImage(photoUrl!)
@@ -118,7 +118,7 @@ class AppHeader extends StatelessWidget {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                                fontSize: 16,
                               ),
                             )
                           : null,

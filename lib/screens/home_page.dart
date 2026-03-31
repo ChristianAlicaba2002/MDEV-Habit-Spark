@@ -366,13 +366,6 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton(
-              onPressed: _showAddHabitDialog,
-              backgroundColor: AppColors.primary,
-              child: const Icon(Icons.add, color: Colors.white),
-            )
-          : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -396,126 +389,151 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildDashboard(String userName, String userInitial, String userId,
       List<Habit> habits, int completedCount, int totalCount) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          StreamBuilder<int>(
-            stream: _notificationService.getUnreadCountStream(userId),
-            builder: (context, notificationSnapshot) {
-              final unreadCount = notificationSnapshot.data ?? 0;
-              
-              return StreamBuilder<UserModel?>(
-                stream: _authService.getUserDataStream(userId),
-                builder: (context, userSnapshot) {
-                  final photoUrl = userSnapshot.data?.photoUrl;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsive padding based on screen width
+        final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
+        final cardSpacing = constraints.maxWidth < 360 ? 12.0 : 16.0;
+        final verticalSpacing = constraints.maxWidth < 360 ? 20.0 : 24.0;
+        
+        return SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: horizontalPadding,
+            right: horizontalPadding,
+            top: 8.0,
+            bottom: 24.0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StreamBuilder<int>(
+                stream: _notificationService.getUnreadCountStream(userId),
+                builder: (context, notificationSnapshot) {
+                  final unreadCount = notificationSnapshot.data ?? 0;
                   
-                  return AppHeader(
-                    onNotificationTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NotificationsPage(),
-                        ),
+                  return StreamBuilder<UserModel?>(
+                    stream: _authService.getUserDataStream(userId),
+                    builder: (context, userSnapshot) {
+                      final photoUrl = userSnapshot.data?.photoUrl;
+                      
+                      return AppHeader(
+                        onNotificationTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const NotificationsPage(),
+                            ),
+                          );
+                        },
+                        onProfileTap: _showProfileMenu,
+                        notificationCount: unreadCount,
+                        userInitial: userInitial,
+                        photoUrl: photoUrl,
                       );
                     },
-                    onProfileTap: _showProfileMenu,
-                    notificationCount: unreadCount,
-                    userInitial: userInitial,
-                    photoUrl: photoUrl,
                   );
                 },
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          GreetingHeader(userName: userName),
-          const SizedBox(height: 40),
-          Row(
-            children: [
-              Expanded(
-                child: StreamBuilder<Map<String, dynamic>>(
-                  stream: _streakService.getStreakStream(userId),
-                  builder: (context, streakSnapshot) {
-                    final streakDays = streakSnapshot.data?['currentStreak'] ?? 0;
-                    return StreakCard(streakDays: streakDays);
-                  },
-                ),
               ),
-              const SizedBox(width: 16),
-              Expanded(child: CompletedCard(completedCount: completedCount)),
-            ],
-          ),
-          const SizedBox(height: 24),
-          ProgressCard(
-            completedHabits: completedCount,
-            totalHabits: totalCount,
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Today\'s Habits',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              SizedBox(height: verticalSpacing + 8),
+              GreetingHeader(userName: userName),
+              SizedBox(height: verticalSpacing + 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: StreamBuilder<Map<String, dynamic>>(
+                      stream: _streakService.getStreakStream(userId),
+                      builder: (context, streakSnapshot) {
+                        final streakDays = streakSnapshot.data?['currentStreak'] ?? 0;
+                        return StreakCard(streakDays: streakDays);
+                      },
+                    ),
+                  ),
+                  SizedBox(width: cardSpacing),
+                  Expanded(child: CompletedCard(completedCount: completedCount)),
+                ],
               ),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
-                },
-                child: Row(
-                  children: [
-                    Text(
-                      _isExpanded ? 'COLLAPSE' : 'EXPAND',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
+              SizedBox(height: verticalSpacing),
+              ProgressCard(
+                completedHabits: completedCount,
+                totalHabits: totalCount,
+              ),
+              SizedBox(height: verticalSpacing),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Today\'s Habits',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isExpanded = !_isExpanded;
+                          });
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              _isExpanded ? 'COLLAPSE' : 'EXPAND',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _showAddHabitDialog,
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: habits.isEmpty
-                ? _buildEmptyState()
-                : AnimatedCrossFade(
-                    duration: const Duration(milliseconds: 300),
-                    crossFadeState: _isExpanded
-                        ? CrossFadeState.showFirst
-                        : CrossFadeState.showSecond,
-                    firstChild: _buildHabitGrid(habits, userId),
-                    secondChild: SizedBox(
-                      width: double.infinity,
-                      child: Center(
-                        child: Text(
-                          'Tap EXPAND to view habits',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: Colors.white60,
+              const SizedBox(height: 16),
+              habits.isEmpty
+                  ? _buildEmptyState()
+                  : AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 300),
+                      crossFadeState: _isExpanded
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      firstChild: _buildHabitList(habits, userId),
+                      secondChild: SizedBox(
+                        width: double.infinity,
+                        child: Center(
+                          child: Text(
+                            'Tap EXPAND to view habits',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: Colors.white60,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -548,15 +566,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHabitGrid(List<Habit> habits, String userId) {
-    return ListView.builder(
-      itemCount: (habits.length / 3).ceil(),
-      itemBuilder: (context, rowIndex) {
-        final startIndex = rowIndex * 3;
-        final endIndex = (startIndex + 3).clamp(0, habits.length);
-        final rowHabits = habits.sublist(startIndex, endIndex);
-        
-        return Padding(
+  Widget _buildHabitList(List<Habit> habits, String userId) {
+    final rows = <Widget>[];
+    for (int rowIndex = 0; rowIndex < (habits.length / 3).ceil(); rowIndex++) {
+      final startIndex = rowIndex * 3;
+      final endIndex = (startIndex + 3).clamp(0, habits.length);
+      final rowHabits = habits.sublist(startIndex, endIndex);
+      
+      rows.add(
+        Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Row(
             children: [
@@ -585,8 +603,12 @@ class _HomePageState extends State<HomePage> {
                 const Expanded(child: SizedBox()),
             ],
           ),
-        );
-      },
+        ),
+      );
+    }
+    
+    return Column(
+      children: rows,
     );
   }
 
