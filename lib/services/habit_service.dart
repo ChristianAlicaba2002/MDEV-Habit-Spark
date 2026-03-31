@@ -37,6 +37,13 @@ class HabitService {
     });
   }
 
+  // Update an existing habit
+  Future<void> updateHabit(String habitId, String habitName) async {
+    await _firestore.collection('habits').doc(habitId).update({
+      'name': habitName,
+    });
+  }
+
   // Toggle habit completion
   Future<void> toggleHabit(String habitId, bool currentStatus, String userId) async {
     await _firestore.collection('habits').doc(habitId).update({
