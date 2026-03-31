@@ -6,6 +6,7 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/widgets/app_header.dart';
 import 'package:habit_spark/widgets/greeting_header.dart';
 import 'package:habit_spark/widgets/streak_card.dart';
