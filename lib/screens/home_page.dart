@@ -103,8 +103,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showProfileMenu() {
+  void _showProfileMenu() async {
     final user = _authService.currentUser;
+    final userId = user?.uid;
+    
+    // Fetch user data to get photo URL
+    UserModel? userData;
+    if (userId != null) {
+      userData = await _authService.getUserData(userId);
+    }
+
+    if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
@@ -119,14 +128,19 @@ class _HomePageState extends State<HomePage> {
             CircleAvatar(
               radius: 40,
               backgroundColor: AppColors.secondary,
-              child: Text(
-                (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 32,
-                ),
-              ),
+              backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
+                  ? NetworkImage(userData.photoUrl)
+                  : null,
+              child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
+                  ? Text(
+                      (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(height: 16),
             Text(
@@ -267,20 +281,29 @@ class _HomePageState extends State<HomePage> {
         children: [
           StreamBuilder<int>(
             stream: _notificationService.getUnreadCountStream(userId),
-            builder: (context, snapshot) {
-              final unreadCount = snapshot.data ?? 0;
-              return AppHeader(
-                onNotificationTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsPage(),
-                    ),
+            builder: (context, notificationSnapshot) {
+              final unreadCount = notificationSnapshot.data ?? 0;
+              
+              return StreamBuilder<UserModel?>(
+                stream: _authService.getUserDataStream(userId),
+                builder: (context, userSnapshot) {
+                  final photoUrl = userSnapshot.data?.photoUrl;
+                  
+                  return AppHeader(
+                    onNotificationTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsPage(),
+                        ),
+                      );
+                    },
+                    onProfileTap: _showProfileMenu,
+                    notificationCount: unreadCount,
+                    userInitial: userInitial,
+                    photoUrl: photoUrl,
                   );
                 },
-                onProfileTap: _showProfileMenu,
-                notificationCount: unreadCount,
-                userInitial: userInitial,
               );
             },
           ),

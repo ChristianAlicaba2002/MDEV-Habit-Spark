@@ -46,6 +46,33 @@ class AuthService {
       throw 'Failed to save user data: $e';
     }
   }
+  
+  // Get user data from Firestore
+  Future<UserModel?> getUserData(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    } catch (e) {
+      throw 'Failed to fetch user data: $e';
+    }
+  }
+  
+  // Get user data stream for real-time updates
+  Stream<UserModel?> getUserDataStream(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.exists) {
+        return UserModel.fromMap(snapshot.data()!, snapshot.id);
+      }
+      return null;
+    });
+  }
 
   // Sign in with Google (placeholder - not functional)
   Future<UserCredential?> signInWithGoogle() async {
