@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:habit_spark/screens/login_page.dart';
+import 'package:habit_spark/screens/home_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnboardingPage extends StatefulWidget {
-  const OnboardingPage({super.key});
+  final String userId;
+  
+  const OnboardingPage({super.key, required this.userId});
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -52,14 +55,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
         curve: Curves.easeInOut,
       );
     } else {
-      _navigateToLogin();
+      _navigateToHome();
     }
   }
 
-  void _navigateToLogin() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-    );
+  Future<void> _navigateToHome() async {
+    // Mark user as having seen onboarding
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .update({'hasSeenOnboarding': true});
+    
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    }
   }
 
   @override
@@ -73,7 +84,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
-                onPressed: _navigateToLogin,
+                onPressed: _navigateToHome,
                 child: const Text(
                   'Skip',
                   style: TextStyle(

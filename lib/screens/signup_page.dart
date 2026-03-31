@@ -150,10 +150,8 @@ class _SignUpPageState extends State<SignUpPage> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const HomePage()),
-                  );
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Go back to login/main
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -164,7 +162,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 child: const Text(
-                  'Continue to Sign In',
+                  'Continue',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,

@@ -7,6 +7,7 @@ class UserModel {
   final String password;
   final String photoUrl;
   final String createdAt;
+  final bool hasSeenOnboarding;
 
   UserModel({
     required this.uuid,
@@ -17,6 +18,7 @@ class UserModel {
     required this.password,
     required this.photoUrl,
     required this.createdAt,
+    this.hasSeenOnboarding = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,6 +31,7 @@ class UserModel {
       'password': password,
       'photoUrl': photoUrl,
       'createdAt': createdAt,
+      'hasSeenOnboarding': hasSeenOnboarding,
     };
   }
 
@@ -42,6 +45,7 @@ class UserModel {
       password: map['password'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
       createdAt: map['createdAt'] ?? '',
+      hasSeenOnboarding: map['hasSeenOnboarding'] ?? false,
     );
   }
 }
