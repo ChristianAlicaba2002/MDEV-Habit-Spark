@@ -35,9 +35,10 @@ class HabitItem extends StatelessWidget {
     
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
+      child: SizedBox(
+        height: 90,
+        child: Container(
+          decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: habit.isDone 
                 ? [Colors.grey[400]!, Colors.grey[500]!] 
@@ -73,38 +74,43 @@ class HabitItem extends StatelessWidget {
             
             // Content
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Icon and status
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Icon(
-                        _getHabitIcon(),
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      if (habit.isDone)
-                        const Icon(
-                          Icons.check_circle,
+                  SizedBox(
+                    height: 20,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(
+                          _getHabitIcon(),
                           color: Colors.white,
-                          size: 18,
+                          size: 20,
                         ),
-                    ],
+                        if (habit.isDone)
+                          const Icon(
+                            Icons.check_circle,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                      ],
+                    ),
                   ),
+                  
+                  const Spacer(),
                   
                   // Habit name
                   Text(
                     habit.name,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
+                      height: 1.2,
                     ),
-                    maxLines: 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -112,12 +118,18 @@ class HabitItem extends StatelessWidget {
             ),
           ],
         ),
+        ),
       ),
     );
   }
 
   IconData _getHabitIcon() {
-    // Simple icon mapping based on habit name keywords
+    // Use saved icon if available
+    if (habit.icon != null) {
+      return _getIconFromString(habit.icon!);
+    }
+    
+    // Fallback to name-based detection
     final name = habit.name.toLowerCase();
     if (name.contains('run') || name.contains('jog')) return Icons.directions_run;
     if (name.contains('read')) return Icons.menu_book;
@@ -130,5 +142,27 @@ class HabitItem extends StatelessWidget {
     if (name.contains('walk')) return Icons.directions_walk;
     if (name.contains('code') || name.contains('program')) return Icons.code;
     return Icons.check_circle_outline;
+  }
+
+  IconData _getIconFromString(String iconString) {
+    switch (iconString) {
+      case 'directions_run': return Icons.directions_run;
+      case 'fitness_center': return Icons.fitness_center;
+      case 'self_improvement': return Icons.self_improvement;
+      case 'menu_book': return Icons.menu_book;
+      case 'water_drop': return Icons.water_drop;
+      case 'restaurant': return Icons.restaurant;
+      case 'bedtime': return Icons.bedtime;
+      case 'school': return Icons.school;
+      case 'code': return Icons.code;
+      case 'music_note': return Icons.music_note;
+      case 'brush': return Icons.brush;
+      case 'camera_alt': return Icons.camera_alt;
+      case 'favorite': return Icons.favorite;
+      case 'wb_sunny': return Icons.wb_sunny;
+      case 'nightlight': return Icons.nightlight;
+      case 'local_cafe': return Icons.local_cafe;
+      default: return Icons.check_circle_outline;
+    }
   }
 }

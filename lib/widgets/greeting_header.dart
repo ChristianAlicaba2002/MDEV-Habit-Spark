@@ -35,7 +35,7 @@ class GreetingHeader extends StatelessWidget {
       children: [
         Text(
           _getGreetingEmoji(),
-          style: const TextStyle(fontSize: 32),
+          style: const TextStyle(fontSize: 28),
         ),
         const SizedBox(width: 12),
         Column(
@@ -44,7 +44,7 @@ class GreetingHeader extends StatelessWidget {
             Text(
               _getGreeting(),
               style: const TextStyle(
-                fontSize: 28,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -52,7 +52,7 @@ class GreetingHeader extends StatelessWidget {
             Text(
               userName,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: Colors.white60,
               ),
             ),

@@ -28,20 +28,25 @@ class HabitService {
   }
 
   // Add a new habit
-  Future<void> addHabit(String userId, String habitName) async {
+  Future<void> addHabit(String userId, String habitName, {String? icon}) async {
     await _firestore.collection('habits').add({
       'name': habitName,
       'isDone': false,
       'createdAt': Timestamp.fromDate(DateTime.now()),
       'userId': userId,
+      if (icon != null) 'icon': icon,
     });
   }
 
   // Update an existing habit
-  Future<void> updateHabit(String habitId, String habitName) async {
-    await _firestore.collection('habits').doc(habitId).update({
+  Future<void> updateHabit(String habitId, String habitName, {String? icon}) async {
+    final updateData = {
       'name': habitName,
-    });
+    };
+    if (icon != null) {
+      updateData['icon'] = icon;
+    }
+    await _firestore.collection('habits').doc(habitId).update(updateData);
   }
 
   // Toggle habit completion
