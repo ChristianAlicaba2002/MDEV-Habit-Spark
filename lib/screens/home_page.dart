@@ -247,13 +247,9 @@ class _HomePageState extends State<HomePage> {
               icon: Icons.logout,
               title: 'Logout',
               onTap: () async {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close profile menu
                 await _authService.signOut();
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const LoginPage()),
-                  );
-                }
+                // No need to manual push LoginPage, main.dart handles it
               },
               isDestructive: true,
             ),
