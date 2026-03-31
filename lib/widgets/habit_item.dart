@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/screens/habit_detail_page.dart';
 
 class HabitItem extends StatelessWidget {
   final Habit habit;
@@ -34,6 +35,14 @@ class HabitItem extends StatelessWidget {
     
     return GestureDetector(
       onTap: onTap,
+      onLongPress: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HabitDetailPage(habit: habit),
+          ),
+        );
+      },
       child: Container(
         height: 100,
         decoration: BoxDecoration(
