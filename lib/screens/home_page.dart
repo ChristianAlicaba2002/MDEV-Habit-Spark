@@ -118,57 +118,134 @@ class _HomePageState extends State<HomePage> {
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: const Color(0xFF1A1A1A),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppColors.secondary,
-              backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
-                  ? NetworkImage(userData.photoUrl)
-                  : null,
-              child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
-                  ? Text(
-                      (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
-                      ),
-                    )
-                  : null,
+            // Profile Photo with border
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF4ECDC4),
+                  width: 3,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: AppColors.secondary,
+                backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
+                    ? NetworkImage(userData.photoUrl)
+                    : null,
+                child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
+                    ? Text(
+                        (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 40,
+                        ),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(height: 16),
+            
+            // Joined date
             Text(
-              user?.email ?? 'Unknown',
-              style: AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Member since ${DateTime.now().year}',
-              style: AppTextStyles.bodySmall,
+              'Joined ${_getJoinedDate()}',
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 24),
-            const Divider(),
+            
+            // Edit Profile Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Edit Profile - Coming soon')),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: const Text(
+                  'EDIT PROFILE',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            
+            // MY STUFF Section
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'MY STUFF',
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.person_outline),
-              title: const Text('Edit Profile'),
+            
+            // Menu Items
+            _buildMenuItem(
+              icon: Icons.apps_outlined,
+              title: 'Connected Apps & Devices',
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Edit Profile - Coming soon')),
+                  const SnackBar(content: Text('Connected Apps - Coming soon')),
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('Settings'),
+            _buildMenuItem(
+              icon: Icons.notifications_outlined,
+              title: 'Notifications',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                );
+              },
+            ),
+            _buildMenuItem(
+              icon: Icons.local_offer_outlined,
+              title: 'Offers',
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Offers - Coming soon')),
+                );
+              },
+            ),
+            _buildMenuItem(
+              icon: Icons.settings_outlined,
+              title: 'Settings',
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -176,12 +253,9 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.error),
-              title: const Text(
-                'Logout',
-                style: TextStyle(color: AppColors.error),
-              ),
+            _buildMenuItem(
+              icon: Icons.logout,
+              title: 'Logout',
               onTap: () async {
                 Navigator.pop(context);
                 await _authService.signOut();
@@ -191,12 +265,69 @@ class _HomePageState extends State<HomePage> {
                   );
                 }
               },
+              isDestructive: true,
             ),
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+  
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isDestructive ? AppColors.error : Colors.white,
+              size: 24,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: isDestructive ? AppColors.error : Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.white.withOpacity(0.3),
+              size: 24,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  String _getJoinedDate() {
+    final now = DateTime.now();
+    final monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${monthNames[now.month - 1]} ${now.year}';
   }
 
   @override
