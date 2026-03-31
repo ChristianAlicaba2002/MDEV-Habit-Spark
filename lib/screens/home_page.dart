@@ -5,6 +5,7 @@ import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/notifications_page.dart';
+import 'package:habit_spark/screens/habit_detail_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/widgets/app_header.dart';
@@ -602,11 +603,14 @@ class _HomePageState extends State<HomePage> {
                     child: HabitItem(
                       habit: rowHabits[i],
                       index: startIndex + i,
-                      onTap: () => _habitService.toggleHabit(
-                        rowHabits[i].id,
-                        rowHabits[i].isDone,
-                        userId,
-                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => HabitDetailPage(habit: rowHabits[i]),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

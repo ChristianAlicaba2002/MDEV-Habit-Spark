@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/screens/habit_detail_page.dart';
 
 class HabitItem extends StatelessWidget {
   final Habit habit;

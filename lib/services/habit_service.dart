@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
+import 'package:habit_spark/services/habit_log_service.dart';
 
 class HabitService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final NotificationService _notificationService = NotificationService();
   final StreakService _streakService = StreakService();
+  final HabitLogService _logService = HabitLogService();
 
   // Get habits stream for a user
   Stream<List<Habit>> getHabitsStream(String userId) {
@@ -40,6 +42,13 @@ class HabitService {
     await _firestore.collection('habits').doc(habitId).update({
       'isDone': !currentStatus,
     });
+    
+    // Log the habit completion/incompletion
+    await _logService.addHabitLog(
+      habitId: habitId,
+      userId: userId,
+      isCompleted: !currentStatus,
+    );
     
     // If habit is being marked as done, check for achievements
     if (!currentStatus) {
