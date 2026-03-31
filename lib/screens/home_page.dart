@@ -33,20 +33,16 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _seedHabitsIfNeeded();
-    _checkStreakOnLogin();
+    _initializeUserData();
   }
 
-  Future<void> _seedHabitsIfNeeded() async {
+  Future<void> _initializeUserData() async {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
       await _habitService.seedDefaultHabits(userId);
-    }
-  }
-  
-  Future<void> _checkStreakOnLogin() async {
-    final userId = _authService.currentUser?.uid;
-    if (userId != null) {
+      // Initialize streak data if it doesn't exist
+      await _streakService.getUserStreak(userId);
+      // Check streak status on login
       await _streakService.checkStreakOnLogin(userId);
     }
   }
