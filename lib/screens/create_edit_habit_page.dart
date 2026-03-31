@@ -49,7 +49,50 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
     super.initState();
     if (widget.habit != null) {
       _nameController.text = widget.habit!.name;
-      _selectedIcon = _getHabitIcon(widget.habit!.name);
+      _selectedIcon = _getIconFromString(widget.habit!.icon) ?? _getHabitIcon(widget.habit!.name);
+    }
+  }
+
+  String _getIconString(IconData icon) {
+    if (icon == Icons.directions_run) return 'directions_run';
+    if (icon == Icons.fitness_center) return 'fitness_center';
+    if (icon == Icons.self_improvement) return 'self_improvement';
+    if (icon == Icons.menu_book) return 'menu_book';
+    if (icon == Icons.water_drop) return 'water_drop';
+    if (icon == Icons.restaurant) return 'restaurant';
+    if (icon == Icons.bedtime) return 'bedtime';
+    if (icon == Icons.school) return 'school';
+    if (icon == Icons.code) return 'code';
+    if (icon == Icons.music_note) return 'music_note';
+    if (icon == Icons.brush) return 'brush';
+    if (icon == Icons.camera_alt) return 'camera_alt';
+    if (icon == Icons.favorite) return 'favorite';
+    if (icon == Icons.wb_sunny) return 'wb_sunny';
+    if (icon == Icons.nightlight) return 'nightlight';
+    if (icon == Icons.local_cafe) return 'local_cafe';
+    return 'check_circle_outline';
+  }
+
+  IconData? _getIconFromString(String? iconString) {
+    if (iconString == null) return null;
+    switch (iconString) {
+      case 'directions_run': return Icons.directions_run;
+      case 'fitness_center': return Icons.fitness_center;
+      case 'self_improvement': return Icons.self_improvement;
+      case 'menu_book': return Icons.menu_book;
+      case 'water_drop': return Icons.water_drop;
+      case 'restaurant': return Icons.restaurant;
+      case 'bedtime': return Icons.bedtime;
+      case 'school': return Icons.school;
+      case 'code': return Icons.code;
+      case 'music_note': return Icons.music_note;
+      case 'brush': return Icons.brush;
+      case 'camera_alt': return Icons.camera_alt;
+      case 'favorite': return Icons.favorite;
+      case 'wb_sunny': return Icons.wb_sunny;
+      case 'nightlight': return Icons.nightlight;
+      case 'local_cafe': return Icons.local_cafe;
+      default: return Icons.check_circle_outline;
     }
   }
 
@@ -79,9 +122,15 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
     setState(() => _isLoading = true);
 
     try {
+      final iconString = _getIconString(_selectedIcon);
+      
       if (widget.habit == null) {
         // Create new habit
-        await _habitService.addHabit(widget.userId, _nameController.text.trim());
+        await _habitService.addHabit(
+          widget.userId, 
+          _nameController.text.trim(),
+          icon: iconString,
+        );
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -96,6 +145,7 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
         await _habitService.updateHabit(
           widget.habit!.id,
           _nameController.text.trim(),
+          icon: iconString,
         );
         if (mounted) {
           Navigator.pop(context);
