@@ -6,6 +6,7 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/screens/habit_detail_page.dart';
+import 'package:habit_spark/screens/create_edit_habit_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/widgets/app_header.dart';
@@ -50,59 +51,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showAddHabitDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Add New Habit'),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: 'Enter habit name',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          autofocus: true,
+    final userId = _authService.currentUser?.uid;
+    if (userId != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CreateEditHabitPage(userId: userId),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                final userId = _authService.currentUser?.uid;
-                if (userId != null) {
-                  try {
-                    await _habitService.addHabit(userId, controller.text);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Habit added successfully!')),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e')),
-                      );
-                    }
-                  }
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   void _showProfileMenu() async {

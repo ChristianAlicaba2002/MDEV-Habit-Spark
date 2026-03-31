@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/habit_log.dart';
 import 'package:habit_spark/services/habit_log_service.dart';
+import 'package:habit_spark/screens/create_edit_habit_page.dart';
+import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:intl/intl.dart';
 
@@ -16,6 +18,7 @@ class HabitDetailPage extends StatefulWidget {
 
 class _HabitDetailPageState extends State<HabitDetailPage> {
   final HabitLogService _logService = HabitLogService();
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +39,25 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: Colors.white),
+            onPressed: () {
+              final userId = _authService.currentUser?.uid;
+              if (userId != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreateEditHabitPage(
+                      habit: widget.habit,
+                      userId: userId,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
