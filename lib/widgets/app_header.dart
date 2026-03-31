@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppHeader extends StatelessWidget {
   final VoidCallback onNotificationTap;
@@ -125,13 +126,13 @@ class AppHeader extends StatelessWidget {
           ),
           
           // Center - App Logo/Name (absolutely centered)
-          const Text(
+          Text(
             'HabitSpark',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.poppins(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
               color: Colors.white,
-              letterSpacing: 0.5,
+              letterSpacing: 1.0,
             ),
           ),
         ],

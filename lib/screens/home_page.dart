@@ -66,9 +66,7 @@ class _HomePageState extends State<HomePage> {
     if (userId != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => CreateEditHabitPage(userId: userId),
-        ),
+        MaterialPageRoute(builder: (_) => CreateEditHabitPage(userId: userId)),
       );
     }
   }
@@ -76,7 +74,7 @@ class _HomePageState extends State<HomePage> {
   void _showProfileMenu() async {
     final user = _authService.currentUser;
     final userId = user?.uid;
-    
+
     // Fetch user data to get photo URL
     UserModel? userData;
     if (userId != null) {
@@ -104,168 +102,178 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-            // Profile Photo with border
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFF4ECDC4),
-                  width: 3,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: AppColors.secondary,
-                backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
-                    ? NetworkImage(userData.photoUrl)
-                    : null,
-                child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
-                    ? Text(
-                        (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 40,
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // User Name
-            Text(
-              '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim().isEmpty 
-                  ? user?.email?.split('@')[0] ?? 'User'
-                  : '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            
-            // Joined date
-            Text(
-              'Joined ${_getJoinedDate()}',
-              style: const TextStyle(
-                color: Colors.white60,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Edit Profile Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit Profile - Coming soon')),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                // Profile Photo with border
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF4ECDC4),
+                      width: 3,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: AppColors.secondary,
+                    backgroundImage:
+                        (userData?.photoUrl != null &&
+                            userData!.photoUrl.isNotEmpty)
+                        ? NetworkImage(userData.photoUrl)
+                        : null,
+                    child:
+                        (userData?.photoUrl == null ||
+                            userData!.photoUrl.isEmpty)
+                        ? Text(
+                            (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 40,
+                            ),
+                          )
+                        : null,
                   ),
                 ),
-                child: const Text(
-                  'EDIT PROFILE',
-                  style: TextStyle(
+                const SizedBox(height: 16),
+
+                // User Name
+                Text(
+                  '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'
+                          .trim()
+                          .isEmpty
+                      ? user?.email?.split('@')[0] ?? 'User'
+                      : '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'
+                            .trim(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    letterSpacing: 0.5,
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            
-            // MY STUFF Section
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'MY STUFF',
-                style: TextStyle(
-                  color: Colors.white60,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1,
+                const SizedBox(height: 4),
+
+                // Joined date
+                Text(
+                  'Joined ${_getJoinedDate()}',
+                  style: const TextStyle(color: Colors.white60, fontSize: 14),
                 ),
-              ),
+                const SizedBox(height: 24),
+
+                // Edit Profile Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Edit Profile - Coming soon'),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: const Text(
+                      'EDIT PROFILE',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // MY STUFF Section
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'MY STUFF',
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Menu Items
+                _buildMenuItem(
+                  icon: Icons.apps_outlined,
+                  title: 'Connected Apps & Devices',
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Connected Apps - Coming soon'),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.notifications_outlined,
+                  title: 'Notifications',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.local_offer_outlined,
+                  title: 'Offers',
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Offers - Coming soon')),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.settings_outlined,
+                  title: 'Settings',
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Settings - Coming soon')),
+                    );
+                  },
+                ),
+                _buildMenuItem(
+                  icon: Icons.logout,
+                  title: 'Logout',
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _authService.signOut();
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      );
+                    }
+                  },
+                  isDestructive: true,
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
-            const SizedBox(height: 16),
-            
-            // Menu Items
-            _buildMenuItem(
-              icon: Icons.apps_outlined,
-              title: 'Connected Apps & Devices',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Connected Apps - Coming soon')),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.notifications_outlined,
-              title: 'Notifications',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.local_offer_outlined,
-              title: 'Offers',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Offers - Coming soon')),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.settings_outlined,
-              title: 'Settings',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Settings - Coming soon')),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.logout,
-              title: 'Logout',
-              onTap: () async {
-                Navigator.pop(context);
-                await _authService.signOut();
-                if (context.mounted) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const LoginPage()),
-                  );
-                }
-              },
-              isDestructive: true,
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
           ),
         ),
       ),
     );
   }
-  
+
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -278,10 +286,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
           ),
         ),
         child: Row(
@@ -312,12 +317,22 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  
+
   String _getJoinedDate() {
     final now = DateTime.now();
     final monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${monthNames[now.month - 1]} ${now.year}';
   }
@@ -344,7 +359,11 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     Text('Error: ${snapshot.error}'),
                     const SizedBox(height: 8),
@@ -363,7 +382,13 @@ class _HomePageState extends State<HomePage> {
 
             return _selectedIndex == 0
                 ? _buildDashboard(
-                    userName, userInitial, userId, habits, completedCount, totalCount)
+                    userName,
+                    userInitial,
+                    userId,
+                    habits,
+                    completedCount,
+                    totalCount,
+                  )
                 : _buildStatsPage();
           },
         ),
@@ -371,10 +396,7 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8),
           ],
         ),
         child: BottomNavigationBar(
@@ -416,35 +438,38 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDashboard(String userName, String userInitial, String userId,
-      List<Habit> habits, int completedCount, int totalCount) {
+  Widget _buildDashboard(
+    String userName,
+    String userInitial,
+    String userId,
+    List<Habit> habits,
+    int completedCount,
+    int totalCount,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Responsive padding based on screen width
-        final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
+        final horizontalPadding = constraints.maxWidth < 360 ? 12.0 : 16.0;
         final cardSpacing = constraints.maxWidth < 360 ? 12.0 : 16.0;
         final verticalSpacing = constraints.maxWidth < 360 ? 20.0 : 24.0;
-        
+
         return SingleChildScrollView(
-          padding: const EdgeInsets.only(
-            top: 8.0,
-            bottom: 24.0,
-          ),
+          padding: const EdgeInsets.only(top: 8.0, bottom: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 child: StreamBuilder<int>(
                   stream: _notificationService.getUnreadCountStream(userId),
                   builder: (context, notificationSnapshot) {
                     final unreadCount = notificationSnapshot.data ?? 0;
-                    
+
                     return StreamBuilder<UserModel?>(
                       stream: _authService.getUserDataStream(userId),
                       builder: (context, userSnapshot) {
                         final photoUrl = userSnapshot.data?.photoUrl;
-                        
+
                         return AppHeader(
                           onNotificationTap: () {
                             Navigator.push(
@@ -478,13 +503,16 @@ class _HomePageState extends State<HomePage> {
                           child: StreamBuilder<Map<String, dynamic>>(
                             stream: _streakService.getStreakStream(userId),
                             builder: (context, streakSnapshot) {
-                              final streakDays = streakSnapshot.data?['currentStreak'] ?? 0;
+                              final streakDays =
+                                  streakSnapshot.data?['currentStreak'] ?? 0;
                               return StreakCard(streakDays: streakDays);
                             },
                           ),
                         ),
                         SizedBox(width: cardSpacing),
-                        Expanded(child: CompletedCard(completedCount: completedCount)),
+                        Expanded(
+                          child: CompletedCard(completedCount: completedCount),
+                        ),
                       ],
                     ),
                     SizedBox(height: verticalSpacing),
@@ -524,7 +552,9 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(width: 4),
                                   Icon(
-                                    _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                    _isExpanded
+                                        ? Icons.keyboard_arrow_up
+                                        : Icons.keyboard_arrow_down,
                                     color: AppColors.primary,
                                     size: 20,
                                   ),
@@ -581,24 +611,16 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.add_circle_outline,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.add_circle_outline, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No habits yet',
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: Colors.white70,
-            ),
+            style: AppTextStyles.bodyLarge.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 8),
           Text(
             'Tap + to add your first habit',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: Colors.white60,
-            ),
+            style: AppTextStyles.bodySmall.copyWith(color: Colors.white60),
           ),
         ],
       ),
@@ -611,7 +633,7 @@ class _HomePageState extends State<HomePage> {
       final startIndex = rowIndex * 3;
       final endIndex = (startIndex + 3).clamp(0, habits.length);
       final rowHabits = habits.sublist(startIndex, endIndex);
-      
+
       rows.add(
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -628,7 +650,8 @@ class _HomePageState extends State<HomePage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => HabitDetailPage(habit: rowHabits[i]),
+                                  builder: (_) =>
+                                      HabitDetailPage(habit: rowHabits[i]),
                                 ),
                               );
                             },
@@ -643,10 +666,8 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
-    
-    return Column(
-      children: rows,
-    );
+
+    return Column(children: rows);
   }
 
   Widget _buildStatsPage() {
@@ -785,10 +806,7 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -806,10 +824,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 11,
-            ),
+            style: const TextStyle(color: Colors.white60, fontSize: 11),
           ),
           const SizedBox(height: 4),
           Text(
@@ -839,9 +854,9 @@ class _HomePageState extends State<HomePage> {
       [const Color(0xFFFF6B9D), const Color(0xFFC44569)],
       [const Color(0xFF00D2FF), const Color(0xFF3A7BD5)],
     ];
-    
+
     final gradient = gradients[index % gradients.length];
-    
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -962,10 +977,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 8),
             const Text(
               'Create habits to see your progress analytics',
-              style: TextStyle(
-                color: Colors.white60,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.white60, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1017,20 +1029,25 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: weekDays.asMap().entries.map((entry) {
               final index = entry.key;
               final day = entry.value;
-              final dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1];
+              final dayName = [
+                'Mon',
+                'Tue',
+                'Wed',
+                'Thu',
+                'Fri',
+                'Sat',
+                'Sun',
+              ][day.weekday - 1];
               final isToday = day.day == now.day && day.month == now.month;
               final isSelected = _selectedDayIndex == index;
-              
+
               return GestureDetector(
                 onTap: () {
                   setState(() {
@@ -1042,11 +1059,15 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                     Text(
                       dayName,
                       style: TextStyle(
-                        color: isSelected 
+                        color: isSelected
                             ? const Color(0xFF4ECDC4)
-                            : (isToday ? const Color(0xFF4ECDC4) : Colors.white60),
+                            : (isToday
+                                  ? const Color(0xFF4ECDC4)
+                                  : Colors.white60),
                         fontSize: 12,
-                        fontWeight: (isSelected || isToday) ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: (isSelected || isToday)
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1056,16 +1077,16 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? const Color(0xFF4ECDC4)
-                            : (isToday 
-                                ? const Color(0xFF4ECDC4)
-                                : Colors.white.withOpacity(0.1)),
+                            : (isToday
+                                  ? const Color(0xFF4ECDC4)
+                                  : Colors.white.withOpacity(0.1)),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFF4ECDC4)
-                              : (isToday 
-                                  ? const Color(0xFF4ECDC4)
-                                  : Colors.white.withOpacity(0.2)),
+                              : (isToday
+                                    ? const Color(0xFF4ECDC4)
+                                    : Colors.white.withOpacity(0.2)),
                           width: 2,
                         ),
                       ),
@@ -1073,7 +1094,9 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                         child: Text(
                           '${day.day}',
                           style: TextStyle(
-                            color: (isSelected || isToday) ? Colors.white : Colors.white60,
+                            color: (isSelected || isToday)
+                                ? Colors.white
+                                : Colors.white60,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1090,7 +1113,6 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
     );
   }
 }
-
 
 class _HabitsBreakdownWidget extends StatefulWidget {
   final String userId;
@@ -1140,7 +1162,7 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
           stream: _habitService.getHabitsStream(widget.userId),
           builder: (context, snapshot) {
             final habits = snapshot.data ?? [];
-            
+
             if (habits.isEmpty) {
               return Container(
                 padding: const EdgeInsets.all(48),
@@ -1164,10 +1186,7 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
                       const SizedBox(height: 8),
                       const Text(
                         'Create habits to see your progress analytics',
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.white60, fontSize: 14),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1202,11 +1221,15 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => HabitDetailPage(habit: habits[index]),
+                                builder: (_) =>
+                                    HabitDetailPage(habit: habits[index]),
                               ),
                             );
                           },
-                          child: widget.buildHabitProgressCard(habits[index], index),
+                          child: widget.buildHabitProgressCard(
+                            habits[index],
+                            index,
+                          ),
                         ),
                       );
                     },
