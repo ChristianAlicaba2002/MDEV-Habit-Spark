@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
-import 'package:habit_spark/screens/home_page.dart';
+import 'package:habit_spark/screens/onboarding_page.dart';
 import 'package:habit_spark/screens/signup_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -35,14 +36,34 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await _authService.signInWithEmailPassword(
+      final userCredential = await _authService.signInWithEmailPassword(
         _emailController.text.trim(),
         _passwordController.text,
       );
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomePage()),
-        );
+      
+      if (mounted && userCredential != null) {
+        // Check if user has seen onboarding
+        final userId = userCredential.user!.uid;
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+        
+        final hasSeenOnboarding = doc.data()?['hasSeenOnboarding'] ?? false;
+        
+        if (!hasSeenOnboarding) {
+          // Navigate to onboarding
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => OnboardingPage(userId: userId)),
+            (route) => false,
+          );
+        } else {
+          // User has seen onboarding, let auth state handle it
+          // Just trigger a rebuild by popping if possible
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
+        }
       }
     } catch (e) {
       if (mounted) {

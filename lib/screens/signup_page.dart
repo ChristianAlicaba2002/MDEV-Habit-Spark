@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/screens/home_page.dart';
+import 'package:habit_spark/screens/onboarding_page.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -149,9 +151,35 @@ class _SignUpPageState extends State<SignUpPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back to login/main
+                  
+                  // Check onboarding status and navigate
+                  final userId = _authService.currentUser?.uid;
+                  if (userId != null) {
+                    final doc = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .get();
+                    
+                    final hasSeenOnboarding = doc.data()?['hasSeenOnboarding'] ?? false;
+                    
+                    if (mounted) {
+                      if (!hasSeenOnboarding) {
+                        // Navigate to onboarding
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => OnboardingPage(userId: userId)),
+                          (route) => false,
+                        );
+                      } else {
+                        // Go to home
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const HomePage()),
+                          (route) => false,
+                        );
+                      }
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
