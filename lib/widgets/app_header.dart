@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppHeader extends StatelessWidget {
   final VoidCallback onNotificationTap;
@@ -22,33 +23,22 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return SizedBox(
+      width: double.infinity,
       child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Center - App Logo/Name (absolutely centered)
-          Align(
-            alignment: Alignment.center,
-            child: const Text(
-              'HabitSpark',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          
-          // Left and Right icons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Left side - Calendar Icon
+              // Left side - Calendar Icon (far left)
               IconButton(
                 icon: const Icon(Icons.calendar_month),
                 color: Colors.white,
-                iconSize: 24,
+                iconSize: 21,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: onCalendarTap ?? () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Calendar - Coming soon')),
@@ -56,58 +46,64 @@ class AppHeader extends StatelessWidget {
                 },
               ),
               
-              // Right side - Notification and Profile
+              // Right side - Notification and Profile (far right)
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Notifications Icon (same size as profile, no background)
+                  // Notifications Icon
                   GestureDetector(
                     onTap: onNotificationTap,
-                    child: SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.notifications_outlined,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          if (notificationCount > 0)
-                            Positioned(
-                              right: 2,
-                              top: 2,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.error,
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 18,
-                                  minHeight: 18,
-                                ),
-                                child: Text(
-                                  '$notificationCount',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            const Icon(
+                              Icons.notifications_outlined,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            if (notificationCount > 0)
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.error,
+                                    shape: BoxShape.circle,
                                   ),
-                                  textAlign: TextAlign.center,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    '$notificationCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   // Profile Icon
                   GestureDetector(
                     onTap: onProfileTap,
                     child: CircleAvatar(
-                      radius: 19,
+                      radius: 16,
                       backgroundColor: AppColors.secondary,
                       backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty)
                           ? NetworkImage(photoUrl!)
@@ -118,7 +114,7 @@ class AppHeader extends StatelessWidget {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
                             )
                           : null,
@@ -127,6 +123,17 @@ class AppHeader extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+          
+          // Center - App Logo/Name (absolutely centered)
+          Text(
+            'HabitSpark',
+            style: GoogleFonts.poppins(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 1.0,
+            ),
           ),
         ],
       ),
