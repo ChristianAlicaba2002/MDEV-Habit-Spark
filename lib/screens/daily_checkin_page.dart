@@ -56,7 +56,7 @@ class _DailyCheckInPageState extends State<DailyCheckInPage>
       }
     }
 
-    setState(() => _isMarkingAll = false);
+    if (mounted) setState(() => _isMarkingAll = false);
 
     if (mounted) {
       _showCompletionCelebration();
