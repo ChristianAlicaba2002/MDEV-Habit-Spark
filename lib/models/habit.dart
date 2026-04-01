@@ -19,7 +19,7 @@ class Habit {
     return Habit(
       id: id,
       name: map['name'] ?? '',
-      isDone: map['isDone'] ?? false,
+      isDone: (map['isDone'] as bool?) ?? false,
       createdAt: map['createdAt'] != null 
           ? (map['createdAt'] as dynamic).toDate() 
           : DateTime.now(),

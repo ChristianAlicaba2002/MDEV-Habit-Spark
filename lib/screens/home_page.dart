@@ -7,6 +7,7 @@ import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/screens/habit_detail_page.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
+import 'package:habit_spark/screens/daily_checkin_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/widgets/app_header.dart';
@@ -377,7 +378,7 @@ class _HomePageState extends State<HomePage> {
             }
 
             final habits = snapshot.data ?? [];
-            final completedCount = habits.where((h) => h.isDone).length;
+            final completedCount = habits.where((h) => h.isDone == true).length;
             final totalCount = habits.length;
 
             return _selectedIndex == 0
@@ -519,6 +520,66 @@ class _HomePageState extends State<HomePage> {
                     ProgressCard(
                       completedHabits: completedCount,
                       totalHabits: totalCount,
+                    ),
+                    SizedBox(height: verticalSpacing),
+                    // Daily Check-In banner
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DailyCheckInPage(),
+                        ),
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF4ECDC4), Color(0xFF2FB5AC)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF4ECDC4).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.checklist_rounded, color: Colors.white, size: 26),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Daily Check-In',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    completedCount == totalCount && totalCount > 0
+                                        ? 'All done! Great work today 🎉'
+                                        : '$completedCount of $totalCount habits done',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                          ],
+                        ),
+                      ),
                     ),
                     SizedBox(height: verticalSpacing),
                     Row(
@@ -739,7 +800,7 @@ class _HomePageState extends State<HomePage> {
             builder: (context, snapshot) {
               final habits = snapshot.data ?? [];
               final totalHabits = habits.length;
-              final completedToday = habits.where((h) => h.isDone).length;
+              final completedToday = habits.where((h) => h.isDone == true).length;
               final completionRate = totalHabits > 0
                   ? ((completedToday / totalHabits) * 100).toStringAsFixed(0)
                   : '0';
