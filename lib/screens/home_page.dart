@@ -269,62 +269,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 16),
               ],
             ),
-            const SizedBox(height: 16),
-            
-            // Menu Items
-            _buildMenuItem(
-              icon: Icons.apps_outlined,
-              title: 'Connected Apps & Devices',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Connected Apps - Coming soon')),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.notifications_outlined,
-              title: 'Notifications',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.local_offer_outlined,
-              title: 'Offers',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Offers - Coming soon')),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.settings_outlined,
-              title: 'Settings',
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Settings - Coming soon')),
-                );
-              },
-            ),
-            _buildMenuItem(
-              icon: Icons.logout,
-              title: 'Logout',
-              onTap: () async {
-                Navigator.pop(context); // Close profile menu
-                await _authService.signOut();
-                // No need to manual push LoginPage, main.dart handles it
-              },
-              isDestructive: true,
-            ),
-            const SizedBox(height: 16),
-          ],
+          ),
         ),
       ),
     );
