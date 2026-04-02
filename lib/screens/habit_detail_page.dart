@@ -7,6 +7,7 @@ import 'package:habit_spark/models/habit_log.dart';
 import 'package:habit_spark/services/habit_log_service.dart';
 import 'package:habit_spark/services/storage_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
+import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
@@ -27,10 +28,13 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   final HabitLogService _logService = HabitLogService();
   final AuthService _authService = AuthService();
   final StorageService _storageService = StorageService();
+  final HabitService _habitService = HabitService();
+  final StreakService _streakService = StreakService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
   double _uploadProgress = 0.0;
+  bool _isCompleting = false;
 
   Future<void> _pickAndUploadImage() async {
     try {
@@ -139,6 +143,49 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _completeHabit() async {
+    try {
+      setState(() => _isCompleting = true);
+
+      final userId = _authService.currentUser?.uid;
+      if (userId == null) throw 'User not authenticated';
+
+      // Toggle habit completion
+      await _habitService.toggleHabit(widget.habit.id, widget.habit.isDone, userId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.habit.isDone
+                  ? '✅ Great job! Habit marked as done!'
+                  : '✅ Habit started! Keep it up!',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = ErrorHandler.getErrorMessage(e);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ $errorMessage'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _completeHabit,
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCompleting = false);
     }
   }
 
@@ -507,27 +554,24 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Implement start running functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        widget.habit.isDone 
-                            ? 'Habit already completed today!' 
-                            : 'Starting ${widget.habit.name}...',
+                onPressed: _isCompleting ? null : _completeHabit,
+                icon: _isCompleting
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Icon(
+                        widget.habit.isDone ? Icons.check_circle : Icons.play_arrow,
+                        size: 28,
                       ),
-                      backgroundColor: widget.habit.isDone 
-                          ? Colors.green 
-                          : const Color(0xFF4ECDC4),
-                    ),
-                  );
-                },
-                icon: Icon(
-                  widget.habit.isDone ? Icons.check_circle : Icons.play_arrow,
-                  size: 28,
-                ),
                 label: Text(
-                  widget.habit.isDone ? 'Completed' : 'Start ${widget.habit.name}',
+                  _isCompleting
+                      ? 'Processing...'
+                      : (widget.habit.isDone ? 'Completed' : 'Start ${widget.habit.name}'),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
