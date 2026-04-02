@@ -21,6 +21,83 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final HabitLogService _logService = HabitLogService();
+  final Set<String> _selectedLogs = {};
+  bool _isSelectionMode = false;
+
+  Future<void> _deleteSelectedLogs() async {
+    final count = _selectedLogs.length;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          title: const Text(
+            'Delete Selected Workouts?',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'Delete $count workout(s)? This action cannot be undone.',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      for (final logId in _selectedLogs) {
+        await _logService.deleteHabitLog(logId);
+      }
+
+      if (mounted) {
+        setState(() {
+          _selectedLogs.clear();
+          _isSelectionMode = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Deleted $count workout(s)'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildCheckbox(String logId) {
+    return Checkbox(
+      value: _selectedLogs.contains(logId),
+      onChanged: (value) {
+        setState(() {
+          if (value == true) {
+            _selectedLogs.add(logId);
+          } else {
+            _selectedLogs.remove(logId);
+          }
+        });
+      },
+      fillColor: MaterialStateProperty.all(const Color(0xFF4ECDC4)),
+      checkColor: Colors.white,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +110,48 @@ class _HistoryPageState extends State<HistoryPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          '${widget.habit.name} - History',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: _isSelectionMode
+            ? Text(
+                '${_selectedLogs.length} selected',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            : Text(
+                '${widget.habit.name} - History',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+        actions: [
+          if (_isSelectionMode) ...[
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: _selectedLogs.isEmpty
+                  ? null
+                  : () => _deleteSelectedLogs(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  _isSelectionMode = false;
+                  _selectedLogs.clear();
+                });
+              },
+            ),
+          ] else
+            IconButton(
+              icon: const Icon(Icons.checklist, color: Colors.white),
+              onPressed: () {
+                setState(() => _isSelectionMode = true);
+              },
+            ),
+        ],
       ),
       body: StreamBuilder<List<HabitLog>>(
         stream: _logService.getHabitLogsStream(widget.habit.id),
@@ -95,7 +206,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Dismissible(
       key: Key(log.id),
-      direction: DismissDirection.endToStart,
+      direction: _isSelectionMode ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -170,6 +281,7 @@ class _HistoryPageState extends State<HistoryPage> {
           children: [
             Row(
               children: [
+                if (_isSelectionMode) _buildCheckbox(log.id),
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
