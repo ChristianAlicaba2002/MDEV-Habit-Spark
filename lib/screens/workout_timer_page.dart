@@ -51,14 +51,9 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
     setState(() => _isRunning = false);
   }
 
-  void _resetTimer() {
-    _timer.cancel();
-    setState(() {
-      _seconds = 0;
-      _isRunning = false;
-      _distance = 0.0;
-      _distanceController.clear();
-    });
+  bool _isDistanceFilled() {
+    final distance = double.tryParse(_distanceController.text) ?? 0.0;
+    return distance > 0;
   }
 
   Future<void> _saveWorkout() async {
@@ -67,6 +62,16 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('❌ Please run for at least a few seconds'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!_isDistanceFilled()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Please enter distance before saving'),
             backgroundColor: Colors.red,
           ),
         );
@@ -96,7 +101,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
         );
         
         Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) Navigator.pop(context);
+          if (mounted) Navigator.pop(context, true);
         });
       }
     } catch (e) {
@@ -213,11 +218,11 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                 ),
                 const SizedBox(width: 16),
                 ElevatedButton.icon(
-                  onPressed: _resetTimer,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Reset'),
+                  onPressed: _isDistanceFilled() ? _saveWorkout : null,
+                  icon: const Icon(Icons.check_circle),
+                  label: const Text('Done'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: _isDistanceFilled() ? AppColors.primary : Colors.grey,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,

@@ -366,6 +366,18 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.history, color: Colors.white),
+            onPressed: () {
+              // Scroll to history section
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('📋 Scroll down to see your workout history'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.edit_outlined, color: Colors.white),
             onPressed: () {
               final userId = _authService.currentUser?.uid;
@@ -557,23 +569,16 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : Icon(
-                        widget.habit.isDone ? Icons.check_circle : Icons.play_arrow,
-                        size: 28,
-                      ),
+                    : const Icon(Icons.play_arrow, size: 28),
                 label: Text(
-                  _isCompleting
-                      ? 'Processing...'
-                      : (widget.habit.isDone ? 'Completed' : 'Start ${widget.habit.name}'),
+                  _isCompleting ? 'Starting...' : 'Start ${widget.habit.name}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: widget.habit.isDone 
-                      ? Colors.green 
-                      : const Color(0xFF4ECDC4),
+                  backgroundColor: const Color(0xFF4ECDC4),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
