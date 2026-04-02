@@ -10,6 +10,8 @@ import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/widgets/error_widget.dart';
+import 'package:habit_spark/utils/error_handler.dart';
 import 'package:intl/intl.dart';
 
 class HabitDetailPage extends StatefulWidget {
@@ -58,13 +60,26 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image uploaded successfully')),
+          const SnackBar(
+            content: Text('✅ Image uploaded successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final errorMessage = ErrorHandler.getErrorMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('❌ $errorMessage'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _pickAndUploadImage,
+            ),
+          ),
         );
       }
     } finally {
@@ -100,13 +115,26 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image uploaded successfully')),
+          const SnackBar(
+            content: Text('✅ Image uploaded successfully'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final errorMessage = ErrorHandler.getErrorMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('❌ $errorMessage'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _pickFromCamera,
+            ),
+          ),
         );
       }
     } finally {
@@ -572,20 +600,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
               stream: _logService.getHabitLogsStream(widget.habit.id),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(),
-                    ),
+                  return const LoadingStateWidget(
+                    message: 'Loading history...',
                   );
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Error loading history',
-                      style: TextStyle(color: Colors.white60),
-                    ),
+                  return ErrorStateWidget(
+                    title: 'Failed to Load History',
+                    message: ErrorHandler.getErrorMessage(snapshot.error),
+                    icon: Icons.history,
+                    onRetry: () => setState(() {}),
                   );
                 }
 
