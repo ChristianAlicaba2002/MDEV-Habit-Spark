@@ -192,20 +192,20 @@ class _HistoryPageState extends State<HistoryPage> {
                         });
                       },
                       child: Container(
-                        width: 20,
-                        height: 20,
+                        width: 16,
+                        height: 16,
                         decoration: BoxDecoration(
                           color: _selectedLogs.isNotEmpty ? Colors.grey : Colors.transparent,
                           border: Border.all(
                             color: Colors.grey,
-                            width: 2,
+                            width: 1.5,
                           ),
                         ),
                         child: _selectedLogs.isNotEmpty
                             ? const Icon(
                                 Icons.check,
                                 color: Colors.white,
-                                size: 14,
+                                size: 12,
                               )
                             : null,
                       ),
@@ -365,20 +365,20 @@ class _HistoryPageState extends State<HistoryPage> {
               Row(
                 children: [
                   Container(
-                    width: 20,
-                    height: 20,
+                    width: 16,
+                    height: 16,
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.grey : Colors.transparent,
                       border: Border.all(
                         color: Colors.grey,
-                        width: 2,
+                        width: 1.5,
                       ),
                     ),
                     child: isSelected
                         ? const Icon(
                             Icons.check,
                             color: Colors.white,
-                            size: 14,
+                            size: 12,
                           )
                         : null,
                   ),
@@ -493,25 +493,40 @@ class _HistoryPageState extends State<HistoryPage> {
           backgroundColor: const Color(0xFF2A2A2A),
           title: const Text(
             'Delete Selected Workouts?',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Text(
             'Delete $count workout(s)? This action cannot be undone.',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+            ),
           ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 13,
+                ),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text(
                 'Delete',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 13,
+                ),
               ),
             ),
           ],
