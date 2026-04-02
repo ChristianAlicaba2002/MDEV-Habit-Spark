@@ -115,7 +115,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              widget.event == null ? 'Add Event' : 'Edit Event',
+              widget.event == null ? 'Add Workout' : 'Edit Workout',
               style: AppTextStyles.heading4,
             ),
             const SizedBox(height: 20),
@@ -123,10 +123,25 @@ class _EventFormDialogState extends State<EventFormDialog> {
             // Training Name
             TextField(
               controller: _trainingNameController,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: AppUIComponents.inputDecoration(
-                hintText: 'Training Name',
-                prefixIcon: Icons.fitness_center,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Workout Name',
+                hintStyle: const TextStyle(color: Colors.grey),
+                prefixIcon: const Icon(Icons.fitness_center, color: Color(0xFFF39C12)),
+                filled: true,
+                fillColor: Colors.grey[800],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFF39C12), width: 2),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -137,10 +152,25 @@ class _EventFormDialogState extends State<EventFormDialog> {
               child: TextField(
                 controller: _startTimeController,
                 enabled: false,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: AppUIComponents.inputDecoration(
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
                   hintText: 'Start Time (HH:mm)',
-                  prefixIcon: Icons.schedule,
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.schedule, color: Color(0xFFF39C12)),
+                  filled: true,
+                  fillColor: Colors.grey[800],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFF39C12), width: 2),
+                  ),
                 ),
               ),
             ),
@@ -152,10 +182,25 @@ class _EventFormDialogState extends State<EventFormDialog> {
               child: TextField(
                 controller: _endTimeController,
                 enabled: false,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: AppUIComponents.inputDecoration(
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
                   hintText: 'End Time (HH:mm)',
-                  prefixIcon: Icons.schedule,
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.schedule, color: Color(0xFFF39C12)),
+                  filled: true,
+                  fillColor: Colors.grey[800],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFF39C12), width: 2),
+                  ),
                 ),
               ),
             ),
@@ -164,10 +209,25 @@ class _EventFormDialogState extends State<EventFormDialog> {
             // Location
             TextField(
               controller: _locationController,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: AppUIComponents.inputDecoration(
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
                 hintText: 'Location',
-                prefixIcon: Icons.location_on,
+                hintStyle: const TextStyle(color: Colors.grey),
+                prefixIcon: const Icon(Icons.location_on, color: Color(0xFFF39C12)),
+                filled: true,
+                fillColor: Colors.grey[800],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFF39C12), width: 2),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -179,8 +239,8 @@ class _EventFormDialogState extends State<EventFormDialog> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.textSecondary,
-                      foregroundColor: AppColors.textPrimary,
+                      backgroundColor: Colors.grey,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -209,8 +269,8 @@ class _EventFormDialogState extends State<EventFormDialog> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.textPrimary,
+                      backgroundColor: const Color(0xFFF39C12),
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

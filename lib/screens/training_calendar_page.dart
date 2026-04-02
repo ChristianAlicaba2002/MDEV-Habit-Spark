@@ -213,7 +213,7 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
               ),
               Text(
                 DateFormat('MMM yyyy').format(_focusedDate),
-                style: AppTextStyles.heading5.copyWith(fontSize: 14),
+                style: AppTextStyles.heading5.copyWith(fontSize: 14, color: AppColors.textPrimary),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right, color: Color(0xFFF39C12)),
@@ -240,9 +240,10 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
                   child: Center(
                     child: Text(
                       day,
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 9,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -275,6 +276,9 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
               final isToday = DateTime.now().year == date.year &&
                   DateTime.now().month == date.month &&
                   DateTime.now().day == date.day;
+              final isSelected = _selectedDate.year == date.year &&
+                  _selectedDate.month == date.month &&
+                  _selectedDate.day == date.day;
 
               // Check if this date has events
               final hasEvents = monthEvents.any((event) =>
@@ -284,21 +288,26 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
 
               return GestureDetector(
                 onTap: () {
+                  setState(() => _selectedDate = date);
                   if (hasEvents) {
                     _showEventsModal(date, monthEvents);
-                  } else {
-                    setState(() => _selectedDate = date);
                   }
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isToday
-                        ? Color(0xFFF39C12).withOpacity(0.2)
-                        : Colors.transparent,
+                    color: isSelected
+                        ? Color(0xFFF39C12).withOpacity(0.3)
+                        : isToday
+                            ? Color(0xFFF39C12).withOpacity(0.1)
+                            : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isToday ? Color(0xFFF39C12) : Colors.transparent,
-                      width: 1.5,
+                      color: isSelected
+                          ? Color(0xFFF39C12)
+                          : isToday
+                              ? Color(0xFFF39C12)
+                              : Colors.transparent,
+                      width: isSelected ? 2 : 1.5,
                     ),
                   ),
                   child: Stack(
@@ -309,7 +318,7 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
                           '$day',
                           style: TextStyle(
                             color: AppColors.textPrimary,
-                            fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
                             fontSize: 11,
                           ),
                         ),
