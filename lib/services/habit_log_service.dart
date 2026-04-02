@@ -9,12 +9,15 @@ class HabitLogService {
     return _firestore
         .collection('habit_logs')
         .where('habitId', isEqualTo: habitId)
-        .orderBy('completedAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final logs = snapshot.docs.map((doc) {
         return HabitLog.fromMap(doc.data(), doc.id);
       }).toList();
+      
+      // Sort in memory instead of in query
+      logs.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+      return logs;
     });
   }
 

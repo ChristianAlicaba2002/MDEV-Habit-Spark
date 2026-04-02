@@ -10,6 +10,7 @@ import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/workout_timer_page.dart';
+import 'package:habit_spark/screens/history_page.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/widgets/error_widget.dart';
@@ -368,7 +369,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
           IconButton(
             icon: const Icon(Icons.history, color: Colors.white),
             onPressed: () {
-              // History icon - just for visual reference
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HistoryPage(habit: widget.habit),
+                ),
+              );
             },
           ),
           IconButton(
@@ -617,54 +623,6 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 32),
-
-            // History Section
-            const Text(
-              'History',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Logs List
-            StreamBuilder<List<HabitLog>>(
-              stream: _logService.getHabitLogsStream(widget.habit.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingStateWidget(
-                    message: 'Loading history...',
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return ErrorStateWidget(
-                    title: 'Failed to Load History',
-                    message: ErrorHandler.getErrorMessage(snapshot.error),
-                    icon: Icons.history,
-                    onRetry: () => setState(() {}),
-                  );
-                }
-
-                final logs = snapshot.data ?? [];
-
-                if (logs.isEmpty) {
-                  return _buildEmptyState();
-                }
-
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: logs.length,
-                  itemBuilder: (context, index) {
-                    return _buildLogItem(logs[index]);
-                  },
-                );
-              },
             ),
           ],
         ),
