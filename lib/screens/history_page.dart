@@ -126,11 +126,7 @@ class _HistoryPageState extends State<HistoryPage> {
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: _selectedLogs.isEmpty
                   ? null
-                  : () {
-                      // Get logs from stream to pass to delete function
-                      // For now, just delete the selected ones
-                      _deleteSelectedLogs();
-                    },
+                  : () => _deleteSelectedLogs(),
             ),
             IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
@@ -143,49 +139,10 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ] else
             IconButton(
-              icon: const Icon(Icons.delete_sweep, color: Colors.red),
-              tooltip: 'Delete All',
+              icon: const Icon(Icons.checklist, color: Colors.white),
+              tooltip: 'Select All',
               onPressed: () {
-                // Will be called from StreamBuilder with logs
-                showDialog(
-                  context: context,
-                  builder: (context) => StreamBuilder<List<HabitLog>>(
-                    stream: _logService.getHabitLogsStream(widget.habit.id),
-                    builder: (context, snapshot) {
-                      final logs = snapshot.data ?? [];
-                      return AlertDialog(
-                        backgroundColor: const Color(0xFF2A2A2A),
-                        title: const Text(
-                          'Delete All Workouts?',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        content: Text(
-                          'Delete all ${logs.length} workout(s)? This action cannot be undone.',
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              _selectAllAndDelete(logs);
-                            },
-                            child: const Text(
-                              'Delete All',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                );
+                setState(() => _isSelectionMode = true);
               },
             ),
         ],
@@ -214,13 +171,62 @@ class _HistoryPageState extends State<HistoryPage> {
             return _buildEmptyState();
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: logs.length,
-            itemBuilder: (context, index) {
-              final isSelected = _selectedLogs.contains(logs[index].id);
-              return _buildLogItem(logs[index], isSelected);
-            },
+          return Column(
+            children: [
+              // Select All Header
+              if (_isSelectionMode)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Colors.white.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _selectedLogs.length == logs.length && logs.isNotEmpty,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              _selectedLogs.clear();
+                              _selectedLogs.addAll(logs.map((log) => log.id));
+                            } else {
+                              _selectedLogs.clear();
+                            }
+                          });
+                        },
+                        fillColor: MaterialStateProperty.all(const Color(0xFF4ECDC4)),
+                        checkColor: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Select all',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              // List of items
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: logs.length,
+                  itemBuilder: (context, index) {
+                    final isSelected = _selectedLogs.contains(logs[index].id);
+                    return _buildLogItem(logs[index], isSelected);
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -244,7 +250,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Dismissible(
       key: Key(log.id),
-      direction: DismissDirection.endToStart,
+      direction: _isSelectionMode ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -303,135 +309,163 @@ class _HistoryPageState extends State<HistoryPage> {
           },
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF4ECDC4).withOpacity(0.2)
-              : Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
+      child: GestureDetector(
+        onTap: _isSelectionMode
+            ? () {
+                setState(() {
+                  if (_selectedLogs.contains(log.id)) {
+                    _selectedLogs.remove(log.id);
+                  } else {
+                    _selectedLogs.add(log.id);
+                  }
+                });
+              }
+            : null,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF4ECDC4).withOpacity(0.5)
-                : Colors.white.withOpacity(0.1),
-            width: isSelected ? 2 : 1,
+                ? const Color(0xFF4ECDC4).withOpacity(0.2)
+                : Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF4ECDC4).withOpacity(0.5)
+                  : Colors.white.withOpacity(0.1),
+              width: isSelected ? 2 : 1,
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (_isSelectionMode)
+                    Checkbox(
+                      value: isSelected,
+                      onChanged: (value) {
+                        setState(() {
+                          if (value == true) {
+                            _selectedLogs.add(log.id);
+                          } else {
+                            _selectedLogs.remove(log.id);
+                          }
+                        });
+                      },
+                      fillColor: MaterialStateProperty.all(const Color(0xFF4ECDC4)),
+                      checkColor: Colors.white,
+                    ),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: log.isCompleted
+                          ? const Color(0xFF4ECDC4).withOpacity(0.2)
+                          : Colors.red.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      log.isCompleted ? Icons.check : Icons.close,
+                      color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          log.isCompleted ? 'Completed' : 'Skipped',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          dateFormat.format(log.completedAt),
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    timeFormat.format(log.completedAt),
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              // Show distance and duration if available
+              if (log.distance != null || log.durationSeconds != null) ...[
+                const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: log.isCompleted
-                        ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                        : Colors.red.withOpacity(0.2),
-                    shape: BoxShape.circle,
+                    color: const Color(0xFF4ECDC4).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
-                    log.isCompleted ? Icons.check : Icons.close,
-                    color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        log.isCompleted ? 'Completed' : 'Skipped',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      if (log.distance != null) ...[
+                        Icon(
+                          Icons.location_on,
+                          color: const Color(0xFF4ECDC4),
+                          size: 16,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        dateFormat.format(log.completedAt),
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 14,
+                        const SizedBox(width: 6),
+                        Text(
+                          '${log.distance!.toStringAsFixed(2)} km',
+                          style: const TextStyle(
+                            color: Color(0xFF4ECDC4),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                      ],
+                      if (log.durationSeconds != null) ...[
+                        Icon(
+                          Icons.timer,
+                          color: const Color(0xFF4ECDC4),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatDuration(log.durationSeconds!),
+                          style: const TextStyle(
+                            color: Color(0xFF4ECDC4),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ],
-                  ),
-                ),
-                Text(
-                  timeFormat.format(log.completedAt),
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 12,
                   ),
                 ),
               ],
-            ),
-            // Show distance and duration if available
-            if (log.distance != null || log.durationSeconds != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4ECDC4).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+              // Show notes if available
+              if (log.notes != null && log.notes!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  log.notes!,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 12,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Row(
-                  children: [
-                    if (log.distance != null) ...[
-                      Icon(
-                        Icons.location_on,
-                        color: const Color(0xFF4ECDC4),
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${log.distance!.toStringAsFixed(2)} km',
-                        style: const TextStyle(
-                          color: Color(0xFF4ECDC4),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                    ],
-                    if (log.durationSeconds != null) ...[
-                      Icon(
-                        Icons.timer,
-                        color: const Color(0xFF4ECDC4),
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _formatDuration(log.durationSeconds!),
-                        style: const TextStyle(
-                          color: Color(0xFF4ECDC4),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+              ],
             ],
-            // Show notes if available
-            if (log.notes != null && log.notes!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                log.notes!,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
