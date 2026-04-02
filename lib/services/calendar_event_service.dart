@@ -56,10 +56,13 @@ class CalendarEventService {
   // Update event
   Future<void> updateEvent(String eventId, CalendarEvent event) async {
     try {
+      final updatedEvent = event.copyWith(updatedAt: DateTime.now());
+      final eventMap = updatedEvent.toMap();
+      eventMap.remove('id'); // Remove id from update to avoid conflicts
       await _firestore
           .collection(_collection)
           .doc(eventId)
-          .update(event.copyWith(updatedAt: DateTime.now()).toMap());
+          .update(eventMap);
     } catch (e) {
       throw Exception('Failed to update event: $e');
     }

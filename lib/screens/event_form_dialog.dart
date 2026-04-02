@@ -23,6 +23,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
   late TextEditingController _startTimeController;
   late TextEditingController _endTimeController;
   late TextEditingController _locationController;
+  late TextEditingController _notesController;
 
   @override
   void initState() {
@@ -39,6 +40,9 @@ class _EventFormDialogState extends State<EventFormDialog> {
     _locationController = TextEditingController(
       text: widget.event?.location ?? '',
     );
+    _notesController = TextEditingController(
+      text: widget.event?.notes ?? '',
+    );
   }
 
   @override
@@ -47,6 +51,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
     _startTimeController.dispose();
     _endTimeController.dispose();
     _locationController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -230,6 +235,33 @@ class _EventFormDialogState extends State<EventFormDialog> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+
+            // Notes
+            TextField(
+              controller: _notesController,
+              maxLines: 3,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Notes (optional)',
+                hintStyle: const TextStyle(color: Colors.grey),
+                prefixIcon: const Icon(Icons.note, color: Color(0xFFF39C12)),
+                filled: true,
+                fillColor: Colors.grey[800],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFF39C12), width: 2),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Buttons
@@ -262,6 +294,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
                           startTime: _startTimeController.text,
                           endTime: _endTimeController.text,
                           location: _locationController.text,
+                          notes: _notesController.text.isNotEmpty ? _notesController.text : null,
                           createdAt: widget.event?.createdAt ?? DateTime.now(),
                           updatedAt: DateTime.now(),
                         );

@@ -8,6 +8,7 @@ class CalendarEvent {
   final String startTime; // Format: "HH:mm"
   final String endTime;   // Format: "HH:mm"
   final String location;
+  final String? notes;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +20,7 @@ class CalendarEvent {
     required this.startTime,
     required this.endTime,
     required this.location,
+    this.notes,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,6 +35,7 @@ class CalendarEvent {
       'startTime': startTime,
       'endTime': endTime,
       'location': location,
+      'notes': notes,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -48,6 +51,7 @@ class CalendarEvent {
       startTime: map['startTime'] ?? '',
       endTime: map['endTime'] ?? '',
       location: map['location'] ?? '',
+      notes: map['notes'],
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
     );
@@ -62,6 +66,7 @@ class CalendarEvent {
     String? startTime,
     String? endTime,
     String? location,
+    String? notes,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -73,6 +78,7 @@ class CalendarEvent {
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
       location: location ?? this.location,
+      notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
