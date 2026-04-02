@@ -7,7 +7,10 @@ import 'package:habit_spark/models/habit_log.dart';
 import 'package:habit_spark/services/habit_log_service.dart';
 import 'package:habit_spark/services/storage_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
+import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
+import 'package:habit_spark/screens/workout_timer_page.dart';
+import 'package:habit_spark/screens/history_page.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/widgets/error_widget.dart';
@@ -27,10 +30,13 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   final HabitLogService _logService = HabitLogService();
   final AuthService _authService = AuthService();
   final StorageService _storageService = StorageService();
+  final HabitService _habitService = HabitService();
+  final StreakService _streakService = StreakService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
   double _uploadProgress = 0.0;
+  bool _isCompleting = false;
 
   Future<void> _pickAndUploadImage() async {
     try {
@@ -139,6 +145,41 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _completeHabit() async {
+    try {
+      setState(() => _isCompleting = true);
+
+      final userId = _authService.currentUser?.uid;
+      if (userId == null) throw 'User not authenticated';
+
+      // Navigate to workout timer page
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WorkoutTimerPage(
+              habit: widget.habit,
+              userId: userId,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = ErrorHandler.getErrorMessage(e);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ $errorMessage'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCompleting = false);
     }
   }
 
@@ -326,6 +367,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.history, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HistoryPage(habit: widget.habit),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.edit_outlined, color: Colors.white),
             onPressed: () {
               final userId = _authService.currentUser?.uid;
@@ -507,36 +559,26 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Implement start running functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        widget.habit.isDone 
-                            ? 'Habit already completed today!' 
-                            : 'Starting ${widget.habit.name}...',
-                      ),
-                      backgroundColor: widget.habit.isDone 
-                          ? Colors.green 
-                          : const Color(0xFF4ECDC4),
-                    ),
-                  );
-                },
-                icon: Icon(
-                  widget.habit.isDone ? Icons.check_circle : Icons.play_arrow,
-                  size: 28,
-                ),
+                onPressed: _isCompleting ? null : _completeHabit,
+                icon: _isCompleting
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.play_arrow, size: 28),
                 label: Text(
-                  widget.habit.isDone ? 'Completed' : 'Start ${widget.habit.name}',
+                  _isCompleting ? 'Starting...' : 'Start ${widget.habit.name}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: widget.habit.isDone 
-                      ? Colors.green 
-                      : const Color(0xFF4ECDC4),
+                  backgroundColor: const Color(0xFF4ECDC4),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
@@ -581,54 +623,6 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 32),
-
-            // History Section
-            const Text(
-              'History',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Logs List
-            StreamBuilder<List<HabitLog>>(
-              stream: _logService.getHabitLogsStream(widget.habit.id),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingStateWidget(
-                    message: 'Loading history...',
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return ErrorStateWidget(
-                    title: 'Failed to Load History',
-                    message: ErrorHandler.getErrorMessage(snapshot.error),
-                    icon: Icons.history,
-                    onRetry: () => setState(() {}),
-                  );
-                }
-
-                final logs = snapshot.data ?? [];
-
-                if (logs.isEmpty) {
-                  return _buildEmptyState();
-                }
-
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: logs.length,
-                  itemBuilder: (context, index) {
-                    return _buildLogItem(logs[index]);
-                  },
-                );
-              },
             ),
           ],
         ),
@@ -677,6 +671,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
+    String _formatDuration(int seconds) {
+      final hours = seconds ~/ 3600;
+      final minutes = (seconds % 3600) ~/ 60;
+      final secs = seconds % 60;
+      
+      if (hours > 0) {
+        return '${hours}h ${minutes}m ${secs}s';
+      }
+      return '${minutes}m ${secs}s';
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -688,53 +693,119 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
           width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: log.isCompleted
-                  ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                  : Colors.red.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              log.isCompleted ? Icons.check : Icons.close,
-              color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  log.isCompleted ? 'Completed' : 'Skipped',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: log.isCompleted
+                      ? const Color(0xFF4ECDC4).withOpacity(0.2)
+                      : Colors.red.withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  dateFormat.format(log.completedAt),
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 14,
-                  ),
+                child: Icon(
+                  log.isCompleted ? Icons.check : Icons.close,
+                  color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
+                  size: 20,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      log.isCompleted ? 'Completed' : 'Skipped',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dateFormat.format(log.completedAt),
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                timeFormat.format(log.completedAt),
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
-          Text(
-            timeFormat.format(log.completedAt),
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 12,
+          // Show distance and duration if available
+          if (log.distance != null || log.durationSeconds != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4ECDC4).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  if (log.distance != null) ...[
+                    Icon(
+                      Icons.location_on,
+                      color: const Color(0xFF4ECDC4),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${log.distance!.toStringAsFixed(2)} km',
+                      style: const TextStyle(
+                        color: Color(0xFF4ECDC4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                  if (log.durationSeconds != null) ...[
+                    Icon(
+                      Icons.timer,
+                      color: const Color(0xFF4ECDC4),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatDuration(log.durationSeconds!),
+                      style: const TextStyle(
+                        color: Color(0xFF4ECDC4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
+          ],
+          // Show notes if available
+          if (log.notes != null && log.notes!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              log.notes!,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );

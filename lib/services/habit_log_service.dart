@@ -9,12 +9,15 @@ class HabitLogService {
     return _firestore
         .collection('habit_logs')
         .where('habitId', isEqualTo: habitId)
-        .orderBy('completedAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final logs = snapshot.docs.map((doc) {
         return HabitLog.fromMap(doc.data(), doc.id);
       }).toList();
+      
+      // Sort in memory instead of in query
+      logs.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+      return logs;
     });
   }
 
@@ -23,12 +26,18 @@ class HabitLogService {
     required String habitId,
     required String userId,
     required bool isCompleted,
+    double? distance,
+    int? durationSeconds,
+    String? notes,
   }) async {
     await _firestore.collection('habit_logs').add({
       'habitId': habitId,
       'userId': userId,
       'completedAt': Timestamp.fromDate(DateTime.now()),
       'isCompleted': isCompleted,
+      if (distance != null) 'distance': distance,
+      if (durationSeconds != null) 'durationSeconds': durationSeconds,
+      if (notes != null) 'notes': notes,
     });
   }
 
