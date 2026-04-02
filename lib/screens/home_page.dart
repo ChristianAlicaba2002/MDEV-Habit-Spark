@@ -374,18 +374,20 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
+          color: Colors.grey[900],
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8),
+            BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8),
           ],
         ),
         child: BottomNavigationBar(
+          backgroundColor: Colors.grey[900],
           currentIndex: _selectedIndex,
           onTap: (index) => setState(() => _selectedIndex = index),
           selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.textSecondary,
           selectedFontSize: 11,
           unselectedFontSize: 10,
-          iconSize: 20,
+          iconSize: 28,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
           items: const [
@@ -1023,7 +1025,11 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
           children: [
             Text(
               'This Week',
-              style: AppTextStyles.heading4,
+              style: TextStyle(
+                color: Color(0xFFF39C12),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -1065,9 +1071,9 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                       dayName,
                       style: TextStyle(
                         color: isSelected
-                            ? AppColors.primary
+                            ? const Color(0xFFF39C12)
                             : (isToday
-                                  ? AppColors.primary
+                                  ? const Color(0xFFF39C12)
                                   : AppColors.textSecondary),
                         fontSize: 12,
                         fontWeight: (isSelected || isToday)
@@ -1081,16 +1087,16 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                       height: 32,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary
+                            ? const Color(0xFFF39C12).withOpacity(0.2)
                             : (isToday
-                                  ? AppColors.primary
+                                  ? const Color(0xFFF39C12).withOpacity(0.15)
                                   : AppColors.surfaceAlt),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.primary
+                              ? const Color(0xFFF39C12).withOpacity(0.6)
                               : (isToday
-                                    ? AppColors.primary
+                                    ? const Color(0xFFF39C12).withOpacity(0.4)
                                     : AppColors.border),
                           width: 2,
                         ),
