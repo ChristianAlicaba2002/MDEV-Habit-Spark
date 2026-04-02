@@ -91,12 +91,15 @@ class AppUIComponents {
     String? labelText,
     IconData? prefixIcon,
     IconData? suffixIcon,
+    Color? iconColor,
   }) {
     return InputDecoration(
       hintText: hintText,
+      hintStyle: const TextStyle(color: AppColors.textPrimary),
       labelText: labelText,
-      prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-      suffixIcon: suffixIcon != null ? Icon(suffixIcon) : null,
+      labelStyle: const TextStyle(color: AppColors.textPrimary),
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: iconColor ?? AppColors.textSecondary) : null,
+      suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: iconColor ?? AppColors.textSecondary) : null,
       filled: true,
       fillColor: AppColors.surfaceAlt,
       border: OutlineInputBorder(
