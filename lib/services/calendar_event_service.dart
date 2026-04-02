@@ -8,8 +8,14 @@ class CalendarEventService {
   // Create event
   Future<String> addEvent(CalendarEvent event) async {
     try {
-      final docRef = await _firestore.collection(_collection).add(event.toMap());
-      return docRef.id;
+      // Use the event's ID if provided, otherwise let Firestore generate one
+      if (event.id.isNotEmpty) {
+        await _firestore.collection(_collection).doc(event.id).set(event.toMap());
+        return event.id;
+      } else {
+        final docRef = await _firestore.collection(_collection).add(event.toMap());
+        return docRef.id;
+      }
     } catch (e) {
       throw Exception('Failed to add event: $e');
     }
@@ -29,7 +35,12 @@ class CalendarEventService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
-          .map((doc) => CalendarEvent.fromMap(doc.data()))
+          .map((doc) {
+            final data = doc.data();
+            // Ensure the document ID is set in the event
+            data['id'] = doc.id;
+            return CalendarEvent.fromMap(data);
+          })
           .toList();
     });
   }
@@ -45,7 +56,12 @@ class CalendarEventService {
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
-          .map((doc) => CalendarEvent.fromMap(doc.data()))
+          .map((doc) {
+            final data = doc.data();
+            // Ensure the document ID is set in the event
+            data['id'] = doc.id;
+            return CalendarEvent.fromMap(data);
+          })
           .where((event) =>
               event.date.isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
               event.date.isBefore(endOfMonth.add(const Duration(days: 1))))

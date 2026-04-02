@@ -28,6 +28,19 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
     _selectedDate = DateTime.now();
   }
 
+  String _formatTime12Hour(String time24Hour) {
+    try {
+      final parts = time24Hour.split(':');
+      var hour = int.parse(parts[0]);
+      final minute = parts[1];
+      final period = hour >= 12 ? 'PM' : 'AM';
+      final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+      return '$displayHour:$minute $period';
+    } catch (e) {
+      return time24Hour;
+    }
+  }
+
   Future<void> _addEvent() async {
     final event = await showDialog<CalendarEvent>(
       context: context,
@@ -60,10 +73,20 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
   }
 
   Future<void> _editEvent(CalendarEvent event) async {
+    if (event.id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Error: Event ID is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final updatedEvent = await showDialog<CalendarEvent>(
       context: context,
       builder: (context) => EventFormDialog(
-        selectedDate: _selectedDate,
+        selectedDate: event.date,
         event: event,
       ),
     );
@@ -91,6 +114,16 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
   }
 
   Future<void> _deleteEvent(CalendarEvent event) async {
+    if (event.id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Error: Event ID is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -499,7 +532,7 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
                                       const Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
                                       const SizedBox(width: 4),
                                       Text(
-                                        '${event.startTime} - ${event.endTime}',
+                                        '${_formatTime12Hour(event.startTime)} - ${_formatTime12Hour(event.endTime)}',
                                         style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
                                       ),
                                     ],
