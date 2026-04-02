@@ -198,38 +198,48 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
 
             // Timer Controls
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton.icon(
-                  onPressed: _isRunning ? _pauseTimer : _startTimer,
-                  icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow),
-                  label: Text(_isRunning ? 'Pause' : 'Start'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isRunning ? Colors.orange : Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isRunning ? _pauseTimer : _startTimer,
+                    icon: Icon(
+                      _isRunning ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    label: Text(
+                      _isRunning ? 'Pause' : 'Start',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isRunning ? Colors.orange : Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                ElevatedButton.icon(
-                  onPressed: _isDistanceFilled() ? _saveWorkout : null,
-                  icon: const Icon(Icons.check_circle),
-                  label: const Text('Done'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isDistanceFilled() ? AppColors.primary : Colors.grey,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isDistanceFilled() ? _saveWorkout : null,
+                    icon: Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    label: const Text(
+                      'Done',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isDistanceFilled() ? AppColors.primary : Colors.grey,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -245,7 +255,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
               decoration: InputDecoration(
                 hintText: 'Distance (km)',
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: const Icon(Icons.location_on, color: AppColors.primary),
+                prefixIcon: Icon(Icons.location_on, color: Colors.white.withOpacity(0.7)),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
                 border: OutlineInputBorder(
@@ -279,7 +289,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
               decoration: InputDecoration(
                 hintText: 'Add notes (optional)',
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: const Icon(Icons.note, color: AppColors.primary),
+                prefixIcon: Icon(Icons.note, color: Colors.white.withOpacity(0.7)),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
                 border: OutlineInputBorder(

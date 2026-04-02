@@ -368,13 +368,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
           IconButton(
             icon: const Icon(Icons.history, color: Colors.white),
             onPressed: () {
-              // Scroll to history section
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('📋 Scroll down to see your workout history'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              // History icon - just for visual reference
             },
           ),
           IconButton(
