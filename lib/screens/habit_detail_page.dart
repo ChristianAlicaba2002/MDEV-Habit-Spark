@@ -119,22 +119,34 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       context: context,
       backgroundColor: const Color(0xFF2A2A2A),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Upload Image',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 24),
+            
+            const Text(
+              'Choose Photo Source',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 28),
+            
             Row(
               children: [
                 Expanded(
@@ -143,30 +155,56 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                       Navigator.pop(context);
                       _pickFromCamera();
                     },
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.camera_alt,
-                            color: AppColors.primary,
-                            size: 32,
-                          ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.primary.withOpacity(0.3),
+                            AppColors.primary.withOpacity(0.1),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Camera',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.4),
+                          width: 1.5,
                         ),
-                      ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.camera_alt_rounded,
+                              color: AppColors.primary,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Camera',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Take a photo',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -177,35 +215,62 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                       Navigator.pop(context);
                       _pickAndUploadImage();
                     },
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.image,
-                            color: AppColors.primary,
-                            size: 32,
-                          ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            const Color(0xFF667EEA).withOpacity(0.3),
+                            const Color(0xFF667EEA).withOpacity(0.1),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Gallery',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFF667EEA).withOpacity(0.4),
+                          width: 1.5,
                         ),
-                      ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF667EEA).withOpacity(0.25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.image_rounded,
+                              color: Color(0xFF667EEA),
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Gallery',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Choose existing',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -262,30 +327,53 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.network(
-                      widget.habit.imageUrl!,
-                      width: double.infinity,
-                      height: 250,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Stack(
+                      children: [
+                        Image.network(
+                          widget.habit.imageUrl!,
                           width: double.infinity,
-                          height: 250,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[800],
-                            borderRadius: BorderRadius.circular(16),
+                          height: 280,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              height: 280,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[800],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Icon(
+                                Icons.image_not_supported,
+                                color: Colors.white60,
+                                size: 48,
+                              ),
+                            );
+                          },
+                        ),
+                        // Gradient overlay
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            height: 100,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.4),
+                                ],
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.image_not_supported,
-                            color: Colors.white60,
-                            size: 48,
-                          ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                 ],
               )
             else
@@ -293,12 +381,19 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                 children: [
                   Container(
                     width: double.infinity,
-                    height: 200,
+                    height: 240,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primary.withOpacity(0.15),
+                          AppColors.primary.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.1),
+                        color: AppColors.primary.withOpacity(0.3),
                         width: 2,
                       ),
                     ),
@@ -306,24 +401,40 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.image_outlined,
-                            size: 48,
-                            color: Colors.white.withOpacity(0.3),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 56,
+                              color: AppColors.primary,
+                            ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                           Text(
-                            'No image yet',
+                            'Add a photo to your habit',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 14,
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Capture your progress visually',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 13,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                 ],
               ),
             
@@ -341,22 +452,28 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(Icons.add_photo_alternate),
+                    : const Icon(Icons.add_photo_alternate, size: 22),
                 label: Text(
                   _isUploading ? 'Uploading...' : 'Upload Image',
-                  style: const TextStyle(fontSize: 16),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
+                  elevation: 4,
+                  shadowColor: AppColors.primary.withOpacity(0.4),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
             
             // Start/Complete Button
             SizedBox(
