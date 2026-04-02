@@ -333,16 +333,16 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? Color(0xFFF39C12).withOpacity(0.3)
+                        ? Color(0xFFF39C12).withOpacity(0.15)
                         : isToday
-                            ? Color(0xFFF39C12).withOpacity(0.1)
+                            ? Color(0xFFF39C12).withOpacity(0.08)
                             : Colors.transparent,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected
-                          ? Color(0xFFF39C12)
+                          ? Color(0xFFF39C12).withOpacity(0.6)
                           : isToday
-                              ? Color(0xFFF39C12)
+                              ? Color(0xFFF39C12).withOpacity(0.4)
                               : Colors.transparent,
                       width: isSelected ? 2 : 1.5,
                     ),
