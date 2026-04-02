@@ -137,14 +137,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 });
               },
             ),
-          ] else
-            IconButton(
-              icon: const Icon(Icons.checklist, color: Colors.white),
-              tooltip: 'Select All',
-              onPressed: () {
-                setState(() => _isSelectionMode = true);
-              },
-            ),
+          ],
         ],
       ),
       body: StreamBuilder<List<HabitLog>>(
@@ -174,51 +167,84 @@ class _HistoryPageState extends State<HistoryPage> {
           return Column(
             children: [
               // Select All Header
-              if (_isSelectionMode)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.white.withOpacity(0.1),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Checkbox(
-                        value: _selectedLogs.length == logs.length && logs.isNotEmpty,
-                        onChanged: (value) {
-                          setState(() {
-                            if (value == true) {
-                              _selectedLogs.clear();
-                              _selectedLogs.addAll(logs.map((log) => log.id));
-                            } else {
-                              _selectedLogs.clear();
-                            }
-                          });
-                        },
-                        fillColor: MaterialStateProperty.all(const Color(0xFF4ECDC4)),
-                        checkColor: Colors.white,
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Select all',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1,
                   ),
                 ),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (_selectedLogs.length == logs.length && logs.isNotEmpty) {
+                            _selectedLogs.clear();
+                          } else {
+                            _selectedLogs.clear();
+                            _selectedLogs.addAll(logs.map((log) => log.id));
+                          }
+                        });
+                      },
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: _selectedLogs.isNotEmpty ? Colors.grey : Colors.transparent,
+                          border: Border.all(
+                            color: Colors.grey,
+                            width: 2,
+                          ),
+                        ),
+                        child: _selectedLogs.isNotEmpty
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 14,
+                              )
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _selectedLogs.isEmpty
+                        ? const Text(
+                            'Select all',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          )
+                        : Text(
+                            '${_selectedLogs.length} selected',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                    const Spacer(),
+                    if (_selectedLogs.isNotEmpty)
+                      GestureDetector(
+                        onTap: () => _deleteSelectedLogs(),
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
               // List of items
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                   itemCount: logs.length,
                   itemBuilder: (context, index) {
                     final isSelected = _selectedLogs.contains(logs[index].id);
@@ -235,7 +261,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Widget _buildLogItem(HabitLog log, bool isSelected) {
     final dateFormat = DateFormat('MMM dd, yyyy');
-    final timeFormat = DateFormat('hh:mm a');
 
     String _formatDuration(int seconds) {
       final hours = seconds ~/ 3600;
@@ -250,7 +275,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Dismissible(
       key: Key(log.id),
-      direction: _isSelectionMode ? DismissDirection.none : DismissDirection.endToStart,
+      direction: DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -310,20 +335,18 @@ class _HistoryPageState extends State<HistoryPage> {
         );
       },
       child: GestureDetector(
-        onTap: _isSelectionMode
-            ? () {
-                setState(() {
-                  if (_selectedLogs.contains(log.id)) {
-                    _selectedLogs.remove(log.id);
-                  } else {
-                    _selectedLogs.add(log.id);
-                  }
-                });
-              }
-            : null,
+        onTap: () {
+          setState(() {
+            if (_selectedLogs.contains(log.id)) {
+              _selectedLogs.remove(log.id);
+            } else {
+              _selectedLogs.add(log.id);
+            }
+          });
+        },
         child: Container(
           margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFF4ECDC4).withOpacity(0.2)
@@ -341,36 +364,25 @@ class _HistoryPageState extends State<HistoryPage> {
             children: [
               Row(
                 children: [
-                  if (_isSelectionMode)
-                    Checkbox(
-                      value: isSelected,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedLogs.add(log.id);
-                          } else {
-                            _selectedLogs.remove(log.id);
-                          }
-                        });
-                      },
-                      fillColor: MaterialStateProperty.all(const Color(0xFF4ECDC4)),
-                      checkColor: Colors.white,
-                    ),
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
-                      color: log.isCompleted
-                          ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                          : Colors.red.withOpacity(0.2),
-                      shape: BoxShape.circle,
+                      color: isSelected ? Colors.grey : Colors.transparent,
+                      border: Border.all(
+                        color: Colors.grey,
+                        width: 2,
+                      ),
                     ),
-                    child: Icon(
-                      log.isCompleted ? Icons.check : Icons.close,
-                      color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
-                      size: 20,
-                    ),
+                    child: isSelected
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 14,
+                          )
+                        : null,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,23 +391,23 @@ class _HistoryPageState extends State<HistoryPage> {
                           log.isCompleted ? 'Completed' : 'Skipped',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           dateFormat.format(log.completedAt),
                           style: const TextStyle(
                             color: Colors.white60,
-                            fontSize: 14,
+                            fontSize: 12,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Text(
-                    timeFormat.format(log.completedAt),
+                    dateFormat.format(log.completedAt),
                     style: const TextStyle(
                       color: Colors.white60,
                       fontSize: 12,
@@ -405,9 +417,9 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
               // Show distance and duration if available
               if (log.distance != null || log.durationSeconds != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4ECDC4).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -418,31 +430,31 @@ class _HistoryPageState extends State<HistoryPage> {
                         Icon(
                           Icons.location_on,
                           color: const Color(0xFF4ECDC4),
-                          size: 16,
+                          size: 14,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         Text(
                           '${log.distance!.toStringAsFixed(2)} km',
                           style: const TextStyle(
                             color: Color(0xFF4ECDC4),
-                            fontSize: 13,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                       ],
                       if (log.durationSeconds != null) ...[
                         Icon(
                           Icons.timer,
                           color: const Color(0xFF4ECDC4),
-                          size: 16,
+                          size: 14,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         Text(
                           _formatDuration(log.durationSeconds!),
                           style: const TextStyle(
                             color: Color(0xFF4ECDC4),
-                            fontSize: 13,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
