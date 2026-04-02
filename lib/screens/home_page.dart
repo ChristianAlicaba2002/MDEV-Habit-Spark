@@ -665,226 +665,341 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDailyCheckInPage(List<Habit> habits, String userId) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with add button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    int? selectedHabitIndex;
+    
+    return StatefulBuilder(
+      builder: (context, setModalState) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Daily Check-In',
-                style: AppTextStyles.heading4,
-              ),
-              GestureDetector(
-                onTap: _showAddHabitDialog,
-                child: const Icon(
-                  Icons.add,
-                  color: Color(0xFFF39C12),
-                  size: 28,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Progress indicator
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border, width: 1),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Today\'s Progress',
-                      style: AppTextStyles.heading5,
-                    ),
-                    Text(
-                      '${habits.where((h) => h.isDone == true).length}/${habits.length}',
-                      style: AppTextStyles.heading5.copyWith(color: AppColors.primary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: habits.isEmpty ? 0 : habits.where((h) => h.isDone == true).length / habits.length,
-                    minHeight: 6,
-                    backgroundColor: AppColors.border,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF39C12)),
+              // Header with add button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Daily Check-In',
+                    style: AppTextStyles.heading4,
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: _showAddHabitDialog,
+                    child: const Icon(
+                      Icons.add,
+                      color: Color(0xFFF39C12),
+                      size: 28,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-          // Habits list
-          habits.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    child: Column(
+              // Progress indicator
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border, width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.add_circle_outline, size: 48, color: AppColors.textSecondary),
-                        const SizedBox(height: 12),
+                        const Text(
+                          'Today\'s Progress',
+                          style: AppTextStyles.heading5,
+                        ),
                         Text(
-                          'No habits yet',
-                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                          '${habits.where((h) => h.isDone == true).length}/${habits.length}',
+                          style: AppTextStyles.heading5.copyWith(color: AppColors.primary),
                         ),
                       ],
                     ),
-                  ),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: habits.length,
-                  itemBuilder: (context, index) {
-                    final habit = habits[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: habit.isDone == true
-                            ? AppColors.primary.withOpacity(0.1)
-                            : AppColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: habit.isDone == true
-                              ? AppColors.primary.withOpacity(0.5)
-                              : AppColors.border,
-                          width: 1,
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: habits.isEmpty ? 0 : habits.where((h) => h.isDone == true).length / habits.length,
+                        minHeight: 6,
+                        backgroundColor: AppColors.border,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF39C12)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Habits list
+              habits.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 32),
+                        child: Column(
+                          children: [
+                            Icon(Icons.add_circle_outline, size: 48, color: AppColors.textSecondary),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No habits yet',
+                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          // Checkbox
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                habits[index] = habit.copyWith(isDone: !habit.isDone);
-                              });
-                            },
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: habit.isDone == true
-                                      ? AppColors.primary
-                                      : AppColors.textSecondary,
-                                  width: 2,
-                                ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: habits.length,
+                      itemBuilder: (context, index) {
+                        final habit = habits[index];
+                        final isSelected = selectedHabitIndex == index;
+                        
+                        return GestureDetector(
+                          onTap: () {
+                            setModalState(() {
+                              selectedHabitIndex = isSelected ? null : index;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: habit.isDone == true
+                                  ? Colors.grey[800]
+                                  : AppColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
                                 color: habit.isDone == true
-                                    ? AppColors.primary
-                                    : Colors.transparent,
+                                    ? Colors.grey[700]!
+                                    : AppColors.border,
+                                width: 1,
                               ),
-                              child: habit.isDone == true
-                                  ? const Icon(
-                                      Icons.check,
-                                      size: 14,
-                                      color: Colors.white,
-                                    )
-                                  : null,
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  habit.name,
-                                  style: AppTextStyles.heading5,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  habit.isDone == true ? 'Completed ✓' : 'Not completed',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: habit.isDone == true
-                                        ? AppColors.primary
-                                        : AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Edit button
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => CreateEditHabitPage(
-                                    habit: habit,
-                                    userId: userId,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: const Icon(
-                              Icons.edit,
-                              color: Color(0xFFF39C12),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Delete button
-                          GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  backgroundColor: AppColors.surface,
-                                  title: const Text('Delete Habit?', style: AppTextStyles.heading4),
-                                  content: const Text(
-                                    'This action cannot be undone.',
-                                    style: AppTextStyles.bodySmall,
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancel', style: AppTextStyles.labelMedium),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        _habitService.deleteHabit(habit.id);
-                                        Navigator.pop(context);
+                                Row(
+                                  children: [
+                                    // Checkbox
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          habits[index] = habit.copyWith(isDone: !habit.isDone);
+                                        });
                                       },
-                                      child: Text(
-                                        'Delete',
-                                        style: AppTextStyles.labelMedium.copyWith(color: AppColors.error),
+                                      child: Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: habit.isDone == true
+                                                ? AppColors.primary
+                                                : AppColors.textSecondary,
+                                            width: 2,
+                                          ),
+                                          color: habit.isDone == true
+                                              ? AppColors.primary
+                                              : Colors.transparent,
+                                        ),
+                                        child: habit.isDone == true
+                                            ? const Icon(
+                                                Icons.check,
+                                                size: 14,
+                                                color: Colors.white,
+                                              )
+                                            : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            habit.name,
+                                            style: AppTextStyles.heading5,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            habit.isDone == true ? 'Completed ✓' : 'Not completed',
+                                            style: AppTextStyles.bodySmall.copyWith(
+                                              color: habit.isDone == true
+                                                  ? AppColors.primary
+                                                  : AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                              );
-                            },
-                            child: const Icon(
-                              Icons.delete,
-                              color: AppColors.error,
-                              size: 18,
+                                // Show edit/delete buttons only when selected
+                                if (isSelected) ...[
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      // Mark as Done button
+                                      GestureDetector(
+                                        onTap: () async {
+                                          await _habitService.toggleHabit(habit.id, habit.isDone ?? false, userId);
+                                          setModalState(() {
+                                            selectedHabitIndex = null;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Color(0xFFF39C12),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                habit.isDone == true ? Icons.check_circle : Icons.circle_outlined,
+                                                color: Color(0xFFF39C12),
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                habit.isDone == true ? 'Done' : 'Mark Done',
+                                                style: const TextStyle(
+                                                  color: Color(0xFFF39C12),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      // Edit button
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => CreateEditHabitPage(
+                                                habit: habit,
+                                                userId: userId,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Color(0xFFF39C12),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: const Row(
+                                            children: [
+                                              Icon(
+                                                Icons.edit,
+                                                color: Color(0xFFF39C12),
+                                                size: 16,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Edit',
+                                                style: TextStyle(
+                                                  color: Color(0xFFF39C12),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      // Delete button
+                                      GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              backgroundColor: AppColors.surface,
+                                              title: const Text('Delete Habit?', style: AppTextStyles.heading4),
+                                              content: const Text(
+                                                'This action cannot be undone.',
+                                                style: AppTextStyles.bodySmall,
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context),
+                                                  child: const Text('Cancel', style: AppTextStyles.labelMedium),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    _habitService.deleteHabit(habit.id);
+                                                    Navigator.pop(context);
+                                                    setModalState(() {
+                                                      selectedHabitIndex = null;
+                                                    });
+                                                  },
+                                                  child: Text(
+                                                    'Delete',
+                                                    style: AppTextStyles.labelMedium.copyWith(color: AppColors.error),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: AppColors.error,
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: const Row(
+                                            children: [
+                                              Icon(
+                                                Icons.delete,
+                                                color: AppColors.error,
+                                                size: 16,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Delete',
+                                                style: TextStyle(
+                                                  color: AppColors.error,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-        ],
-      ),
+                        );
+                      },
+                    ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -993,6 +1108,39 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 32),
 
+          // This Week Section
+          Column(
+            children: [
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'This Week',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border, width: 1),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: _buildWeekDays(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+
           // Habits Breakdown
           _HabitsBreakdownWidget(
             userId: userId,
@@ -1040,6 +1188,60 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildWeekDays() {
+    final now = DateTime.now();
+    final weekDays = List.generate(7, (index) {
+      return now.subtract(Duration(days: now.weekday - 1 - index));
+    });
+
+    return weekDays.asMap().entries.map((entry) {
+      final index = entry.key;
+      final day = entry.value;
+      final dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1];
+      final isToday = day.day == now.day && day.month == now.month;
+
+      return Column(
+        children: [
+          Text(
+            dayName,
+            style: TextStyle(
+              color: isToday ? const Color(0xFFF39C12) : AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isToday
+                  ? const Color(0xFFF39C12).withOpacity(0.15)
+                  : AppColors.surfaceAlt,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isToday
+                    ? const Color(0xFFF39C12).withOpacity(0.4)
+                    : AppColors.border,
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                '${day.day}',
+                style: TextStyle(
+                  color: isToday ? AppColors.textPrimary : AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }).toList();
   }
 
   Widget _buildHabitProgressCard(Habit habit, int index) {
