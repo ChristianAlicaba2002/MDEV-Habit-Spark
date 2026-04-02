@@ -10,8 +10,10 @@ import 'package:habit_spark/screens/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/daily_checkin_page.dart';
 import 'package:habit_spark/screens/calendar_picker_page.dart';
 import 'package:habit_spark/screens/training_calendar_page.dart';
+import 'package:habit_spark/services/calendar_event_service.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
+import 'package:habit_spark/models/calendar_event.dart';
 import 'package:habit_spark/widgets/app_header.dart';
 import 'package:habit_spark/widgets/greeting_header.dart';
 import 'package:habit_spark/widgets/streak_card.dart';
@@ -1195,6 +1197,7 @@ class _HomePageState extends State<HomePage> {
     final weekDays = List.generate(7, (index) {
       return now.subtract(Duration(days: now.weekday - 1 - index));
     });
+    final userId = _authService.currentUser?.uid ?? '';
 
     return weekDays.asMap().entries.map((entry) {
       final index = entry.key;
@@ -1202,44 +1205,67 @@ class _HomePageState extends State<HomePage> {
       final dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1];
       final isToday = day.day == now.day && day.month == now.month;
 
-      return Column(
-        children: [
-          Text(
-            dayName,
-            style: TextStyle(
-              color: isToday ? const Color(0xFFF39C12) : AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isToday
-                  ? const Color(0xFFF39C12).withOpacity(0.15)
-                  : AppColors.surfaceAlt,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isToday
-                    ? const Color(0xFFF39C12).withOpacity(0.4)
-                    : AppColors.border,
-                width: 2,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                '${day.day}',
+      return StreamBuilder<List<CalendarEvent>>(
+        stream: CalendarEventService().getEventsForDate(userId, day),
+        builder: (context, snapshot) {
+          final hasEvents = (snapshot.data ?? []).isNotEmpty;
+
+          return Column(
+            children: [
+              Text(
+                dayName,
                 style: TextStyle(
-                  color: isToday ? AppColors.textPrimary : AppColors.textSecondary,
+                  color: isToday ? const Color(0xFFF39C12) : AppColors.textSecondary,
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
-            ),
-          ),
-        ],
+              const SizedBox(height: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isToday
+                      ? const Color(0xFFF39C12).withOpacity(0.15)
+                      : AppColors.surfaceAlt,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isToday
+                        ? const Color(0xFFF39C12).withOpacity(0.4)
+                        : AppColors.border,
+                    width: 2,
+                  ),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        color: isToday ? AppColors.textPrimary : AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    // Event dot
+                    if (hasEvents)
+                      Positioned(
+                        bottom: 2,
+                        child: Container(
+                          width: 4,
+                          height: 4,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF39C12),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       );
     }).toList();
   }
