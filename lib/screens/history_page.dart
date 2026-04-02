@@ -93,131 +93,193 @@ class _HistoryPageState extends State<HistoryPage> {
       return '${minutes}m ${secs}s';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
+    return Dismissible(
+      key: Key(log.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(
+          Icons.delete,
+          color: Colors.white,
+          size: 28,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
+      onDismissed: (direction) {
+        _logService.deleteHabitLog(log.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Workout deleted'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF2A2A2A),
+              title: const Text(
+                'Delete Workout?',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: const Text(
+                'This action cannot be undone.',
+                style: TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: log.isCompleted
+                        ? const Color(0xFF4ECDC4).withOpacity(0.2)
+                        : Colors.red.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    log.isCompleted ? Icons.check : Icons.close,
+                    color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        log.isCompleted ? 'Completed' : 'Skipped',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        dateFormat.format(log.completedAt),
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  timeFormat.format(log.completedAt),
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            // Show distance and duration if available
+            if (log.distance != null || log.durationSeconds != null) ...[
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: log.isCompleted
-                      ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                      : Colors.red.withOpacity(0.2),
-                  shape: BoxShape.circle,
+                  color: const Color(0xFF4ECDC4).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  log.isCompleted ? Icons.check : Icons.close,
-                  color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      log.isCompleted ? 'Completed' : 'Skipped',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    if (log.distance != null) ...[
+                      Icon(
+                        Icons.location_on,
+                        color: const Color(0xFF4ECDC4),
+                        size: 16,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      dateFormat.format(log.completedAt),
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 14,
+                      const SizedBox(width: 6),
+                      Text(
+                        '${log.distance!.toStringAsFixed(2)} km',
+                        style: const TextStyle(
+                          color: Color(0xFF4ECDC4),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 16),
+                    ],
+                    if (log.durationSeconds != null) ...[
+                      Icon(
+                        Icons.timer,
+                        color: const Color(0xFF4ECDC4),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _formatDuration(log.durationSeconds!),
+                        style: const TextStyle(
+                          color: Color(0xFF4ECDC4),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ],
-                ),
-              ),
-              Text(
-                timeFormat.format(log.completedAt),
-                style: const TextStyle(
-                  color: Colors.white60,
-                  fontSize: 12,
                 ),
               ),
             ],
-          ),
-          // Show distance and duration if available
-          if (log.distance != null || log.durationSeconds != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4ECDC4).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+            // Show notes if available
+            if (log.notes != null && log.notes!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                log.notes!,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 12,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              child: Row(
-                children: [
-                  if (log.distance != null) ...[
-                    Icon(
-                      Icons.location_on,
-                      color: const Color(0xFF4ECDC4),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${log.distance!.toStringAsFixed(2)} km',
-                      style: const TextStyle(
-                        color: Color(0xFF4ECDC4),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                  ],
-                  if (log.durationSeconds != null) ...[
-                    Icon(
-                      Icons.timer,
-                      color: const Color(0xFF4ECDC4),
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _formatDuration(log.durationSeconds!),
-                      style: const TextStyle(
-                        color: Color(0xFF4ECDC4),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            ],
           ],
-          // Show notes if available
-          if (log.notes != null && log.notes!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              log.notes!,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
