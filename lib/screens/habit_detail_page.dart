@@ -13,6 +13,8 @@ import 'package:habit_spark/screens/workout_timer_page.dart';
 import 'package:habit_spark/screens/history_page.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
+import 'package:habit_spark/constants/app_ui_components.dart';
 import 'package:habit_spark/widgets/error_widget.dart';
 import 'package:habit_spark/utils/error_handler.dart';
 import 'package:intl/intl.dart';
@@ -186,7 +188,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF2A2A2A),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -200,7 +202,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: AppColors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -208,11 +210,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             
             const Text(
               'Choose Photo Source',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.heading4,
             ),
             const SizedBox(height: 28),
             
@@ -258,19 +256,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           const SizedBox(height: 12),
                           const Text(
                             'Camera',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTextStyles.heading5,
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Take a photo',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: 12,
-                            ),
+                            style: AppTextStyles.bodySmall,
                           ),
                         ],
                       ),
@@ -318,19 +309,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           const SizedBox(height: 12),
                           const Text(
                             'Gallery',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTextStyles.heading5,
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Choose existing',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: 12,
-                            ),
+                            style: AppTextStyles.bodySmall,
                           ),
                         ],
                       ),
@@ -349,25 +333,21 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.habit.name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.heading4,
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history, color: Colors.white),
+            icon: const Icon(Icons.history, color: AppColors.textPrimary),
             onPressed: () {
               Navigator.push(
                 context,
@@ -378,7 +358,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: Colors.white),
+            icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
             onPressed: () {
               final userId = _authService.currentUser?.uid;
               if (userId != null) {
@@ -420,12 +400,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                               width: double.infinity,
                               height: 280,
                               decoration: BoxDecoration(
-                                color: Colors.grey[800],
+                                color: AppColors.surfaceAlt,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Icon(
                                 Icons.image_not_supported,
-                                color: Colors.white60,
+                                color: AppColors.textSecondary,
                                 size: 48,
                               ),
                             );
@@ -496,19 +476,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           const SizedBox(height: 16),
                           Text(
                             'Add a photo to your habit',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTextStyles.heading5,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Capture your progress visually',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: 13,
-                            ),
+                            style: AppTextStyles.bodySmall,
                           ),
                         ],
                       ),
@@ -529,28 +502,15 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                         ),
                       )
                     : const Icon(Icons.add_photo_alternate, size: 22),
                 label: Text(
                   _isUploading ? 'Uploading...' : 'Upload Image',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+                  style: AppTextStyles.button,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 4,
-                  shadowColor: AppColors.primary.withOpacity(0.4),
-                ),
+                style: AppUIComponents.primaryButtonStyle,
               ),
             ),
             const SizedBox(height: 28),
@@ -566,20 +526,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                         width: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                         ),
                       )
                     : const Icon(Icons.play_arrow, size: 28),
                 label: Text(
                   _isCompleting ? 'Starting...' : 'Start ${widget.habit.name}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.button,
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4ECDC4),
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -648,19 +605,12 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
           const SizedBox(height: 12),
           Text(
             value,
-            style: TextStyle(
-              color: color,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyles.heading3.copyWith(color: color),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 12,
-            ),
+            style: AppTextStyles.bodySmall,
           ),
         ],
       ),
@@ -686,10 +636,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: AppColors.surfaceAlt,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: AppColors.border,
           width: 1,
         ),
       ),
@@ -702,13 +652,13 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: log.isCompleted
-                      ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                      : Colors.red.withOpacity(0.2),
+                      ? AppColors.primary.withOpacity(0.2)
+                      : AppColors.error.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   log.isCompleted ? Icons.check : Icons.close,
-                  color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
+                  color: log.isCompleted ? AppColors.primary : AppColors.error,
                   size: 20,
                 ),
               ),
@@ -719,29 +669,19 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                   children: [
                     Text(
                       log.isCompleted ? 'Completed' : 'Skipped',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.heading5,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       dateFormat.format(log.completedAt),
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 14,
-                      ),
+                      style: AppTextStyles.bodySmall,
                     ),
                   ],
                 ),
               ),
               Text(
                 timeFormat.format(log.completedAt),
-                style: const TextStyle(
-                  color: Colors.white60,
-                  fontSize: 12,
-                ),
+                style: AppTextStyles.bodySmall,
               ),
             ],
           ),
@@ -751,7 +691,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF4ECDC4).withOpacity(0.1),
+                color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -759,16 +699,14 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                   if (log.distance != null) ...[
                     Icon(
                       Icons.location_on,
-                      color: const Color(0xFF4ECDC4),
+                      color: AppColors.primary,
                       size: 16,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       '${log.distance!.toStringAsFixed(2)} km',
-                      style: const TextStyle(
-                        color: Color(0xFF4ECDC4),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -776,16 +714,14 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                   if (log.durationSeconds != null) ...[
                     Icon(
                       Icons.timer,
-                      color: const Color(0xFF4ECDC4),
+                      color: AppColors.primary,
                       size: 16,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       _formatDuration(log.durationSeconds!),
-                      style: const TextStyle(
-                        color: Color(0xFF4ECDC4),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -798,10 +734,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             const SizedBox(height: 8),
             Text(
               log.notes!,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-              ),
+              style: AppTextStyles.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -820,24 +753,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             Icon(
               Icons.history,
               size: 64,
-              color: Colors.white.withOpacity(0.3),
+              color: AppColors.textSecondary,
             ),
             const SizedBox(height: 16),
             const Text(
               'No history yet',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.heading5,
             ),
             const SizedBox(height: 8),
             const Text(
               'Complete this habit to start tracking your progress',
-              style: TextStyle(
-                color: Colors.white60,
-                fontSize: 14,
-              ),
+              style: AppTextStyles.bodySmall,
               textAlign: TextAlign.center,
             ),
           ],

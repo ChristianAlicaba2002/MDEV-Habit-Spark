@@ -35,7 +35,7 @@ class AppHeader extends StatelessWidget {
               // Left side - Calendar Icon (far left)
               IconButton(
                 icon: const Icon(Icons.calendar_month),
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 iconSize: 21,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -65,7 +65,7 @@ class AppHeader extends StatelessWidget {
                           children: [
                             const Icon(
                               Icons.notifications_outlined,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               size: 24,
                             ),
                             if (notificationCount > 0)
@@ -84,10 +84,8 @@ class AppHeader extends StatelessWidget {
                                   ),
                                   child: Text(
                                     '$notificationCount',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: AppColors.textPrimary,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -111,10 +109,8 @@ class AppHeader extends StatelessWidget {
                       child: (photoUrl == null || photoUrl!.isEmpty)
                           ? Text(
                               userInitial,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                              style: AppTextStyles.labelLarge.copyWith(
+                                color: AppColors.textPrimary,
                               ),
                             )
                           : null,
@@ -131,7 +127,7 @@ class AppHeader extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 26,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: AppColors.textPrimary,
               letterSpacing: 1.0,
             ),
           ),

@@ -6,6 +6,8 @@ import 'package:habit_spark/services/habit_log_service.dart';
 import 'package:habit_spark/widgets/error_widget.dart';
 import 'package:habit_spark/utils/error_handler.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
+import 'package:habit_spark/constants/app_ui_components.dart';
 
 class HistoryPage extends StatefulWidget {
   final Habit habit;
@@ -36,28 +38,30 @@ class _HistoryPageState extends State<HistoryPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: AppColors.surface,
           title: const Text(
             'Delete All Workouts?',
-            style: TextStyle(color: Colors.white),
+            style: AppTextStyles.heading4,
           ),
           content: Text(
             'Delete all ${logs.length} workout(s)? This action cannot be undone.',
-            style: const TextStyle(color: Colors.white70),
+            style: AppTextStyles.bodySmall,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Colors.grey),
+                style: AppTextStyles.labelMedium,
               ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
+              child: Text(
                 'Delete All',
-                style: TextStyle(color: Colors.red),
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.error,
+                ),
               ),
             ),
           ],
@@ -95,30 +99,22 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: _isSelectionMode
             ? Text(
                 '${_selectedLogs.length} selected',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.heading4,
               )
             : Text(
                 '${widget.habit.name} - History',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.heading4,
               ),
         actions: [
           if (_isSelectionMode) ...[
@@ -129,7 +125,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   : () => _deleteSelectedLogs(),
             ),
             IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
+              icon: const Icon(Icons.close, color: AppColors.textPrimary),
               onPressed: () {
                 setState(() {
                   _isSelectionMode = false;
@@ -168,13 +164,13 @@ class _HistoryPageState extends State<HistoryPage> {
             children: [
               // Select All Header
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
+                    color: AppColors.border,
                     width: 1,
                   ),
                 ),
@@ -192,41 +188,34 @@ class _HistoryPageState extends State<HistoryPage> {
                         });
                       },
                       child: Container(
-                        width: 16,
-                        height: 16,
+                        width: 18,
+                        height: 18,
                         decoration: BoxDecoration(
                           color: _selectedLogs.isNotEmpty ? Colors.grey : Colors.transparent,
                           border: Border.all(
                             color: Colors.grey,
                             width: 1.5,
                           ),
+                          borderRadius: BorderRadius.circular(3),
                         ),
                         child: _selectedLogs.isNotEmpty
                             ? const Icon(
                                 Icons.check,
-                                color: Colors.white,
+                                color: AppColors.textPrimary,
                                 size: 12,
                               )
                             : null,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     _selectedLogs.isEmpty
                         ? const Text(
                             'Select all',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: AppTextStyles.labelMedium,
                           )
                         : Text(
-                            '${_selectedLogs.length} selected',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            'Select ${_selectedLogs.length} items',
+                            style: AppTextStyles.labelMedium,
                           ),
                     const Spacer(),
                     if (_selectedLogs.isNotEmpty)
@@ -235,7 +224,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         child: const Icon(
                           Icons.delete,
                           color: Colors.red,
-                          size: 20,
+                          size: 18,
                         ),
                       ),
                   ],
@@ -277,7 +266,7 @@ class _HistoryPageState extends State<HistoryPage> {
       key: Key(log.id),
       direction: DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
           color: Colors.red,
           borderRadius: BorderRadius.circular(12),
@@ -286,8 +275,8 @@ class _HistoryPageState extends State<HistoryPage> {
         padding: const EdgeInsets.only(right: 20),
         child: const Icon(
           Icons.delete,
-          color: Colors.white,
-          size: 28,
+          color: AppColors.textPrimary,
+          size: 24,
         ),
       ),
       onDismissed: (direction) {
@@ -305,28 +294,30 @@ class _HistoryPageState extends State<HistoryPage> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              backgroundColor: const Color(0xFF2A2A2A),
+              backgroundColor: AppColors.surface,
               title: const Text(
                 'Delete Workout?',
-                style: TextStyle(color: Colors.white),
+                style: AppTextStyles.heading4,
               ),
               content: const Text(
                 'This action cannot be undone.',
-                style: TextStyle(color: Colors.white70),
+                style: AppTextStyles.bodySmall,
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   child: const Text(
                     'Cancel',
-                    style: TextStyle(color: Colors.grey),
+                    style: AppTextStyles.labelMedium,
                   ),
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text(
+                  child: Text(
                     'Delete',
-                    style: TextStyle(color: Colors.red),
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ],
@@ -345,17 +336,17 @@ class _HistoryPageState extends State<HistoryPage> {
           });
         },
         child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                : Colors.white.withOpacity(0.05),
+                ? AppColors.primary.withOpacity(0.2)
+                : AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? const Color(0xFF4ECDC4).withOpacity(0.5)
-                  : Colors.white.withOpacity(0.1),
+                  ? AppColors.primary.withOpacity(0.5)
+                  : AppColors.border,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -365,24 +356,25 @@ class _HistoryPageState extends State<HistoryPage> {
               Row(
                 children: [
                   Container(
-                    width: 16,
-                    height: 16,
+                    width: 18,
+                    height: 18,
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.grey : Colors.transparent,
                       border: Border.all(
                         color: Colors.grey,
                         width: 1.5,
                       ),
+                      borderRadius: BorderRadius.circular(3),
                     ),
                     child: isSelected
                         ? const Icon(
                             Icons.check,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             size: 12,
                           )
                         : null,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,7 +383,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           log.isCompleted ? 'Completed' : 'Skipped',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -400,17 +392,10 @@ class _HistoryPageState extends State<HistoryPage> {
                           dateFormat.format(log.completedAt),
                           style: const TextStyle(
                             color: Colors.white60,
-                            fontSize: 12,
+                            fontSize: 11,
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  Text(
-                    dateFormat.format(log.completedAt),
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12,
                     ),
                   ),
                 ],

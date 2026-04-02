@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
+import 'package:habit_spark/constants/app_ui_components.dart';
 
 class CreateEditHabitPage extends StatefulWidget {
   final Habit? habit; // null for create, non-null for edit
@@ -175,15 +177,15 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2A2A2A),
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Delete Habit',
-          style: TextStyle(color: Colors.white),
+          style: AppTextStyles.heading4,
         ),
         content: const Text(
           'Are you sure you want to delete this habit? This action cannot be undone.',
-          style: TextStyle(color: Colors.white70),
+          style: AppTextStyles.bodySmall,
         ),
         actions: [
           TextButton(
@@ -193,8 +195,8 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.textPrimary,
             ),
             child: const Text('Delete'),
           ),
@@ -232,26 +234,22 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
     final isEdit = widget.habit != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: const Icon(Icons.close, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           isEdit ? 'Edit Habit' : 'Create Habit',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.heading4,
         ),
         actions: [
           if (isEdit)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),
               onPressed: _deleteHabit,
             ),
         ],
@@ -266,33 +264,14 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
               // Habit Name
               const Text(
                 'Habit Name',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.labelLarge,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: AppUIComponents.inputDecoration(
                   hintText: 'e.g., Morning Run, Read 30 minutes',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF4ECDC4), width: 2),
-                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -306,19 +285,15 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
               // Icon Selection
               const Text(
                 'Choose Icon',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.labelLarge,
               ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: AppColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Wrap(
                   spacing: 12,
@@ -332,19 +307,19 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
                         height: 56,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? const Color(0xFF4ECDC4)
-                              : Colors.white.withOpacity(0.05),
+                              ? AppColors.primary
+                              : AppColors.surfaceAlt,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFF4ECDC4)
-                                : Colors.white.withOpacity(0.1),
+                                ? AppColors.primary
+                                : AppColors.border,
                             width: 2,
                           ),
                         ),
                         child: Icon(
                           icon,
-                          color: isSelected ? Colors.white : Colors.white60,
+                          color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
                           size: 28,
                         ),
                       ),
@@ -359,30 +334,19 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _saveHabit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4ECDC4),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 4,
-                  ),
+                  style: AppUIComponents.primaryButtonStyle,
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                           ),
                         )
                       : Text(
                           isEdit ? 'Update Habit' : 'Create Habit',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: AppTextStyles.button,
                         ),
                 ),
               ),

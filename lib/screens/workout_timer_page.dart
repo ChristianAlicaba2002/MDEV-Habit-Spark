@@ -4,6 +4,8 @@ import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/habit_log_service.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
+import 'package:habit_spark/constants/app_ui_components.dart';
 
 class WorkoutTimerPage extends StatefulWidget {
   final Habit habit;
@@ -120,21 +122,17 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           widget.habit.name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.heading4,
         ),
       ),
       body: SingleChildScrollView(
@@ -165,10 +163,8 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                 children: [
                   Text(
                     _formatTime(_seconds),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 72,
-                      fontWeight: FontWeight.bold,
+                    style: AppTextStyles.display1.copyWith(
+                      color: AppColors.textPrimary,
                       fontFamily: 'Courier',
                     ),
                   ),
@@ -176,7 +172,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                   Text(
                     _isRunning ? '🏃 Running...' : '⏸️ Paused',
                     style: TextStyle(
-                      color: _isRunning ? Colors.green : Colors.orange,
+                      color: _isRunning ? AppColors.success : AppColors.warning,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -195,15 +191,15 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                     onPressed: _isRunning ? _pauseTimer : _startTimer,
                     icon: Icon(
                       _isRunning ? Icons.pause : Icons.play_arrow,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                     label: Text(
                       _isRunning ? 'Pause' : 'Start',
-                      style: const TextStyle(color: Colors.white),
+                      style: AppTextStyles.button,
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isRunning ? Colors.orange : Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: _isRunning ? AppColors.warning : AppColors.success,
+                      foregroundColor: AppColors.textPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -215,17 +211,17 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _saveWorkout,
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.check_circle,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                     label: const Text(
                       'Done',
-                      style: TextStyle(color: Colors.white),
+                      style: AppTextStyles.button,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.textPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -241,32 +237,10 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
             TextField(
               controller: _distanceController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              style: const TextStyle(color: AppColors.textPrimary),
+              decoration: AppUIComponents.inputDecoration(
                 hintText: 'Distance (km)',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: Icon(Icons.location_on, color: Colors.white.withOpacity(0.7)),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.3),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.3),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
-                ),
+                prefixIcon: Icons.location_on,
               ),
             ),
             const SizedBox(height: 16),
@@ -275,32 +249,10 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
             TextField(
               controller: _notesController,
               maxLines: 3,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              style: const TextStyle(color: AppColors.textPrimary),
+              decoration: AppUIComponents.inputDecoration(
                 hintText: 'Add notes (optional)',
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                prefixIcon: Icon(Icons.note, color: Colors.white.withOpacity(0.7)),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.3),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.3),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
-                ),
+                prefixIcon: Icons.note,
               ),
             ),
           ],
