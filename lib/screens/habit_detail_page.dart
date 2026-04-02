@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/habit_log.dart';
 import 'package:habit_spark/services/habit_log_service.dart';
@@ -23,7 +24,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   final HabitLogService _logService = HabitLogService();
   final AuthService _authService = AuthService();
   final StorageService _storageService = StorageService();
-  final HabitService _habitService = HabitService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
   double _uploadProgress = 0.0;
@@ -49,9 +50,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         imageFile: imageFile,
       );
 
-      // Update habit with image URL
-      final updatedHabit = widget.habit.copyWith(imageUrl: downloadUrl);
-      await _habitService.updateHabit(userId, updatedHabit);
+      // Update habit with image URL in Firestore
+      await _firestore.collection('habits').doc(widget.habit.id).update({
+        'imageUrl': downloadUrl,
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,9 +92,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
         imageFile: imageFile,
       );
 
-      // Update habit with image URL
-      final updatedHabit = widget.habit.copyWith(imageUrl: downloadUrl);
-      await _habitService.updateHabit(userId, updatedHabit);
+      // Update habit with image URL in Firestore
+      await _firestore.collection('habits').doc(widget.habit.id).update({
+        'imageUrl': downloadUrl,
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
