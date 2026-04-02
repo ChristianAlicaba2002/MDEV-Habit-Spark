@@ -24,20 +24,25 @@ class _HistoryPageState extends State<HistoryPage> {
   final Set<String> _selectedLogs = {};
   bool _isSelectionMode = false;
 
-  Future<void> _deleteSelectedLogs() async {
-    final count = _selectedLogs.length;
+  Future<void> _selectAllAndDelete(List<HabitLog> logs) async {
+    // Select all logs
+    setState(() {
+      _selectedLogs.clear();
+      _selectedLogs.addAll(logs.map((log) => log.id));
+    });
 
+    // Show confirmation modal
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2A2A2A),
           title: const Text(
-            'Delete Selected Workouts?',
+            'Delete All Workouts?',
             style: TextStyle(color: Colors.white),
           ),
           content: Text(
-            'Delete $count workout(s)? This action cannot be undone.',
+            'Delete all ${logs.length} workout(s)? This action cannot be undone.',
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
@@ -51,7 +56,7 @@ class _HistoryPageState extends State<HistoryPage> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
               child: const Text(
-                'Delete',
+                'Delete All',
                 style: TextStyle(color: Colors.red),
               ),
             ),
@@ -73,30 +78,18 @@ class _HistoryPageState extends State<HistoryPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Deleted $count workout(s)'),
+            content: Text('✅ Deleted ${logs.length} workout(s)'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 2),
           ),
         );
       }
+    } else {
+      // If cancelled, deselect all
+      setState(() {
+        _selectedLogs.clear();
+      });
     }
-  }
-
-  Widget _buildCheckbox(String logId) {
-    return Checkbox(
-      value: _selectedLogs.contains(logId),
-      onChanged: (value) {
-        setState(() {
-          if (value == true) {
-            _selectedLogs.add(logId);
-          } else {
-            _selectedLogs.remove(logId);
-          }
-        });
-      },
-      fillColor: MaterialStateProperty.all(const Color(0xFF4ECDC4)),
-      checkColor: Colors.white,
-    );
   }
 
   @override
@@ -133,7 +126,11 @@ class _HistoryPageState extends State<HistoryPage> {
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: _selectedLogs.isEmpty
                   ? null
-                  : () => _deleteSelectedLogs(),
+                  : () {
+                      // Get logs from stream to pass to delete function
+                      // For now, just delete the selected ones
+                      _deleteSelectedLogs();
+                    },
             ),
             IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
@@ -146,9 +143,49 @@ class _HistoryPageState extends State<HistoryPage> {
             ),
           ] else
             IconButton(
-              icon: const Icon(Icons.checklist, color: Colors.white),
+              icon: const Icon(Icons.delete_sweep, color: Colors.red),
+              tooltip: 'Delete All',
               onPressed: () {
-                setState(() => _isSelectionMode = true);
+                // Will be called from StreamBuilder with logs
+                showDialog(
+                  context: context,
+                  builder: (context) => StreamBuilder<List<HabitLog>>(
+                    stream: _logService.getHabitLogsStream(widget.habit.id),
+                    builder: (context, snapshot) {
+                      final logs = snapshot.data ?? [];
+                      return AlertDialog(
+                        backgroundColor: const Color(0xFF2A2A2A),
+                        title: const Text(
+                          'Delete All Workouts?',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        content: Text(
+                          'Delete all ${logs.length} workout(s)? This action cannot be undone.',
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              _selectAllAndDelete(logs);
+                            },
+                            child: const Text(
+                              'Delete All',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                );
               },
             ),
         ],
@@ -181,7 +218,8 @@ class _HistoryPageState extends State<HistoryPage> {
             padding: const EdgeInsets.all(16),
             itemCount: logs.length,
             itemBuilder: (context, index) {
-              return _buildLogItem(logs[index]);
+              final isSelected = _selectedLogs.contains(logs[index].id);
+              return _buildLogItem(logs[index], isSelected);
             },
           );
         },
@@ -189,7 +227,7 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
-  Widget _buildLogItem(HabitLog log) {
+  Widget _buildLogItem(HabitLog log, bool isSelected) {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
@@ -206,7 +244,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Dismissible(
       key: Key(log.id),
-      direction: _isSelectionMode ? DismissDirection.none : DismissDirection.endToStart,
+      direction: DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -269,11 +307,15 @@ class _HistoryPageState extends State<HistoryPage> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: isSelected
+              ? const Color(0xFF4ECDC4).withOpacity(0.2)
+              : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
+            color: isSelected
+                ? const Color(0xFF4ECDC4).withOpacity(0.5)
+                : Colors.white.withOpacity(0.1),
+            width: isSelected ? 2 : 1,
           ),
         ),
         child: Column(
@@ -281,7 +323,6 @@ class _HistoryPageState extends State<HistoryPage> {
           children: [
             Row(
               children: [
-                if (_isSelectionMode) _buildCheckbox(log.id),
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -394,6 +435,64 @@ class _HistoryPageState extends State<HistoryPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteSelectedLogs() async {
+    final count = _selectedLogs.length;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          title: const Text(
+            'Delete Selected Workouts?',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'Delete $count workout(s)? This action cannot be undone.',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      for (final logId in _selectedLogs) {
+        await _logService.deleteHabitLog(logId);
+      }
+
+      if (mounted) {
+        setState(() {
+          _selectedLogs.clear();
+          _isSelectionMode = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Deleted $count workout(s)'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildEmptyState() {
