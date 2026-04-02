@@ -86,13 +86,13 @@ class HabitItem extends StatelessWidget {
                       children: [
                         Icon(
                           _getHabitIcon(),
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           size: 20,
                         ),
                         if (habit.isDone)
                           const Icon(
                             Icons.check_circle,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             size: 18,
                           ),
                       ],
@@ -104,11 +104,8 @@ class HabitItem extends StatelessWidget {
                   // Habit name
                   Text(
                     habit.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
+                    style: AppTextStyles.labelLarge.copyWith(
+                      color: AppColors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

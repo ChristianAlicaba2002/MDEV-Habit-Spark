@@ -12,7 +12,7 @@ class AppUIComponents {
       vertical: AppSpacing.md,
     ),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     ),
     elevation: 0,
   );
@@ -25,7 +25,7 @@ class AppUIComponents {
       vertical: AppSpacing.md,
     ),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     ),
     elevation: 0,
   );
@@ -38,7 +38,7 @@ class AppUIComponents {
       vertical: AppSpacing.md,
     ),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     ),
   );
 
@@ -53,7 +53,7 @@ class AppUIComponents {
   // Card Decoration
   static BoxDecoration cardDecoration = BoxDecoration(
     color: AppColors.surface,
-    borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     border: Border.all(
       color: AppColors.border,
       width: 1,
@@ -62,7 +62,7 @@ class AppUIComponents {
 
   static BoxDecoration cardDecorationWithShadow = BoxDecoration(
     color: AppColors.surface,
-    borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     border: Border.all(
       color: AppColors.border,
       width: 1,
@@ -78,7 +78,7 @@ class AppUIComponents {
 
   static BoxDecoration highlightedCardDecoration = BoxDecoration(
     color: AppColors.surfaceAlt,
-    borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
     border: Border.all(
       color: AppColors.primary,
       width: 2,
@@ -100,19 +100,19 @@ class AppUIComponents {
       filled: true,
       fillColor: AppColors.surfaceAlt,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.borderRadiusMd),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         borderSide: const BorderSide(color: AppColors.error),
       ),
       contentPadding: const EdgeInsets.symmetric(
@@ -126,7 +126,7 @@ class AppUIComponents {
   static BoxDecoration gradientDecoration({
     required Color startColor,
     required Color endColor,
-    double borderRadius = AppSpacing.borderRadiusMd,
+    double borderRadius = AppSpacing.radiusMd,
   }) {
     return BoxDecoration(
       gradient: LinearGradient(
@@ -152,7 +152,7 @@ class AppUIComponents {
     labelStyle: const TextStyle(color: AppColors.textPrimary),
     side: const BorderSide(color: AppColors.border),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSpacing.borderRadiusSm),
+      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
     ),
   );
 }

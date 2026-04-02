@@ -18,6 +18,7 @@ import 'package:habit_spark/widgets/progress_card.dart';
 import 'package:habit_spark/widgets/habit_item.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
+import 'package:habit_spark/constants/app_ui_components.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -86,7 +87,7 @@ class _HomePageState extends State<HomePage> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: AppColors.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -108,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: const Color(0xFF4ECDC4),
+                      color: AppColors.primary,
                       width: 3,
                     ),
                   ),
@@ -144,18 +145,14 @@ class _HomePageState extends State<HomePage> {
                       ? user?.email?.split('@')[0] ?? 'User'
                       : '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'
                             .trim(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.heading4,
                 ),
                 const SizedBox(height: 4),
 
                 // Joined date
                 Text(
                   'Joined ${_getJoinedDate()}',
-                  style: const TextStyle(color: Colors.white60, fontSize: 14),
+                  style: AppTextStyles.bodySmall,
                 ),
                 const SizedBox(height: 24),
 
@@ -171,21 +168,10 @@ class _HomePageState extends State<HomePage> {
                         ),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
+                    style: AppUIComponents.primaryButtonStyle,
                     child: const Text(
                       'EDIT PROFILE',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        letterSpacing: 0.5,
-                      ),
+                      style: AppTextStyles.button,
                     ),
                   ),
                 ),
@@ -196,12 +182,7 @@ class _HomePageState extends State<HomePage> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'MY STUFF',
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1,
-                    ),
+                    style: AppTextStyles.labelSmall,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -283,30 +264,28 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
+            bottom: BorderSide(color: AppColors.border, width: 1),
           ),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: isDestructive ? AppColors.error : Colors.white,
+              color: isDestructive ? AppColors.error : AppColors.textPrimary,
               size: 24,
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(
-                  color: isDestructive ? AppColors.error : Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: isDestructive ? AppColors.error : AppColors.textPrimary,
                 ),
               ),
             ),
             Icon(
               Icons.chevron_right,
-              color: Colors.white.withOpacity(0.3),
+              color: AppColors.textSecondary,
               size: 24,
             ),
           ],
@@ -342,7 +321,7 @@ class _HomePageState extends State<HomePage> {
     final userInitial = user?.email?.substring(0, 1).toUpperCase() ?? 'U';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A), // Dark background
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: StreamBuilder<List<Habit>>(
           stream: _habitService.getHabitsStream(userId),
@@ -359,13 +338,14 @@ class _HomePageState extends State<HomePage> {
                     const Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: Colors.red,
+                      color: AppColors.error,
                     ),
                     const SizedBox(height: 16),
                     Text('Error: ${snapshot.error}'),
                     const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: () => setState(() {}),
+                      style: AppUIComponents.primaryButtonStyle,
                       child: const Text('Retry'),
                     ),
                   ],
@@ -529,16 +509,14 @@ class _HomePageState extends State<HomePage> {
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF4ECDC4), Color(0xFF2FB5AC)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                          borderRadius: BorderRadius.circular(18),
+                        decoration: AppUIComponents.gradientDecoration(
+                          startColor: AppColors.primary,
+                          endColor: AppColors.primaryDark,
+                          borderRadius: 18,
+                        ).copyWith(
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF4ECDC4).withOpacity(0.3),
+                              color: AppColors.primary.withOpacity(0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -546,7 +524,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.checklist_rounded, color: Colors.white, size: 26),
+                            const Icon(Icons.checklist_rounded, color: AppColors.textPrimary, size: 26),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -554,25 +532,20 @@ class _HomePageState extends State<HomePage> {
                                 children: [
                                   const Text(
                                     'Daily Check-In',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: AppTextStyles.heading5,
                                   ),
                                   Text(
                                     completedCount == totalCount && totalCount > 0
                                         ? 'All done! Great work today 🎉'
                                         : '$completedCount of $totalCount habits done',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 12,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textPrimary.withOpacity(0.8),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                            const Icon(Icons.arrow_forward_ios, color: AppColors.textPrimary, size: 16),
                           ],
                         ),
                       ),
@@ -583,11 +556,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         const Text(
                           'Today\'s Habits',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          style: AppTextStyles.heading4,
                         ),
                         Row(
                           children: [
@@ -601,11 +570,7 @@ class _HomePageState extends State<HomePage> {
                                 children: [
                                   Text(
                                     _isExpanded ? 'COLLAPSE' : 'EXPAND',
-                                    style: AppTextStyles.bodyMedium.copyWith(
-                                      color: Colors.white70,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
-                                    ),
+                                    style: AppTextStyles.labelMedium,
                                   ),
                                   const SizedBox(width: 4),
                                   Icon(
@@ -623,7 +588,7 @@ class _HomePageState extends State<HomePage> {
                               onTap: _showAddHabitDialog,
                               child: const Icon(
                                 Icons.add,
-                                color: Colors.white,
+                                color: AppColors.textPrimary,
                                 size: 28,
                               ),
                             ),
@@ -668,16 +633,16 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.add_circle_outline, size: 64, color: Colors.grey[400]),
+          Icon(Icons.add_circle_outline, size: 64, color: AppColors.textSecondary),
           const SizedBox(height: 16),
           Text(
             'No habits yet',
-            style: AppTextStyles.bodyLarge.copyWith(color: Colors.white70),
+            style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           Text(
             'Tap + to add your first habit',
-            style: AppTextStyles.bodySmall.copyWith(color: Colors.white60),
+            style: AppTextStyles.bodySmall,
           ),
         ],
       ),
@@ -739,11 +704,7 @@ class _HomePageState extends State<HomePage> {
           // Page Title
           const Text(
             'Progress Analytics',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyles.heading2,
           ),
           const SizedBox(height: 24),
 
@@ -872,25 +833,17 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
-              color: color,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyles.heading3.copyWith(color: color),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(color: Colors.white60, fontSize: 11),
+            style: AppTextStyles.captionSmall,
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.labelMedium,
           ),
         ],
       ),
@@ -904,9 +857,9 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHabitProgressCard(Habit habit, int index) {
     // Gradient colors for cards
     final gradients = [
-      [const Color(0xFFFF6B6B), const Color(0xFFFF8E53)],
-      [const Color(0xFF4ECDC4), const Color(0xFF44A08D)],
-      [const Color(0xFFFFD93D), const Color(0xFFFF6B6B)],
+      [AppColors.streakStart, AppColors.streakEnd],
+      [AppColors.primary, AppColors.primaryDark],
+      [AppColors.accent, AppColors.accentDark],
       [const Color(0xFF6C5CE7), const Color(0xFFA29BFE)],
       [const Color(0xFFFF6B9D), const Color(0xFFC44569)],
       [const Color(0xFF00D2FF), const Color(0xFF3A7BD5)],
@@ -942,11 +895,7 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                   child: Text(
                     habit.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTextStyles.heading5.copyWith(color: AppColors.textPrimary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -954,12 +903,12 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: AppColors.textPrimary.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     habit.isDone ? Icons.check_circle : Icons.circle_outlined,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     size: 24,
                   ),
                 ),
@@ -970,18 +919,15 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Text(
                   habit.isDone ? 'Completed today' : 'Not completed yet',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary.withOpacity(0.9),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Tap to view details',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 12,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textPrimary.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -1002,8 +948,8 @@ class _HomePageState extends State<HomePage> {
           height: 8,
           decoration: BoxDecoration(
             color: _currentHabitPage == index
-                ? const Color(0xFF4ECDC4)
-                : Colors.white.withOpacity(0.3),
+                ? AppColors.primary
+                : AppColors.textSecondary.withOpacity(0.3),
             borderRadius: BorderRadius.circular(4),
           ),
         );
@@ -1020,21 +966,17 @@ class _HomePageState extends State<HomePage> {
             Icon(
               Icons.insights,
               size: 64,
-              color: Colors.white.withOpacity(0.3),
+              color: AppColors.textSecondary,
             ),
             const SizedBox(height: 16),
             const Text(
               'No habits yet',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.heading5,
             ),
             const SizedBox(height: 8),
             const Text(
               'Create habits to see your progress analytics',
-              style: TextStyle(color: Colors.white60, fontSize: 14),
+              style: AppTextStyles.bodySmall,
               textAlign: TextAlign.center,
             ),
           ],
@@ -1071,11 +1013,7 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
           children: [
             Text(
               'This Week',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.heading4,
             ),
           ],
         ),
@@ -1084,9 +1022,9 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+            border: Border.all(color: AppColors.border, width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1117,10 +1055,10 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                       dayName,
                       style: TextStyle(
                         color: isSelected
-                            ? const Color(0xFF4ECDC4)
+                            ? AppColors.primary
                             : (isToday
-                                  ? const Color(0xFF4ECDC4)
-                                  : Colors.white60),
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary),
                         fontSize: 12,
                         fontWeight: (isSelected || isToday)
                             ? FontWeight.bold
@@ -1133,17 +1071,17 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                       height: 32,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFF4ECDC4)
+                            ? AppColors.primary
                             : (isToday
-                                  ? const Color(0xFF4ECDC4)
-                                  : Colors.white.withOpacity(0.1)),
+                                  ? AppColors.primary
+                                  : AppColors.surfaceAlt),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF4ECDC4)
+                              ? AppColors.primary
                               : (isToday
-                                    ? const Color(0xFF4ECDC4)
-                                    : Colors.white.withOpacity(0.2)),
+                                    ? AppColors.primary
+                                    : AppColors.border),
                           width: 2,
                         ),
                       ),
@@ -1152,8 +1090,8 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                           '${day.day}',
                           style: TextStyle(
                             color: (isSelected || isToday)
-                                ? Colors.white
-                                : Colors.white60,
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1208,11 +1146,7 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
       children: [
         const Text(
           'Habits Breakdown',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.heading4,
         ),
         const SizedBox(height: 16),
         StreamBuilder<List<Habit>>(
@@ -1229,21 +1163,17 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
                       Icon(
                         Icons.insights,
                         size: 64,
-                        color: Colors.white.withOpacity(0.3),
+                        color: AppColors.textSecondary,
                       ),
                       const SizedBox(height: 16),
                       const Text(
                         'No habits yet',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.heading5,
                       ),
                       const SizedBox(height: 8),
                       const Text(
                         'Create habits to see your progress analytics',
-                        style: TextStyle(color: Colors.white60, fontSize: 14),
+                        style: AppTextStyles.bodySmall,
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1302,8 +1232,8 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
                       height: 8,
                       decoration: BoxDecoration(
                         color: _currentHabitPage == index
-                            ? const Color(0xFF4ECDC4)
-                            : Colors.white.withOpacity(0.3),
+                            ? AppColors.primary
+                            : AppColors.textSecondary.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );

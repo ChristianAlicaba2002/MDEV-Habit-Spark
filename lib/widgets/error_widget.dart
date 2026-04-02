@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
+import 'package:habit_spark/constants/app_ui_components.dart';
 
 class ErrorStateWidget extends StatelessWidget {
   final String title;
@@ -28,32 +30,25 @@ class ErrorStateWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: AppColors.error.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 56,
-                color: Colors.red,
+                color: AppColors.error,
               ),
             ),
             const SizedBox(height: 24),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.heading4,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
               message,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 14,
-              ),
+              style: AppTextStyles.bodySmall,
               textAlign: TextAlign.center,
             ),
             if (showRetry && onRetry != null) ...[
@@ -62,17 +57,7 @@ class ErrorStateWidget extends StatelessWidget {
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                style: AppUIComponents.primaryButtonStyle,
               ),
             ],
           ],
@@ -104,10 +89,7 @@ class LoadingStateWidget extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               message!,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 14,
-              ),
+              style: AppTextStyles.bodySmall,
             ),
           ],
         ],
@@ -131,9 +113,9 @@ class OfflineStateWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.2),
+        color: AppColors.warning.withOpacity(0.2),
         border: Border.all(
-          color: Colors.orange.withOpacity(0.5),
+          color: AppColors.warning.withOpacity(0.5),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(12),
@@ -142,27 +124,25 @@ class OfflineStateWidget extends StatelessWidget {
         children: [
           Icon(
             Icons.wifi_off,
-            color: Colors.orange,
+            color: AppColors.warning,
             size: 20,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
-                color: Colors.orange.withOpacity(0.9),
-                fontSize: 13,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.warning.withOpacity(0.9),
               ),
             ),
           ),
           if (onRetry != null)
             TextButton(
               onPressed: onRetry,
-              child: const Text(
+              child: Text(
                 'Retry',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.warning,
                 ),
               ),
             ),

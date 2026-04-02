@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
 
 class StreakCard extends StatelessWidget {
   final int streakDays;
@@ -33,18 +34,14 @@ class StreakCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.local_fire_department,
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 size: 24,
               ),
               SizedBox(width: 6),
               Flexible(
                 child: Text(
                   'Current Streak',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AppTextStyles.labelMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -53,18 +50,11 @@ class StreakCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             '$streakDays',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyles.display1,
           ),
           const Text(
             'days',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: AppTextStyles.bodySmall,
           ),
         ],
       ),
