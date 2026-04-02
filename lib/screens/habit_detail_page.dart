@@ -9,6 +9,7 @@ import 'package:habit_spark/services/storage_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
+import 'package:habit_spark/screens/workout_timer_page.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/widgets/error_widget.dart';
@@ -153,19 +154,15 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       final userId = _authService.currentUser?.uid;
       if (userId == null) throw 'User not authenticated';
 
-      // Toggle habit completion
-      await _habitService.toggleHabit(widget.habit.id, widget.habit.isDone, userId);
-
+      // Navigate to workout timer page
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.habit.isDone
-                  ? '✅ Great job! Habit marked as done!'
-                  : '✅ Habit started! Keep it up!',
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WorkoutTimerPage(
+              habit: widget.habit,
+              userId: userId,
             ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -177,10 +174,6 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             content: Text('❌ $errorMessage'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: _completeHabit,
-            ),
           ),
         );
       }
@@ -721,6 +714,17 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     final dateFormat = DateFormat('MMM dd, yyyy');
     final timeFormat = DateFormat('hh:mm a');
 
+    String _formatDuration(int seconds) {
+      final hours = seconds ~/ 3600;
+      final minutes = (seconds % 3600) ~/ 60;
+      final secs = seconds % 60;
+      
+      if (hours > 0) {
+        return '${hours}h ${minutes}m ${secs}s';
+      }
+      return '${minutes}m ${secs}s';
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -732,53 +736,119 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
           width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: log.isCompleted
-                  ? const Color(0xFF4ECDC4).withOpacity(0.2)
-                  : Colors.red.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              log.isCompleted ? Icons.check : Icons.close,
-              color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  log.isCompleted ? 'Completed' : 'Skipped',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: log.isCompleted
+                      ? const Color(0xFF4ECDC4).withOpacity(0.2)
+                      : Colors.red.withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  dateFormat.format(log.completedAt),
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 14,
-                  ),
+                child: Icon(
+                  log.isCompleted ? Icons.check : Icons.close,
+                  color: log.isCompleted ? const Color(0xFF4ECDC4) : Colors.red,
+                  size: 20,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      log.isCompleted ? 'Completed' : 'Skipped',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dateFormat.format(log.completedAt),
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                timeFormat.format(log.completedAt),
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
-          Text(
-            timeFormat.format(log.completedAt),
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 12,
+          // Show distance and duration if available
+          if (log.distance != null || log.durationSeconds != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4ECDC4).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  if (log.distance != null) ...[
+                    Icon(
+                      Icons.location_on,
+                      color: const Color(0xFF4ECDC4),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${log.distance!.toStringAsFixed(2)} km',
+                      style: const TextStyle(
+                        color: Color(0xFF4ECDC4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                  if (log.durationSeconds != null) ...[
+                    Icon(
+                      Icons.timer,
+                      color: const Color(0xFF4ECDC4),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatDuration(log.durationSeconds!),
+                      style: const TextStyle(
+                        color: Color(0xFF4ECDC4),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
+          ],
+          // Show notes if available
+          if (log.notes != null && log.notes!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              log.notes!,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ],
       ),
     );
