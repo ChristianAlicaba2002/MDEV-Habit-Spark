@@ -368,7 +368,9 @@ class _HomePageState extends State<HomePage> {
                     completedCount,
                     totalCount,
                   )
-                : _buildStatsPage();
+                : _selectedIndex == 1
+                    ? _buildDailyCheckInPage(habits, userId)
+                    : _buildStatsPage();
           },
         ),
       ),
@@ -401,6 +403,17 @@ class _HomePageState extends State<HomePage> {
                 child: Icon(Icons.home),
               ),
               label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(Icons.checklist_rounded),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(Icons.checklist),
+              ),
+              label: 'Check-In',
             ),
             BottomNavigationBarItem(
               icon: Padding(
@@ -508,59 +521,6 @@ class _HomePageState extends State<HomePage> {
                     ProgressCard(
                       completedHabits: completedCount,
                       totalHabits: totalCount,
-                    ),
-                    SizedBox(height: verticalSpacing),
-                    // Daily Check-In banner
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DailyCheckInPage(),
-                        ),
-                      ),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                        decoration: AppUIComponents.gradientDecoration(
-                          startColor: AppColors.primary,
-                          endColor: AppColors.primaryDark,
-                          borderRadius: 18,
-                        ).copyWith(
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.checklist_rounded, color: AppColors.textPrimary, size: 26),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Daily Check-In',
-                                    style: AppTextStyles.heading5,
-                                  ),
-                                  Text(
-                                    completedCount == totalCount && totalCount > 0
-                                        ? 'All done! Great work today 🎉'
-                                        : '$completedCount of $totalCount habits done',
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: AppColors.textPrimary.withOpacity(0.8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.arrow_forward_ios, color: AppColors.textPrimary, size: 16),
-                          ],
-                        ),
-                      ),
                     ),
                     SizedBox(height: verticalSpacing),
                     Row(
@@ -704,6 +664,230 @@ class _HomePageState extends State<HomePage> {
     return Column(children: rows);
   }
 
+  Widget _buildDailyCheckInPage(List<Habit> habits, String userId) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with add button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Daily Check-In',
+                style: AppTextStyles.heading4,
+              ),
+              GestureDetector(
+                onTap: _showAddHabitDialog,
+                child: const Icon(
+                  Icons.add,
+                  color: Color(0xFFF39C12),
+                  size: 28,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Progress indicator
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border, width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Today\'s Progress',
+                      style: AppTextStyles.heading5,
+                    ),
+                    Text(
+                      '${habits.where((h) => h.isDone == true).length}/${habits.length}',
+                      style: AppTextStyles.heading5.copyWith(color: AppColors.primary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: habits.isEmpty ? 0 : habits.where((h) => h.isDone == true).length / habits.length,
+                    minHeight: 6,
+                    backgroundColor: AppColors.border,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF39C12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Habits list
+          habits.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Column(
+                      children: [
+                        Icon(Icons.add_circle_outline, size: 48, color: AppColors.textSecondary),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No habits yet',
+                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: habits.length,
+                  itemBuilder: (context, index) {
+                    final habit = habits[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: habit.isDone == true
+                            ? AppColors.primary.withOpacity(0.1)
+                            : AppColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: habit.isDone == true
+                              ? AppColors.primary.withOpacity(0.5)
+                              : AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Checkbox
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                habits[index] = habit.copyWith(isDone: !habit.isDone);
+                              });
+                            },
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: habit.isDone == true
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary,
+                                  width: 2,
+                                ),
+                                color: habit.isDone == true
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                              ),
+                              child: habit.isDone == true
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 14,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  habit.name,
+                                  style: AppTextStyles.heading5,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  habit.isDone == true ? 'Completed ✓' : 'Not completed',
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: habit.isDone == true
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Edit button
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CreateEditHabitPage(
+                                    habit: habit,
+                                    userId: userId,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const Icon(
+                              Icons.edit,
+                              color: Color(0xFFF39C12),
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Delete button
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: AppColors.surface,
+                                  title: const Text('Delete Habit?', style: AppTextStyles.heading4),
+                                  content: const Text(
+                                    'This action cannot be undone.',
+                                    style: AppTextStyles.bodySmall,
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancel', style: AppTextStyles.labelMedium),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        _habitService.deleteHabit(habit.id);
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text(
+                                        'Delete',
+                                        style: AppTextStyles.labelMedium.copyWith(color: AppColors.error),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: const Icon(
+                              Icons.delete,
+                              color: AppColors.error,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatsPage() {
     final user = _authService.currentUser;
     final userId = user?.uid ?? '';
@@ -809,10 +993,6 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 32),
 
-          // Weekly Progress Section
-          _buildWeeklyProgress(userId),
-          const SizedBox(height: 32),
-
           // Habits Breakdown
           _HabitsBreakdownWidget(
             userId: userId,
@@ -860,10 +1040,6 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
-  }
-
-  Widget _buildWeeklyProgress(String userId) {
-    return _WeeklyProgressWidget(userId: userId);
   }
 
   Widget _buildHabitProgressCard(Habit habit, int index) {
