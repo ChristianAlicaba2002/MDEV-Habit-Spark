@@ -42,13 +42,13 @@ class CalendarEventService {
     return _firestore
         .collection(_collection)
         .where('userId', isEqualTo: userId)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
-        .orderBy('date')
         .snapshots()
         .map((snapshot) {
       return snapshot.docs
           .map((doc) => CalendarEvent.fromMap(doc.data()))
+          .where((event) =>
+              event.date.isAfter(startOfMonth.subtract(const Duration(days: 1))) &&
+              event.date.isBefore(endOfMonth.add(const Duration(days: 1))))
           .toList();
     });
   }

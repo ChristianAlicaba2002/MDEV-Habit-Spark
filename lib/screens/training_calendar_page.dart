@@ -42,10 +42,12 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Event added successfully'),
+            content: Text('✅ Workout added successfully'),
             backgroundColor: Colors.green,
           ),
         );
+        // Rebuild the calendar to show the new event
+        setState(() {});
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -72,10 +74,11 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Event updated successfully'),
+            content: Text('✅ Workout updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
+        setState(() {});
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -92,7 +95,7 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete Event?', style: AppTextStyles.heading4),
+        title: const Text('Delete Workout?', style: AppTextStyles.heading4),
         content: const Text(
           'This action cannot be undone.',
           style: AppTextStyles.bodySmall,
@@ -119,10 +122,11 @@ class _TrainingCalendarPageState extends State<TrainingCalendarPage> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Event deleted'),
+            content: Text('✅ Workout deleted'),
             backgroundColor: Colors.red,
           ),
         );
+        setState(() {});
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
