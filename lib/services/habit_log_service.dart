@@ -67,3 +67,20 @@ class HabitLogService {
       await doc.reference.delete();
     }
   }
+
+  // Get completion rate for last 30 days
+  Future<double> getCompletionRate(String habitId) async {
+    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+    
+    final logs = await _firestore
+        .collection('habit_logs')
+        .where('habitId', isEqualTo: habitId)
+        .where('completedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(thirtyDaysAgo))
+        .get();
+    
+    if (logs.docs.isEmpty) return 0.0;
+    
+    final completedCount = logs.docs.where((doc) => doc.data()['isCompleted'] == true).length;
+    return (completedCount / 30) * 100;
+  }
+}
