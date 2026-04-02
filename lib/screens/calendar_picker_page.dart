@@ -129,18 +129,14 @@ class _CalendarPickerPageState extends State<CalendarPickerPage> {
                     color: AppColors.primary,
                     size: 24,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                 ),
-                daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: const TextStyle(
+                daysOfWeekStyle: const DaysOfWeekStyle(
+                  weekdayStyle: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
-                  weekendStyle: const TextStyle(
+                  weekendStyle: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
