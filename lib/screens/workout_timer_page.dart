@@ -68,16 +68,6 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
         return;
       }
 
-      if (!_isDistanceFilled()) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('❌ Please enter distance before saving'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
       _pauseTimer();
 
       final distance = double.tryParse(_distanceController.text) ?? 0.0;
@@ -224,7 +214,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _isDistanceFilled() ? _saveWorkout : null,
+                    onPressed: _saveWorkout,
                     icon: Icon(
                       Icons.check_circle,
                       color: Colors.white,
@@ -234,7 +224,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                       style: TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _isDistanceFilled() ? AppColors.primary : Colors.grey,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -310,32 +300,6 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
                     color: AppColors.primary,
                     width: 2,
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _saveWorkout,
-                icon: const Icon(Icons.save, size: 24),
-                label: const Text(
-                  'Save Workout',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 4,
                 ),
               ),
             ),
