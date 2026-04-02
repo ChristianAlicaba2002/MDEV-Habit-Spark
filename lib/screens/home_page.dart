@@ -8,6 +8,7 @@ import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/screens/habit_detail_page.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/daily_checkin_page.dart';
+import 'package:habit_spark/screens/calendar_picker_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/widgets/app_header.dart';
@@ -457,6 +458,22 @@ class _HomePageState extends State<HomePage> {
                             );
                           },
                           onProfileTap: _showProfileMenu,
+                          onCalendarTap: () async {
+                            final selectedDate = await Navigator.push<DateTime>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CalendarPickerPage(),
+                              ),
+                            );
+                            if (selectedDate != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Selected: ${selectedDate.toString().split(' ')[0]}'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
                           notificationCount: unreadCount,
                           userInitial: userInitial,
                           photoUrl: photoUrl,
