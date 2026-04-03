@@ -3,6 +3,7 @@ import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/habit_log_service.dart';
+import 'package:habit_spark/services/error_handler.dart';
 
 class HabitService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -29,24 +30,40 @@ class HabitService {
 
   // Add a new habit
   Future<void> addHabit(String userId, String habitName, {String? icon}) async {
-    await _firestore.collection('habits').add({
-      'name': habitName,
-      'isDone': false,
-      'createdAt': Timestamp.fromDate(DateTime.now()),
-      'userId': userId,
-      if (icon != null) 'icon': icon,
-    });
+    try {
+      if (habitName.trim().isEmpty) {
+        throw AppException(message: 'Habit name cannot be empty.');
+      }
+      
+      await _firestore.collection('habits').add({
+        'name': habitName,
+        'isDone': false,
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+        'userId': userId,
+        if (icon != null) 'icon': icon,
+      });
+    } catch (e) {
+      throw ErrorHandler.handleException(e);
+    }
   }
 
   // Update an existing habit
   Future<void> updateHabit(String habitId, String habitName, {String? icon}) async {
-    final updateData = {
-      'name': habitName,
-    };
-    if (icon != null) {
-      updateData['icon'] = icon;
+    try {
+      if (habitName.trim().isEmpty) {
+        throw AppException(message: 'Habit name cannot be empty.');
+      }
+      
+      final updateData = {
+        'name': habitName,
+      };
+      if (icon != null) {
+        updateData['icon'] = icon;
+      }
+      await _firestore.collection('habits').doc(habitId).update(updateData);
+    } catch (e) {
+      throw ErrorHandler.handleException(e);
     }
-    await _firestore.collection('habits').doc(habitId).update(updateData);
   }
 
   // Toggle habit completion
@@ -104,7 +121,11 @@ class HabitService {
 
   // Delete a habit
   Future<void> deleteHabit(String habitId) async {
-    await _firestore.collection('habits').doc(habitId).delete();
+    try {
+      await _firestore.collection('habits').doc(habitId).delete();
+    } catch (e) {
+      throw ErrorHandler.handleException(e);
+    }
   }
 
   // Reset all habits (for new day)
