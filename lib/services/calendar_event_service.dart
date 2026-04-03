@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/models/calendar_event.dart';
+import 'package:habit_spark/services/error_handler.dart';
 
 class CalendarEventService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -8,6 +9,13 @@ class CalendarEventService {
   // Create event
   Future<String> addEvent(CalendarEvent event) async {
     try {
+      if (event.trainingName.isEmpty) {
+        throw AppException(message: 'Workout name cannot be empty.');
+      }
+      if (event.location.isEmpty) {
+        throw AppException(message: 'Location cannot be empty.');
+      }
+      
       // Use the event's ID if provided, otherwise let Firestore generate one
       if (event.id.isNotEmpty) {
         await _firestore.collection(_collection).doc(event.id).set(event.toMap());
@@ -17,7 +25,7 @@ class CalendarEventService {
         return docRef.id;
       }
     } catch (e) {
-      throw Exception('Failed to add event: $e');
+      throw ErrorHandler.handleException(e);
     }
   }
 
@@ -72,6 +80,13 @@ class CalendarEventService {
   // Update event
   Future<void> updateEvent(String eventId, CalendarEvent event) async {
     try {
+      if (event.trainingName.isEmpty) {
+        throw AppException(message: 'Workout name cannot be empty.');
+      }
+      if (event.location.isEmpty) {
+        throw AppException(message: 'Location cannot be empty.');
+      }
+      
       final updatedEvent = event.copyWith(updatedAt: DateTime.now());
       final eventMap = updatedEvent.toMap();
       eventMap.remove('id'); // Remove id from update to avoid conflicts
@@ -80,7 +95,7 @@ class CalendarEventService {
           .doc(eventId)
           .update(eventMap);
     } catch (e) {
-      throw Exception('Failed to update event: $e');
+      throw ErrorHandler.handleException(e);
     }
   }
 
@@ -89,7 +104,7 @@ class CalendarEventService {
     try {
       await _firestore.collection(_collection).doc(eventId).delete();
     } catch (e) {
-      throw Exception('Failed to delete event: $e');
+      throw ErrorHandler.handleException(e);
     }
   }
 
