@@ -1,7 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:habit_spark/firebase_options.dart';
 import 'package:habit_spark/services/auth_service.dart';
+import 'package:habit_spark/services/fcm_service.dart';
 import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/home_page.dart';
 import 'package:habit_spark/screens/onboarding_page.dart';
@@ -10,6 +12,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Set background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  
+  // Initialize FCM
+  await FCMService().initialize();
+  
   runApp(const MyApp());
 }
 
@@ -75,4 +84,11 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
+}
+
+// Background message handler (must be a top-level function)
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print('Handling a background message: ${message.messageId}');
+  print('Title: ${message.notification?.title}');
+  print('Body: ${message.notification?.body}');
 }
