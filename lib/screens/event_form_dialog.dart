@@ -25,6 +25,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
   late TextEditingController _endTimeController;
   late TextEditingController _locationController;
   late TextEditingController _notesController;
+  bool _isLoading = false;
 
   String _convertTo24Hour(String time12Hour) {
     final parts = time12Hour.trim().split(' ');
@@ -358,8 +359,10 @@ class _EventFormDialogState extends State<EventFormDialog> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: _isLoading ? null : () {
                       if (_validateForm()) {
+                        setState(() => _isLoading = true);
+                        
                         // Convert 12-hour format to 24-hour format for storage
                         final startTime = _convertTo24Hour(_startTimeController.text);
                         final endTime = _convertTo24Hour(_endTimeController.text);
@@ -386,8 +389,18 @@ class _EventFormDialogState extends State<EventFormDialog> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      disabledBackgroundColor: const Color(0xFFF39C12).withOpacity(0.5),
                     ),
-                    child: const Text('Save', style: AppTextStyles.button),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Save', style: AppTextStyles.button),
                   ),
                 ),
               ],
