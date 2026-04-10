@@ -342,17 +342,10 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                         );
                       },
-                      child: Image.network(
-                        'https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg',
-                        width: 24,
-                        height: 24,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            'assets/images/google_icon.png',
-                            width: 24,
-                            height: 24,
-                          );
-                        },
+                      child: Image.asset(
+                        'assets/images/google_icon.png',
+                        width: 20,
+                        height: 20,
                       ),
                     ),
                   ),
