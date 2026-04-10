@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 600),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -44,6 +44,13 @@ class _LoginPageState extends State<LoginPage>
           ),
         );
     _animController.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pre-cache the Google icon for instant appearance during transition
+    precacheImage(const AssetImage('assets/images/google_icon.png'), context);
   }
 
   @override
@@ -170,40 +177,39 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Formal Slate 900
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1E293B), // Slate 800
-              Color(0xFF0F172A), // Slate 900
-            ],
+      backgroundColor: const Color(0xFF0F172A),
+      body: RepaintBoundary(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: AbsorbPointer(
-            absorbing: _isLoading,
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 40,
-                ),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 48),
-                        _buildFormalCard(),
-                        const SizedBox(height: 32),
-                        _buildSignUpRow(),
-                      ],
+          child: SafeArea(
+            child: AbsorbPointer(
+              absorbing: _isLoading,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                  child: RepaintBoundary(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildHeader(),
+                            const SizedBox(height: 48),
+                            _buildFormalCard(),
+                            const SizedBox(height: 32),
+                            _buildSignUpRow(),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -219,21 +225,14 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildHeader() {
     return Column(
       children: [
-        // Professional Icon Container
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(20),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withAlpha(40), width: 1.5),
-          ),
-          child: const Icon(
-            Icons.local_fire_department_rounded,
-            size: 44,
-            color: Color(0xFF4ECDC4), // Brand Teal
-          ),
-        ),
+        // Logo without circle - same spacing as before
         const SizedBox(height: 20),
+        const Icon(
+          Icons.local_fire_department_rounded,
+          size: 80,
+          color: Color(0xFF4ECDC4), // Brand Teal
+        ),
+        const SizedBox(height: 1),
         Text(
           'HabitSpark',
           style: GoogleFonts.poppins(
@@ -455,7 +454,7 @@ class _LoginPageState extends State<LoginPage>
         // Implementation
       },
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 24),
         side: BorderSide(color: Colors.white.withAlpha(40), width: 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: Colors.white.withAlpha(10),
@@ -463,8 +462,10 @@ class _LoginPageState extends State<LoginPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset('assets/images/google_icon.png', width: 20, height: 20),
-          const SizedBox(width: 12),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Image.asset('assets/images/google_icon.png', width: 24, height: 24),
+          ),
           Text(
             'Google',
             style: GoogleFonts.poppins(
@@ -488,9 +489,16 @@ class _LoginPageState extends State<LoginPage>
           style: TextStyle(color: Colors.white.withAlpha(120), fontSize: 14),
         ),
         GestureDetector(
-          onTap: () => Navigator.push(
+          onTap: () => Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const SignUpPage()),
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const SignUpPage(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 400),
+            ),
           ),
           child: Text(
             'Sign Up',
