@@ -389,7 +389,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      disabledBackgroundColor: const Color(0xFFF39C12).withOpacity(0.5),
+                      disabledBackgroundColor: const Color(0xFFF39C12).withAlpha(128),
                     ),
                     child: _isLoading
                         ? const SizedBox(

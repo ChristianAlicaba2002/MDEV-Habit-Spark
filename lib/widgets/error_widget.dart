@@ -30,7 +30,7 @@ class ErrorStateWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withAlpha(26),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -113,9 +113,9 @@ class OfflineStateWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.2),
+        color: AppColors.warning.withAlpha(51),
         border: Border.all(
-          color: AppColors.warning.withOpacity(0.5),
+          color: AppColors.warning.withAlpha(128),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(12),
@@ -132,7 +132,7 @@ class OfflineStateWidget extends StatelessWidget {
             child: Text(
               message,
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.warning.withOpacity(0.9),
+                color: AppColors.warning.withAlpha(230),
               ),
             ),
           ),

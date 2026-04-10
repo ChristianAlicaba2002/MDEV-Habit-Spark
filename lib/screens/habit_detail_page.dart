@@ -15,7 +15,6 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/constants/app_ui_components.dart';
-import 'package:habit_spark/widgets/error_widget.dart';
 import 'package:habit_spark/utils/error_handler.dart';
 import 'package:intl/intl.dart';
 
@@ -37,7 +36,6 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
-  double _uploadProgress = 0.0;
   bool _isCompleting = false;
 
   Future<void> _pickAndUploadImage() async {
@@ -229,13 +227,13 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            AppColors.primary.withOpacity(0.3),
-                            AppColors.primary.withOpacity(0.1),
+                            AppColors.primary.withAlpha(77),
+                            AppColors.primary.withAlpha(26),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.primary.withOpacity(0.4),
+                          color: AppColors.primary.withAlpha(102),
                           width: 1.5,
                         ),
                       ),
@@ -244,7 +242,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.25),
+                              color: AppColors.primary.withAlpha(64),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -282,13 +280,13 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            const Color(0xFF667EEA).withOpacity(0.3),
-                            const Color(0xFF667EEA).withOpacity(0.1),
+                            const Color(0xFF667EEA).withAlpha(77),
+                            const Color(0xFF667EEA).withAlpha(26),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFF667EEA).withOpacity(0.4),
+                          color: const Color(0xFF667EEA).withAlpha(102),
                           width: 1.5,
                         ),
                       ),
@@ -297,7 +295,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF667EEA).withOpacity(0.25),
+                              color: const Color(0xFF667EEA).withAlpha(64),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -424,7 +422,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  Colors.black.withOpacity(0.4),
+                                  Colors.black.withAlpha(102),
                                 ],
                               ),
                             ),
@@ -447,13 +445,13 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.primary.withOpacity(0.15),
-                          AppColors.primary.withOpacity(0.05),
+                          AppColors.primary.withAlpha(38),
+                          AppColors.primary.withAlpha(13),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
+                        color: AppColors.primary.withAlpha(77),
                         width: 2,
                       ),
                     ),
@@ -464,7 +462,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.2),
+                              color: AppColors.primary.withAlpha(51),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -591,10 +589,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withAlpha(77),
           width: 1,
         ),
       ),
@@ -652,7 +650,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: log.isCompleted
-                      ? AppColors.primary.withOpacity(0.2)
+                      ? AppColors.primary.withAlpha(51)
                       : AppColors.error.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
@@ -691,7 +689,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withAlpha(26),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(

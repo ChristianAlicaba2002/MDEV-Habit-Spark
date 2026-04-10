@@ -32,27 +32,14 @@ class CompletedCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: AppColors.textPrimary,
-                size: 28,
-              ),
+              Icon(Icons.check_circle, color: AppColors.textPrimary, size: 28),
               SizedBox(width: 8),
-              Text(
-                'Completed',
-                style: AppTextStyles.labelMedium,
-              ),
+              Text('Completed', style: AppTextStyles.labelMedium),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            '$completedCount',
-            style: AppTextStyles.display1,
-          ),
-          const Text(
-            'habits today',
-            style: AppTextStyles.bodySmall,
-          ),
+          Text('$completedCount', style: AppTextStyles.display1),
+          const Text('habits today', style: AppTextStyles.bodySmall),
         ],
       ),
     );

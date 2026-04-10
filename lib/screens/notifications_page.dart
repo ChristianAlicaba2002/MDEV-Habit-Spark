@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/models/notification_model.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/auth_service.dart';
-import 'package:habit_spark/constants/app_colors.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
