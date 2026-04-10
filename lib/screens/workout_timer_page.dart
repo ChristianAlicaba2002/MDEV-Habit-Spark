@@ -23,7 +23,7 @@ class WorkoutTimerPage extends StatefulWidget {
 
 class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
   final HabitLogService _logService = HabitLogService();
-  late Timer _timer;
+  Timer? _timer;
   int _seconds = 0;
   bool _isRunning = false;
   double _distance = 0.0;
@@ -32,7 +32,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     _distanceController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -49,7 +49,7 @@ class _WorkoutTimerPageState extends State<WorkoutTimerPage> {
 
   void _pauseTimer() {
     if (!_isRunning) return;
-    _timer.cancel();
+    _timer?.cancel();
     setState(() => _isRunning = false);
   }
 

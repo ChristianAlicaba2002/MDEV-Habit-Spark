@@ -380,7 +380,7 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: Colors.grey[900],
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8),
+            BoxShadow(color: Colors.black.withAlpha(77), blurRadius: 8),
           ],
         ),
         child: BottomNavigationBar(
@@ -1164,9 +1164,9 @@ class _HomePageState extends State<HomePage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withAlpha(77), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1226,12 +1226,12 @@ class _HomePageState extends State<HomePage> {
                 height: 32,
                 decoration: BoxDecoration(
                   color: isToday
-                      ? const Color(0xFFF39C12).withOpacity(0.15)
+                      ? const Color(0xFFF39C12).withAlpha(38)
                       : AppColors.surfaceAlt,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isToday
-                        ? const Color(0xFFF39C12).withOpacity(0.4)
+                        ? const Color(0xFFF39C12).withAlpha(102)
                         : AppColors.border,
                     width: 2,
                   ),
@@ -1293,7 +1293,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: gradient[0].withOpacity(0.3),
+            color: gradient[0].withAlpha(77),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -1319,7 +1319,7 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.textPrimary.withOpacity(0.2),
+                    color: AppColors.textPrimary.withAlpha(51),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -1336,14 +1336,14 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   habit.isDone ? 'Completed today' : 'Not completed yet',
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary.withOpacity(0.9),
+                    color: AppColors.textPrimary.withAlpha(230),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Tap to view details',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary.withOpacity(0.7),
+                    color: AppColors.textPrimary.withAlpha(179),
                   ),
                 ),
               ],
@@ -1365,7 +1365,7 @@ class _HomePageState extends State<HomePage> {
           decoration: BoxDecoration(
             color: _currentHabitPage == index
                 ? AppColors.primary
-                : AppColors.textSecondary.withOpacity(0.3),
+                : AppColors.textSecondary.withAlpha(77),
             borderRadius: BorderRadius.circular(4),
           ),
         );
@@ -1491,16 +1491,16 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
                       height: 32,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFFF39C12).withOpacity(0.2)
+                            ? const Color(0xFFF39C12).withAlpha(51)
                             : (isToday
-                                  ? const Color(0xFFF39C12).withOpacity(0.15)
+                                  ? const Color(0xFFF39C12).withAlpha(38)
                                   : AppColors.surfaceAlt),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFFF39C12).withOpacity(0.6)
+                              ? const Color(0xFFF39C12).withAlpha(153)
                               : (isToday
-                                    ? const Color(0xFFF39C12).withOpacity(0.4)
+                                    ? const Color(0xFFF39C12).withAlpha(102)
                                     : AppColors.border),
                           width: 2,
                         ),
@@ -1653,7 +1653,7 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
                       decoration: BoxDecoration(
                         color: _currentHabitPage == index
                             ? AppColors.primary
-                            : AppColors.textSecondary.withOpacity(0.3),
+                            : AppColors.textSecondary.withAlpha(77),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );

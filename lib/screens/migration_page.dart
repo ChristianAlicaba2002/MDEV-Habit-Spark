@@ -105,10 +105,10 @@ class _MigrationPageState extends State<MigrationPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withAlpha(13),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withAlpha(26),
                   width: 1,
                 ),
               ),
@@ -164,10 +164,10 @@ class _MigrationPageState extends State<MigrationPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withAlpha(13),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withAlpha(26),
                   width: 1,
                 ),
               ),
@@ -205,7 +205,7 @@ class _MigrationPageState extends State<MigrationPage> {
                                     AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Icon(Icons.distribute),
+                          : const Icon(Icons.shuffle),
                       label: Text(_isRunning ? 'Running...' : 'Distribute Logs'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
@@ -225,13 +225,13 @@ class _MigrationPageState extends State<MigrationPage> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: _status.contains('✅')
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.red.withOpacity(0.1),
+                      ? Colors.green.withAlpha(26)
+                      : Colors.red.withAlpha(26),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _status.contains('✅')
-                        ? Colors.green.withOpacity(0.3)
-                        : Colors.red.withOpacity(0.3),
+                        ? Colors.green.withAlpha(77)
+                        : Colors.red.withAlpha(77),
                     width: 1,
                   ),
                 ),

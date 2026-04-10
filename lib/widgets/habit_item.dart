@@ -49,7 +49,7 @@ class HabitItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: (habit.isDone ? Colors.grey : colors[0]).withOpacity(0.3),
+              color: (habit.isDone ? Colors.grey : colors[0]).withAlpha(77),
               spreadRadius: 1,
               blurRadius: 6,
               offset: const Offset(0, 3),

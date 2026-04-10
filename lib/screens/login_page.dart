@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
-import 'package:habit_spark/screens/onboarding_page.dart';
 import 'package:habit_spark/screens/signup_page.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

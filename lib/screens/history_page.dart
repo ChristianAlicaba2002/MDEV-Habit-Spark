@@ -7,7 +7,6 @@ import 'package:habit_spark/widgets/error_widget.dart';
 import 'package:habit_spark/utils/error_handler.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
-import 'package:habit_spark/constants/app_ui_components.dart';
 
 class HistoryPage extends StatefulWidget {
   final Habit habit;
@@ -340,12 +339,12 @@ class _HistoryPageState extends State<HistoryPage> {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primary.withOpacity(0.2)
+                ? AppColors.primary.withAlpha(51)
                 : AppColors.surfaceAlt,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? AppColors.primary.withOpacity(0.5)
+                  ? AppColors.primary.withAlpha(128)
                   : AppColors.border,
               width: isSelected ? 2 : 1,
             ),
@@ -406,7 +405,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4ECDC4).withOpacity(0.1),
+                    color: const Color(0xFF4ECDC4).withAlpha(26),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -454,7 +453,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 Text(
                   log.notes!,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withAlpha(179),
                     fontSize: 12,
                   ),
                   maxLines: 2,
@@ -551,7 +550,7 @@ class _HistoryPageState extends State<HistoryPage> {
             Icon(
               Icons.history,
               size: 64,
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withAlpha(77),
             ),
             const SizedBox(height: 16),
             const Text(
