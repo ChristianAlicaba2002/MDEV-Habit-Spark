@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:habit_spark/screens/login_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -15,7 +16,8 @@ class SignUpPage extends StatefulWidget {
   State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateMixin {
+class _SignUpPageState extends State<SignUpPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
@@ -40,10 +42,17 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animController);
+    _fadeAnimation =
+        Tween<double>(begin: 0.0, end: 1.0).animate(_animController);
     _animController.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(const AssetImage('assets/images/google_icon.png'), context);
   }
 
   String hashPassword(String password) {
@@ -148,9 +157,8 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -174,7 +182,8 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                 color: const Color(0xFF4ECDC4).withAlpha(40),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_rounded, color: Color(0xFF4ECDC4), size: 40),
+              child: const Icon(Icons.check_rounded,
+                  color: Color(0xFF4ECDC4), size: 40),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -189,7 +198,8 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
             Text(
               'Your account has been created successfully.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withAlpha(160), fontSize: 14),
+              style:
+                  TextStyle(color: Colors.white.withAlpha(160), fontSize: 14),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -197,20 +207,22 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
               height: 54,
               child: ElevatedButton(
                 onPressed: () async {
-                  Navigator.of(context).pop(); 
+                  Navigator.of(context).pop();
                   final userId = _authService.currentUser?.uid;
                   if (userId != null) {
                     final doc = await FirebaseFirestore.instance
                         .collection('users')
                         .doc(userId)
                         .get();
-                    
-                    final hasSeenOnboarding = doc.data()?['hasSeenOnboarding'] ?? false;
-                    
+
+                    final hasSeenOnboarding =
+                        doc.data()?['hasSeenOnboarding'] ?? false;
+
                     if (mounted) {
                       if (!hasSeenOnboarding) {
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => OnboardingPage(userId: userId)),
+                          MaterialPageRoute(
+                              builder: (_) => OnboardingPage(userId: userId)),
                           (route) => false,
                         );
                       } else {
@@ -225,9 +237,11 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4ECDC4),
                   foregroundColor: const Color(0xFF0F172A),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Start Journey', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Start Journey',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -240,40 +254,38 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+      body: RepaintBoundary(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: AbsorbPointer(
-            absorbing: _isLoading,
-            child: Column(
-              children: [
-                _buildHeader(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: SafeArea(
+            child: AbsorbPointer(
+              absorbing: _isLoading,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                  child: RepaintBoundary(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 12),
-                          _buildStepIndicatorRow(),
-                          const SizedBox(height: 32),
+                          _buildHeader(),
+                          const SizedBox(height: 48),
                           _buildFormalSignupCard(),
                           const SizedBox(height: 32),
                           _buildSignInRow(),
-                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -282,32 +294,30 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 24, 0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-            onPressed: () => Navigator.pop(context),
-          ),
-          Row(
-            children: [
-              const Icon(Icons.local_fire_department_rounded, color: Color(0xFF4ECDC4), size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'HabitSpark',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+    return Column(
+      children: [
+        // Logo without circle
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.local_fire_department_rounded,
+              size: 40,
+              color: Color(0xFF4ECDC4), // Brand Teal
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'HabitSpark',
+              style: GoogleFonts.poppins(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: -0.5,
               ),
-            ],
-          ),
-          const SizedBox(width: 40), // Balance
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -332,11 +342,13 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          width: 36,
-          height: 36,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isActive || isCompleted ? const Color(0xFF4ECDC4) : Colors.white.withAlpha(20),
+            color: isActive || isCompleted
+                ? const Color(0xFF4ECDC4)
+                : Colors.white.withAlpha(20),
             border: Border.all(
               color: isActive ? Colors.white : Colors.transparent,
               width: 2,
@@ -344,22 +356,25 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
           ),
           child: Center(
             child: isCompleted
-                ? const Icon(Icons.check, color: Color(0xFF0F172A), size: 20)
+                ? const Icon(Icons.check, color: Color(0xFF0F172A), size: 24)
                 : Text(
                     '${step + 1}',
                     style: TextStyle(
-                      color: isActive ? const Color(0xFF0F172A) : Colors.white.withAlpha(120),
+                      color: isActive
+                          ? const Color(0xFF0F172A)
+                          : Colors.white.withAlpha(120),
                       fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
           label,
           style: TextStyle(
             color: isActive ? Colors.white : Colors.white.withAlpha(100),
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -374,7 +389,8 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       height: 2,
       margin: const EdgeInsets.only(bottom: 16, left: 4, right: 4),
       decoration: BoxDecoration(
-        color: isCompleted ? const Color(0xFF4ECDC4) : Colors.white.withAlpha(20),
+        color:
+            isCompleted ? const Color(0xFF4ECDC4) : Colors.white.withAlpha(20),
         borderRadius: BorderRadius.circular(1),
       ),
     );
@@ -382,7 +398,7 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
 
   Widget _buildFormalSignupCard() {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B).withAlpha(180),
         borderRadius: BorderRadius.circular(24),
@@ -398,22 +414,30 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       child: Form(
         key: _formKey,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildStepContent(),
+            _buildStepIndicatorRow(),
             const SizedBox(height: 32),
+            _buildStepContent(),
+            const SizedBox(height: 36),
             _buildContinueButton(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             Row(
               children: [
                 Expanded(child: Divider(color: Colors.white.withAlpha(30))),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('OR', style: TextStyle(color: Colors.white.withAlpha(80), fontSize: 11)),
+                  child: Text('OR CONTINUE WITH',
+                      style: TextStyle(
+                          color: Colors.white.withAlpha(80),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.2)),
                 ),
                 Expanded(child: Divider(color: Colors.white.withAlpha(30))),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
             _buildGoogleButton(),
           ],
         ),
@@ -424,7 +448,11 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
   Widget _buildStepContent() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      child: _currentStep == 0 ? _buildStep1() : _currentStep == 1 ? _buildStep2() : _buildStep3(),
+      child: _currentStep == 0
+          ? _buildStep1()
+          : _currentStep == 1
+              ? _buildStep2()
+              : _buildStep3(),
     );
   }
 
@@ -432,11 +460,20 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     return Column(
       key: const ValueKey(0),
       children: [
-        _buildTextField(controller: _firstNameController, label: 'First Name', icon: Icons.person_outline),
-        const SizedBox(height: 16),
-        _buildTextField(controller: _middleNameController, label: 'Middle Name (Optional)', icon: Icons.person_outline),
-        const SizedBox(height: 16),
-        _buildTextField(controller: _lastNameController, label: 'Last Name', icon: Icons.person_outline),
+        _buildTextField(
+            controller: _firstNameController,
+            label: 'First Name',
+            icon: Icons.person_outline),
+        const SizedBox(height: 20),
+        _buildTextField(
+            controller: _middleNameController,
+            label: 'Middle Name (Optional)',
+            icon: Icons.person_outline),
+        const SizedBox(height: 20),
+        _buildTextField(
+            controller: _lastNameController,
+            label: 'Last Name',
+            icon: Icons.person_outline),
       ],
     );
   }
@@ -452,9 +489,12 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
           readOnly: true,
           onTap: _selectBirthDate,
         ),
-        const SizedBox(height: 16),
-        _buildTextField(controller: _addressController, label: 'Address', icon: Icons.location_on_outlined),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
+        _buildTextField(
+            controller: _addressController,
+            label: 'Address',
+            icon: Icons.location_on_outlined),
+        const SizedBox(height: 20),
         _buildDropdown(),
       ],
     );
@@ -470,26 +510,38 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         _buildTextField(
           controller: _passwordController,
           label: 'Password',
           icon: Icons.lock_outline,
           obscureText: _obscurePassword,
           suffixIcon: IconButton(
-            icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white.withAlpha(100), size: 20),
-            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: Colors.white.withAlpha(100),
+                size: 22),
+            onPressed: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         _buildTextField(
           controller: _confirmPasswordController,
           label: 'Confirm Password',
           icon: Icons.lock_reset_rounded,
           obscureText: _obscureConfirmPassword,
           suffixIcon: IconButton(
-            icon: Icon(_obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white.withAlpha(100), size: 20),
-            onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+            icon: Icon(
+                _obscureConfirmPassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: Colors.white.withAlpha(100),
+                size: 22),
+            onPressed: () => setState(
+                () => _obscureConfirmPassword = !_obscureConfirmPassword),
           ),
         ),
       ],
@@ -512,19 +564,24 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       onTap: onTap,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 15),
+      style: const TextStyle(color: Colors.white, fontSize: 16),
       cursorColor: const Color(0xFF4ECDC4),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 14),
-        prefixIcon: Icon(icon, color: Colors.white.withAlpha(100), size: 20),
+        labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 15),
+        prefixIcon: Icon(icon, color: Colors.white.withAlpha(100), size: 22),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: Colors.white.withAlpha(10),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withAlpha(20))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF4ECDC4))),
-        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.white.withAlpha(20))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF4ECDC4))),
+        contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
       ),
     );
   }
@@ -533,18 +590,27 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     return DropdownButtonFormField<String>(
       value: _selectedGender,
       dropdownColor: const Color(0xFF1E293B),
-      style: const TextStyle(color: Colors.white, fontSize: 15),
+      style: const TextStyle(color: Colors.white, fontSize: 16),
       decoration: InputDecoration(
         labelText: 'Gender',
-        labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 14),
-        prefixIcon: Icon(Icons.person_pin_rounded, color: Colors.white.withAlpha(100), size: 20),
+        labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 15),
+        prefixIcon: Icon(Icons.person_pin_rounded,
+            color: Colors.white.withAlpha(100), size: 22),
         filled: true,
         fillColor: Colors.white.withAlpha(10),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withAlpha(20))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF4ECDC4))),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.white.withAlpha(20))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF4ECDC4))),
+        contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
       ),
-      items: ['Male', 'Female', 'Other', 'Prefer not to say'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+      items: ['Male', 'Female', 'Other', 'Prefer not to say']
+          .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+          .toList(),
       onChanged: (v) => setState(() => _selectedGender = v!),
     );
   }
@@ -558,12 +624,22 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4ECDC4),
           foregroundColor: const Color(0xFF0F172A),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
+          textStyle: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
         ),
         child: _isLoading
-            ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFF0F172A)))
-            : Text(_currentStep == 2 ? 'CREATE ACCOUNT' : 'CONTINUE', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                    strokeWidth: 3, color: Color(0xFF0F172A)))
+            : Text(_currentStep == 2 ? 'CREATE ACCOUNT' : 'CONTINUE'),
       ),
     );
   }
@@ -572,17 +648,26 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     return OutlinedButton(
       onPressed: () {},
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        side: BorderSide(color: Colors.white.withAlpha(40)),
+        padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 24),
+        side: BorderSide(color: Colors.white.withAlpha(40), width: 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: Colors.white.withAlpha(10),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset('assets/images/google_icon.png', width: 20, height: 20),
-          const SizedBox(width: 12),
-          const Text('Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Image.asset('assets/images/google_icon.png', width: 24, height: 24),
+          ),
+          Text(
+            'Google',
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -592,10 +677,31 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('Already member? ', style: TextStyle(color: Colors.white.withAlpha(130), fontSize: 14)),
+        Text(
+          'Already member?  ',
+          style: TextStyle(color: Colors.white.withAlpha(120), fontSize: 14),
+        ),
         GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Text('Sign In', style: TextStyle(color: Color(0xFF4ECDC4), fontWeight: FontWeight.bold, fontSize: 14)),
+          onTap: () => Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const LoginPage(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 400),
+            ),
+          ),
+          child: Text(
+            'Sign In',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: const Color(0xFF4ECDC4),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
       ],
     );
@@ -606,7 +712,8 @@ class _SignUpPageState extends State<SignUpPage> with SingleTickerProviderStateM
       if (_validateCurrentStep()) {
         setState(() => _currentStep++);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please complete current step')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please complete current step')));
       }
     } else {
       _signUp();
