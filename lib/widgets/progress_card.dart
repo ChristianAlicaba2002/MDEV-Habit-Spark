@@ -38,14 +38,8 @@ class ProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Today\'s Progress',
-                style: AppTextStyles.bodyMedium,
-              ),
-              Text(
-                '$percentage%',
-                style: AppTextStyles.heading3,
-              ),
+              const Text('Today\'s Progress', style: AppTextStyles.bodyMedium),
+              Text('$percentage%', style: AppTextStyles.heading3),
             ],
           ),
           const SizedBox(height: 12),
@@ -59,8 +53,8 @@ class ProgressCard extends StatelessWidget {
                 percentage >= 80
                     ? AppColors.success
                     : percentage >= 50
-                        ? AppColors.warning
-                        : AppColors.error,
+                    ? AppColors.warning
+                    : AppColors.error,
               ),
             ),
           ),

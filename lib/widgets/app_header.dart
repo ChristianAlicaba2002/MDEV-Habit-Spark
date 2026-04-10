@@ -39,13 +39,15 @@ class AppHeader extends StatelessWidget {
                 iconSize: 21,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                onPressed: onCalendarTap ?? () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Calendar - Coming soon')),
-                  );
-                },
+                onPressed:
+                    onCalendarTap ??
+                    () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Calendar - Coming soon')),
+                      );
+                    },
               ),
-              
+
               // Right side - Notification and Profile (far right)
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -103,7 +105,8 @@ class AppHeader extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 16,
                       backgroundColor: AppColors.secondary,
-                      backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty)
+                      backgroundImage:
+                          (photoUrl != null && photoUrl!.isNotEmpty)
                           ? NetworkImage(photoUrl!)
                           : null,
                       child: (photoUrl == null || photoUrl!.isEmpty)
@@ -120,7 +123,7 @@ class AppHeader extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Center - App Logo/Name (absolutely centered)
           Text(
             'HabitSpark',

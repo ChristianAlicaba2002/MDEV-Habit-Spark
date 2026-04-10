@@ -112,10 +112,7 @@ class _HomePageState extends State<HomePage> {
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary,
-                      width: 3,
-                    ),
+                    border: Border.all(color: AppColors.primary, width: 3),
                   ),
                   child: CircleAvatar(
                     radius: 50,
@@ -184,10 +181,7 @@ class _HomePageState extends State<HomePage> {
                 // MY STUFF Section
                 const Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(
-                    'MY STUFF',
-                    style: AppTextStyles.labelSmall,
-                  ),
+                  child: Text('MY STUFF', style: AppTextStyles.labelSmall),
                 ),
                 const SizedBox(height: 16),
 
@@ -267,9 +261,7 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppColors.border, width: 1),
-          ),
+          border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
         ),
         child: Row(
           children: [
@@ -283,15 +275,13 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 title,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDestructive ? AppColors.error : AppColors.textPrimary,
+                  color: isDestructive
+                      ? AppColors.error
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: AppColors.textSecondary,
-              size: 24,
-            ),
+            Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 24),
           ],
         ),
       ),
@@ -371,8 +361,8 @@ class _HomePageState extends State<HomePage> {
                     totalCount,
                   )
                 : _selectedIndex == 1
-                    ? _buildDailyCheckInPage(habits, userId)
-                    : _buildStatsPage();
+                ? _buildDailyCheckInPage(habits, userId)
+                : _buildStatsPage();
           },
         ),
       ),
@@ -607,17 +597,20 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.add_circle_outline, size: 64, color: AppColors.textSecondary),
+          Icon(
+            Icons.add_circle_outline,
+            size: 64,
+            color: AppColors.textSecondary,
+          ),
           const SizedBox(height: 16),
           Text(
             'No habits yet',
-            style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Tap + to add your first habit',
-            style: AppTextStyles.bodySmall,
-          ),
+          Text('Tap + to add your first habit', style: AppTextStyles.bodySmall),
         ],
       ),
     );
@@ -668,7 +661,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildDailyCheckInPage(List<Habit> habits, String userId) {
     int? selectedHabitIndex;
-    
+
     return StatefulBuilder(
       builder: (context, setModalState) {
         return SingleChildScrollView(
@@ -680,10 +673,7 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Daily Check-In',
-                    style: AppTextStyles.heading4,
-                  ),
+                  const Text('Daily Check-In', style: AppTextStyles.heading4),
                   GestureDetector(
                     onTap: _showAddHabitDialog,
                     child: const Icon(
@@ -716,7 +706,9 @@ class _HomePageState extends State<HomePage> {
                         ),
                         Text(
                           '${habits.where((h) => h.isDone == true).length}/${habits.length}',
-                          style: AppTextStyles.heading5.copyWith(color: AppColors.primary),
+                          style: AppTextStyles.heading5.copyWith(
+                            color: AppColors.primary,
+                          ),
                         ),
                       ],
                     ),
@@ -724,10 +716,15 @@ class _HomePageState extends State<HomePage> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: LinearProgressIndicator(
-                        value: habits.isEmpty ? 0 : habits.where((h) => h.isDone == true).length / habits.length,
+                        value: habits.isEmpty
+                            ? 0
+                            : habits.where((h) => h.isDone == true).length /
+                                  habits.length,
                         minHeight: 6,
                         backgroundColor: AppColors.border,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFF39C12)),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Color(0xFFF39C12),
+                        ),
                       ),
                     ),
                   ],
@@ -742,11 +739,17 @@ class _HomePageState extends State<HomePage> {
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Column(
                           children: [
-                            Icon(Icons.add_circle_outline, size: 48, color: AppColors.textSecondary),
+                            Icon(
+                              Icons.add_circle_outline,
+                              size: 48,
+                              color: AppColors.textSecondary,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'No habits yet',
-                              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -759,7 +762,7 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, index) {
                         final habit = habits[index];
                         final isSelected = selectedHabitIndex == index;
-                        
+
                         return GestureDetector(
                           onTap: () {
                             setModalState(() {
@@ -789,7 +792,9 @@ class _HomePageState extends State<HomePage> {
                                     GestureDetector(
                                       onTap: () {
                                         setState(() {
-                                          habits[index] = habit.copyWith(isDone: !habit.isDone);
+                                          habits[index] = habit.copyWith(
+                                            isDone: !habit.isDone,
+                                          );
                                         });
                                       },
                                       child: Container(
@@ -819,7 +824,8 @@ class _HomePageState extends State<HomePage> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             habit.name,
@@ -827,12 +833,15 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            habit.isDone == true ? 'Completed ✓' : 'Not completed',
-                                            style: AppTextStyles.bodySmall.copyWith(
-                                              color: habit.isDone == true
-                                                  ? AppColors.primary
-                                                  : AppColors.textSecondary,
-                                            ),
+                                            habit.isDone == true
+                                                ? 'Completed ✓'
+                                                : 'Not completed',
+                                            style: AppTextStyles.bodySmall
+                                                .copyWith(
+                                                  color: habit.isDone == true
+                                                      ? AppColors.primary
+                                                      : AppColors.textSecondary,
+                                                ),
                                           ),
                                         ],
                                       ),
@@ -848,15 +857,24 @@ class _HomePageState extends State<HomePage> {
                                       // Mark as Done button
                                       GestureDetector(
                                         onTap: () async {
-                                          await _habitService.toggleHabit(habit.id, habit.isDone ?? false, userId);
+                                          await _habitService.toggleHabit(
+                                            habit.id,
+                                            habit.isDone ?? false,
+                                            userId,
+                                          );
                                           setModalState(() {
                                             selectedHabitIndex = null;
                                           });
                                         },
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             border: Border.all(
                                               color: Color(0xFFF39C12),
                                               width: 1,
@@ -865,13 +883,17 @@ class _HomePageState extends State<HomePage> {
                                           child: Row(
                                             children: [
                                               Icon(
-                                                habit.isDone == true ? Icons.check_circle : Icons.circle_outlined,
+                                                habit.isDone == true
+                                                    ? Icons.check_circle
+                                                    : Icons.circle_outlined,
                                                 color: Color(0xFFF39C12),
                                                 size: 16,
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                habit.isDone == true ? 'Done' : 'Mark Done',
+                                                habit.isDone == true
+                                                    ? 'Done'
+                                                    : 'Mark Done',
                                                 style: const TextStyle(
                                                   color: Color(0xFFF39C12),
                                                   fontSize: 12,
@@ -889,17 +911,23 @@ class _HomePageState extends State<HomePage> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => CreateEditHabitPage(
-                                                habit: habit,
-                                                userId: userId,
-                                              ),
+                                              builder: (_) =>
+                                                  CreateEditHabitPage(
+                                                    habit: habit,
+                                                    userId: userId,
+                                                  ),
                                             ),
                                           );
                                         },
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             border: Border.all(
                                               color: Color(0xFFF39C12),
                                               width: 1,
@@ -932,20 +960,31 @@ class _HomePageState extends State<HomePage> {
                                           showDialog(
                                             context: context,
                                             builder: (context) => AlertDialog(
-                                              backgroundColor: AppColors.surface,
-                                              title: const Text('Delete Habit?', style: AppTextStyles.heading4),
+                                              backgroundColor:
+                                                  AppColors.surface,
+                                              title: const Text(
+                                                'Delete Habit?',
+                                                style: AppTextStyles.heading4,
+                                              ),
                                               content: const Text(
                                                 'This action cannot be undone.',
                                                 style: AppTextStyles.bodySmall,
                                               ),
                                               actions: [
                                                 TextButton(
-                                                  onPressed: () => Navigator.pop(context),
-                                                  child: const Text('Cancel', style: AppTextStyles.labelMedium),
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: const Text(
+                                                    'Cancel',
+                                                    style: AppTextStyles
+                                                        .labelMedium,
+                                                  ),
                                                 ),
                                                 TextButton(
                                                   onPressed: () {
-                                                    _habitService.deleteHabit(habit.id);
+                                                    _habitService.deleteHabit(
+                                                      habit.id,
+                                                    );
                                                     Navigator.pop(context);
                                                     setModalState(() {
                                                       selectedHabitIndex = null;
@@ -953,7 +992,12 @@ class _HomePageState extends State<HomePage> {
                                                   },
                                                   child: Text(
                                                     'Delete',
-                                                    style: AppTextStyles.labelMedium.copyWith(color: AppColors.error),
+                                                    style: AppTextStyles
+                                                        .labelMedium
+                                                        .copyWith(
+                                                          color:
+                                                              AppColors.error,
+                                                        ),
                                                   ),
                                                 ),
                                               ],
@@ -961,9 +1005,14 @@ class _HomePageState extends State<HomePage> {
                                           );
                                         },
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             border: Border.all(
                                               color: AppColors.error,
                                               width: 1,
@@ -1015,10 +1064,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Page Title
-          const Text(
-            'Progress Analytics',
-            style: AppTextStyles.heading2,
-          ),
+          const Text('Progress Analytics', style: AppTextStyles.heading2),
           const SizedBox(height: 24),
 
           // Streak Stats
@@ -1070,7 +1116,9 @@ class _HomePageState extends State<HomePage> {
             builder: (context, snapshot) {
               final habits = snapshot.data ?? [];
               final totalHabits = habits.length;
-              final completedToday = habits.where((h) => h.isDone == true).length;
+              final completedToday = habits
+                  .where((h) => h.isDone == true)
+                  .length;
               final completionRate = totalHabits > 0
                   ? ((completedToday / totalHabits) * 100).toStringAsFixed(0)
                   : '0';
@@ -1173,20 +1221,11 @@ class _HomePageState extends State<HomePage> {
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: AppTextStyles.heading3.copyWith(color: color),
-          ),
+          Text(value, style: AppTextStyles.heading3.copyWith(color: color)),
           const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: AppTextStyles.captionSmall,
-          ),
+          Text(subtitle, style: AppTextStyles.captionSmall),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: AppTextStyles.labelMedium,
-          ),
+          Text(title, style: AppTextStyles.labelMedium),
         ],
       ),
     );
@@ -1202,7 +1241,15 @@ class _HomePageState extends State<HomePage> {
     return weekDays.asMap().entries.map((entry) {
       final index = entry.key;
       final day = entry.value;
-      final dayName = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day.weekday - 1];
+      final dayName = [
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat',
+        'Sun',
+      ][day.weekday - 1];
       final isToday = day.day == now.day && day.month == now.month;
 
       return StreamBuilder<List<CalendarEvent>>(
@@ -1215,7 +1262,9 @@ class _HomePageState extends State<HomePage> {
               Text(
                 dayName,
                 style: TextStyle(
-                  color: isToday ? const Color(0xFFF39C12) : AppColors.textSecondary,
+                  color: isToday
+                      ? const Color(0xFFF39C12)
+                      : AppColors.textSecondary,
                   fontSize: 12,
                   fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                 ),
@@ -1242,7 +1291,9 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       '${day.day}',
                       style: TextStyle(
-                        color: isToday ? AppColors.textPrimary : AppColors.textSecondary,
+                        color: isToday
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1311,7 +1362,9 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                   child: Text(
                     habit.name,
-                    style: AppTextStyles.heading5.copyWith(color: AppColors.textPrimary),
+                    style: AppTextStyles.heading5.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1379,16 +1432,9 @@ class _HomePageState extends State<HomePage> {
       child: Center(
         child: Column(
           children: [
-            Icon(
-              Icons.insights,
-              size: 64,
-              color: AppColors.textSecondary,
-            ),
+            Icon(Icons.insights, size: 64, color: AppColors.textSecondary),
             const SizedBox(height: 16),
-            const Text(
-              'No habits yet',
-              style: AppTextStyles.heading5,
-            ),
+            const Text('No habits yet', style: AppTextStyles.heading5),
             const SizedBox(height: 8),
             const Text(
               'Create habits to see your progress analytics',
@@ -1564,10 +1610,7 @@ class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Habits Breakdown',
-          style: AppTextStyles.heading4,
-        ),
+        const Text('Habits Breakdown', style: AppTextStyles.heading4),
         const SizedBox(height: 16),
         StreamBuilder<List<Habit>>(
           stream: _habitService.getHabitsStream(widget.userId),

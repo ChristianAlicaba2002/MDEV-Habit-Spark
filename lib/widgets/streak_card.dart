@@ -48,14 +48,8 @@ class StreakCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            '$streakDays',
-            style: AppTextStyles.display1,
-          ),
-          const Text(
-            'days',
-            style: AppTextStyles.bodySmall,
-          ),
+          Text('$streakDays', style: AppTextStyles.display1),
+          const Text('days', style: AppTextStyles.bodySmall),
         ],
       ),
     );
