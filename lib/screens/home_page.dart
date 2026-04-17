@@ -1,25 +1,16 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
-import 'package:habit_spark/screens/login_page.dart';
 import 'package:habit_spark/screens/notifications_page.dart';
 import 'package:habit_spark/screens/habit_detail_page.dart';
 import 'package:habit_spark/screens/create_edit_habit_page.dart';
-import 'package:habit_spark/screens/daily_checkin_page.dart';
-import 'package:habit_spark/screens/calendar_picker_page.dart';
 import 'package:habit_spark/screens/training_calendar_page.dart';
-import 'package:habit_spark/services/calendar_event_service.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
-import 'package:habit_spark/models/calendar_event.dart';
 import 'package:habit_spark/widgets/app_header.dart';
-import 'package:habit_spark/widgets/greeting_header.dart';
-import 'package:habit_spark/widgets/streak_card.dart';
-import 'package:habit_spark/widgets/completed_card.dart';
-import 'package:habit_spark/widgets/progress_card.dart';
-import 'package:habit_spark/widgets/habit_item.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/constants/app_ui_components.dart';
@@ -31,38 +22,59 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
   final NotificationService _notificationService = NotificationService();
   final StreakService _streakService = StreakService();
+
   int _selectedIndex = 0;
-  bool _isExpanded = true; // Track expand/collapse state
-  int _currentHabitPage = 0; // Track current page in habits breakdown carousel
-  late PageController _habitPageController;
-  bool _isWeekExpanded = true; // Track week section expand/collapse
-  int? _selectedDayIndex; // Track selected day in week view
+  late AnimationController _heroAnimController;
+  late AnimationController _ringAnimController;
+  late Animation<double> _heroFadeAnim;
+  late Animation<double> _ringProgressAnim;
+  double _currentRingProgress = 0;
 
   @override
   void initState() {
     super.initState();
-    _habitPageController = PageController(viewportFraction: 0.85);
+    _heroAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _heroFadeAnim = CurvedAnimation(
+      parent: _heroAnimController,
+      curve: Curves.easeOut,
+    );
+    _ringAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _ringProgressAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _ringAnimController, curve: Curves.easeInOut),
+    );
+    _heroAnimController.forward();
     _initializeUserData();
   }
 
   @override
   void dispose() {
-    _habitPageController.dispose();
+    _heroAnimController.dispose();
+    _ringAnimController.dispose();
     super.dispose();
+  }
+
+  void _animateRing(double target) {
+    _ringAnimController.reset();
+    _currentRingProgress = target;
+    _ringAnimController.forward();
   }
 
   Future<void> _initializeUserData() async {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
       await _habitService.seedDefaultHabits(userId);
-      // Initialize streak data if it doesn't exist
       await _streakService.getUserStreak(userId);
-      // Check streak status on login
       await _streakService.checkStreakOnLogin(userId);
     }
   }
@@ -80,231 +92,32 @@ class _HomePageState extends State<HomePage> {
   void _showProfileMenu() async {
     final user = _authService.currentUser;
     final userId = user?.uid;
-
-    // Fetch user data to get photo URL
     UserModel? userData;
     if (userId != null) {
       userData = await _authService.getUserData(userId);
     }
-
     if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Profile Photo with border
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary, width: 3),
-                  ),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: AppColors.secondary,
-                    backgroundImage:
-                        (userData?.photoUrl != null &&
-                            userData!.photoUrl.isNotEmpty)
-                        ? NetworkImage(userData.photoUrl)
-                        : null,
-                    child:
-                        (userData?.photoUrl == null ||
-                            userData!.photoUrl.isEmpty)
-                        ? Text(
-                            (user?.email?.substring(0, 1).toUpperCase() ?? 'U'),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 40,
-                            ),
-                          )
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // User Name
-                Text(
-                  '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'
-                          .trim()
-                          .isEmpty
-                      ? user?.email?.split('@')[0] ?? 'User'
-                      : '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'
-                            .trim(),
-                  style: AppTextStyles.heading4,
-                ),
-                const SizedBox(height: 4),
-
-                // Joined date
-                Text(
-                  'Joined ${_getJoinedDate()}',
-                  style: AppTextStyles.bodySmall,
-                ),
-                const SizedBox(height: 24),
-
-                // Edit Profile Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Edit Profile - Coming soon'),
-                        ),
-                      );
-                    },
-                    style: AppUIComponents.primaryButtonStyle,
-                    child: const Text(
-                      'EDIT PROFILE',
-                      style: AppTextStyles.button,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // MY STUFF Section
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('MY STUFF', style: AppTextStyles.labelSmall),
-                ),
-                const SizedBox(height: 16),
-
-                // Menu Items
-                _buildMenuItem(
-                  icon: Icons.apps_outlined,
-                  title: 'Connected Apps & Devices',
-                  onTap: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Connected Apps - Coming soon'),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.notifications_outlined,
-                  title: 'Notifications',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationsPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.local_offer_outlined,
-                  title: 'Offers',
-                  onTap: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Offers - Coming soon')),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.settings_outlined,
-                  title: 'Settings',
-                  onTap: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Settings - Coming soon')),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  icon: Icons.logout,
-                  title: 'Logout',
-                  onTap: () async {
-                    Navigator.pop(context); // Close profile menu
-                    await _authService.signOut();
-                    // Let main.dart handle navigation via StreamBuilder
-                  },
-                  isDestructive: true,
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    bool isDestructive = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isDestructive ? AppColors.error : AppColors.textPrimary,
-              size: 24,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDestructive
-                      ? AppColors.error
-                      : AppColors.textPrimary,
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 24),
-          ],
-        ),
+      builder: (context) => _ProfileSheet(
+        user: user,
+        userData: userData,
+        authService: _authService,
+        joinedDate: _getJoinedDate(),
       ),
     );
   }
 
   String _getJoinedDate() {
     final now = DateTime.now();
-    final monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    return '${monthNames[now.month - 1]} ${now.year}';
+    return '${months[now.month - 1]} ${now.year}';
   }
 
   @override
@@ -321,1247 +134,1791 @@ class _HomePageState extends State<HomePage> {
           stream: _habitService.getHabitsStream(userId),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: AppColors.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Error: ${snapshot.error}'),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => setState(() {}),
-                      style: AppUIComponents.primaryButtonStyle,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
               );
+            }
+            if (snapshot.hasError) {
+              return _ErrorView(onRetry: () => setState(() {}));
             }
 
             final habits = snapshot.data ?? [];
             final completedCount = habits.where((h) => h.isDone == true).length;
             final totalCount = habits.length;
+            final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
 
-            return _selectedIndex == 0
-                ? _buildDashboard(
-                    userName,
-                    userInitial,
-                    userId,
-                    habits,
-                    completedCount,
-                    totalCount,
-                  )
-                : _selectedIndex == 1
-                ? _buildDailyCheckInPage(habits, userId)
-                : _buildStatsPage();
+            // Animate ring whenever progress changes
+            if (_currentRingProgress != progress) {
+              WidgetsBinding.instance.addPostFrameCallback(
+                (_) => _animateRing(progress),
+              );
+            }
+
+            return IndexedStack(
+              index: _selectedIndex,
+              children: [
+                _DashboardTab(
+                  userId: userId,
+                  userName: userName,
+                  userInitial: userInitial,
+                  habits: habits,
+                  completedCount: completedCount,
+                  totalCount: totalCount,
+                  progress: progress,
+                  heroFadeAnim: _heroFadeAnim,
+                  ringProgressAnim: _ringProgressAnim,
+                  notificationService: _notificationService,
+                  streakService: _streakService,
+                  authService: _authService,
+                  onAddHabit: _showAddHabitDialog,
+                  onProfileTap: _showProfileMenu,
+                ),
+                _CheckInTab(
+                  habits: habits,
+                  userId: userId,
+                  habitService: _habitService,
+                  onAddHabit: _showAddHabitDialog,
+                ),
+                _StatsTab(
+                  userId: userId,
+                  habits: habits,
+                  streakService: _streakService,
+                ),
+              ],
+            );
           },
         ),
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          boxShadow: [
-            BoxShadow(color: Colors.black.withAlpha(77), blurRadius: 8),
-          ],
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: _showAddHabitDialog,
+              backgroundColor: AppColors.primary,
+              elevation: 6,
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
+      bottomNavigationBar: _BottomNav(
+        selectedIndex: _selectedIndex,
+        onTap: (i) => setState(() => _selectedIndex = i),
+      ),
+    );
+  }
+}
+
+// ─── Bottom Navigation ────────────────────────────────────────────────────────
+
+class _BottomNav extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  const _BottomNav({required this.selectedIndex, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF141414),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(120),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(
+                icon: Icons.home_rounded,
+                label: 'Home',
+                selected: selectedIndex == 0,
+                onTap: () => onTap(0),
+              ),
+              _NavItem(
+                icon: Icons.task_alt_rounded,
+                label: 'Check-In',
+                selected: selectedIndex == 1,
+                onTap: () => onTap(1),
+              ),
+              _NavItem(
+                icon: Icons.insights_rounded,
+                label: 'Progress',
+                selected: selectedIndex == 2,
+                onTap: () => onTap(2),
+              ),
+            ],
+          ),
         ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.grey[900],
-          currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
-          selectedFontSize: 11,
-          unselectedFontSize: 10,
-          iconSize: 28,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: Icon(Icons.home_outlined),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: Icon(Icons.home),
-              ),
-              label: 'Home',
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withAlpha(30)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 26,
+              color: selected ? AppColors.primary : AppColors.textSecondary,
             ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: Icon(Icons.checklist_rounded),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                color: selected ? AppColors.primary : AppColors.textSecondary,
               ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: Icon(Icons.checklist),
-              ),
-              label: 'Check-In',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: Icon(Icons.bar_chart_outlined),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: Icon(Icons.bar_chart),
-              ),
-              label: 'Stats',
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildDashboard(
-    String userName,
-    String userInitial,
-    String userId,
-    List<Habit> habits,
-    int completedCount,
-    int totalCount,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Responsive padding based on screen width
-        final horizontalPadding = constraints.maxWidth < 360 ? 12.0 : 16.0;
-        final cardSpacing = constraints.maxWidth < 360 ? 12.0 : 16.0;
-        final verticalSpacing = constraints.maxWidth < 360 ? 20.0 : 24.0;
+// ─── Error View ───────────────────────────────────────────────────────────────
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.only(top: 8.0, bottom: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: StreamBuilder<int>(
-                  stream: _notificationService.getUnreadCountStream(userId),
-                  builder: (context, notificationSnapshot) {
-                    final unreadCount = notificationSnapshot.data ?? 0;
+class _ErrorView extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorView({required this.onRetry});
 
-                    return StreamBuilder<UserModel?>(
-                      stream: _authService.getUserDataStream(userId),
-                      builder: (context, userSnapshot) {
-                        final photoUrl = userSnapshot.data?.photoUrl;
-
-                        return AppHeader(
-                          onNotificationTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NotificationsPage(),
-                              ),
-                            );
-                          },
-                          onProfileTap: _showProfileMenu,
-                          onCalendarTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const TrainingCalendarPage(),
-                              ),
-                            );
-                          },
-                          notificationCount: unreadCount,
-                          userInitial: userInitial,
-                          photoUrl: photoUrl,
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: verticalSpacing + 8),
-                    GreetingHeader(userName: userName),
-                    SizedBox(height: verticalSpacing + 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: StreamBuilder<Map<String, dynamic>>(
-                            stream: _streakService.getStreakStream(userId),
-                            builder: (context, streakSnapshot) {
-                              final streakDays =
-                                  streakSnapshot.data?['currentStreak'] ?? 0;
-                              return StreakCard(streakDays: streakDays);
-                            },
-                          ),
-                        ),
-                        SizedBox(width: cardSpacing),
-                        Expanded(
-                          child: CompletedCard(completedCount: completedCount),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: verticalSpacing),
-                    ProgressCard(
-                      completedHabits: completedCount,
-                      totalHabits: totalCount,
-                    ),
-                    SizedBox(height: verticalSpacing),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Today\'s Habits',
-                          style: AppTextStyles.heading4,
-                        ),
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isExpanded = !_isExpanded;
-                                });
-                              },
-                              child: Row(
-                                children: [
-                                  Text(
-                                    _isExpanded ? 'COLLAPSE' : 'EXPAND',
-                                    style: AppTextStyles.labelMedium,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Icon(
-                                    _isExpanded
-                                        ? Icons.keyboard_arrow_up
-                                        : Icons.keyboard_arrow_down,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: _showAddHabitDialog,
-                              child: const Icon(
-                                Icons.add,
-                                color: AppColors.textPrimary,
-                                size: 28,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    habits.isEmpty
-                        ? _buildEmptyState()
-                        : AnimatedSize(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                            child: _isExpanded
-                                ? _buildHabitList(habits, userId)
-                                : const SizedBox(
-                                    width: double.infinity,
-                                    height: 50,
-                                    child: Center(
-                                      child: Text(
-                                        'Tap EXPAND to view habits',
-                                        style: TextStyle(
-                                          color: Colors.white60,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                          ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEmptyState() {
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.add_circle_outline,
-            size: 64,
-            color: AppColors.textSecondary,
-          ),
+          const Icon(Icons.error_outline, size: 64, color: AppColors.error),
           const SizedBox(height: 16),
-          Text(
-            'No habits yet',
-            style: AppTextStyles.bodyLarge.copyWith(
-              color: AppColors.textSecondary,
-            ),
+          const Text(
+            'Something went wrong',
+            style: AppTextStyles.heading4,
           ),
           const SizedBox(height: 8),
-          Text('Tap + to add your first habit', style: AppTextStyles.bodySmall),
+          ElevatedButton(
+            onPressed: onRetry,
+            style: AppUIComponents.primaryButtonStyle,
+            child: const Text('Retry'),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildHabitList(List<Habit> habits, String userId) {
-    final rows = <Widget>[];
-    for (int rowIndex = 0; rowIndex < (habits.length / 3).ceil(); rowIndex++) {
-      final startIndex = rowIndex * 3;
-      final endIndex = (startIndex + 3).clamp(0, habits.length);
-      final rowHabits = habits.sublist(startIndex, endIndex);
+// ─── Dashboard Tab ────────────────────────────────────────────────────────────
 
-      rows.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            children: [
-              for (int i = 0; i < 3; i++) ...[
-                Expanded(
-                  child: i < rowHabits.length
-                      ? RepaintBoundary(
-                          child: HabitItem(
-                            habit: rowHabits[i],
-                            index: startIndex + i,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      HabitDetailPage(habit: rowHabits[i]),
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : const SizedBox(),
-                ),
-                if (i < 2) const SizedBox(width: 12),
-              ],
-            ],
+class _DashboardTab extends StatelessWidget {
+  final String userId;
+  final String userName;
+  final String userInitial;
+  final List<Habit> habits;
+  final int completedCount;
+  final int totalCount;
+  final double progress;
+  final Animation<double> heroFadeAnim;
+  final Animation<double> ringProgressAnim;
+  final NotificationService notificationService;
+  final StreakService streakService;
+  final AuthService authService;
+  final VoidCallback onAddHabit;
+  final VoidCallback onProfileTap;
+
+  const _DashboardTab({
+    required this.userId,
+    required this.userName,
+    required this.userInitial,
+    required this.habits,
+    required this.completedCount,
+    required this.totalCount,
+    required this.progress,
+    required this.heroFadeAnim,
+    required this.ringProgressAnim,
+    required this.notificationService,
+    required this.streakService,
+    required this.authService,
+    required this.onAddHabit,
+    required this.onProfileTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // ── App Header
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: StreamBuilder<int>(
+              stream: notificationService.getUnreadCountStream(userId),
+              builder: (context, notifSnap) {
+                final unreadCount = notifSnap.data ?? 0;
+                return StreamBuilder<UserModel?>(
+                  stream: authService.getUserDataStream(userId),
+                  builder: (context, userSnap) {
+                    return AppHeader(
+                      onNotificationTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsPage(),
+                        ),
+                      ),
+                      onProfileTap: onProfileTap,
+                      onCalendarTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TrainingCalendarPage(),
+                        ),
+                      ),
+                      notificationCount: unreadCount,
+                      userInitial: userInitial,
+                      photoUrl: userSnap.data?.photoUrl,
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
-      );
-    }
 
-    return Column(children: rows);
-  }
-
-  Widget _buildDailyCheckInPage(List<Habit> habits, String userId) {
-    int? selectedHabitIndex;
-
-    return StatefulBuilder(
-      builder: (context, setModalState) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with add button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Daily Check-In', style: AppTextStyles.heading4),
-                  GestureDetector(
-                    onTap: _showAddHabitDialog,
-                    child: const Icon(
-                      Icons.add,
-                      color: Color(0xFFF39C12),
-                      size: 28,
-                    ),
-                  ),
-                ],
+        // ── Hero Banner
+        SliverToBoxAdapter(
+          child: FadeTransition(
+            opacity: heroFadeAnim,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: _HeroBanner(
+                userName: userName,
+                completedCount: completedCount,
+                totalCount: totalCount,
+                progress: progress,
+                ringProgressAnim: ringProgressAnim,
+                streakService: streakService,
+                userId: userId,
               ),
-              const SizedBox(height: 16),
+            ),
+          ),
+        ),
 
-              // Progress indicator
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border, width: 1),
-                ),
-                child: Column(
+        // ── Quick Stats Row
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _QuickStatsRow(
+              streakService: streakService,
+              userId: userId,
+              completedCount: completedCount,
+              totalCount: totalCount,
+            ),
+          ),
+        ),
+
+        // ── Today's Habits Header
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    const Text("Today's Habits", style: AppTextStyles.heading4),
+                    Text(
+                      '$completedCount of $totalCount completed',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: onAddHabit,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(30),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.primary.withAlpha(80),
+                      ),
+                    ),
+                    child: Row(
                       children: [
-                        const Text(
-                          'Today\'s Progress',
-                          style: AppTextStyles.heading5,
+                        const Icon(
+                          Icons.add,
+                          color: AppColors.primary,
+                          size: 16,
                         ),
+                        const SizedBox(width: 4),
                         Text(
-                          '${habits.where((h) => h.isDone == true).length}/${habits.length}',
-                          style: AppTextStyles.heading5.copyWith(
+                          'Add',
+                          style: AppTextStyles.labelMedium.copyWith(
                             color: AppColors.primary,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: habits.isEmpty
-                            ? 0
-                            : habits.where((h) => h.isDone == true).length /
-                                  habits.length,
-                        minHeight: 6,
-                        backgroundColor: AppColors.border,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFFF39C12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Habit Grid
+        habits.isEmpty
+            ? SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(48),
+                  child: _EmptyHabitsState(onAddHabit: onAddHabit),
+                ),
+              )
+            : SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.9,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final habit = habits[index];
+                      return _HabitGridCard(
+                        habit: habit,
+                        index: index,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => HabitDetailPage(habit: habit),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: habits.length,
+                  ),
+                ),
+              ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 96)),
+      ],
+    );
+  }
+}
+
+// ─── Hero Banner ──────────────────────────────────────────────────────────────
+
+class _HeroBanner extends StatelessWidget {
+  final String userName;
+  final int completedCount;
+  final int totalCount;
+  final double progress;
+  final Animation<double> ringProgressAnim;
+  final StreakService streakService;
+  final String userId;
+
+  const _HeroBanner({
+    required this.userName,
+    required this.completedCount,
+    required this.totalCount,
+    required this.progress,
+    required this.ringProgressAnim,
+    required this.streakService,
+    required this.userId,
+  });
+
+  String _getGreeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good Morning';
+    if (h < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  String _getMotivation(double progress) {
+    if (progress == 0) return 'Let\'s crush it today! 💪';
+    if (progress < 0.4) return 'Great start! Keep going! 🔥';
+    if (progress < 0.7) return 'You\'re on fire! 🚀';
+    if (progress < 1.0) return 'Almost there! Push harder!';
+    return 'Perfect day! You\'re unstoppable! 🏆';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withAlpha(60),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Left: Greeting + Motivation
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getGreeting(),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _getMotivation(progress),
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(200),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                StreamBuilder<Map<String, dynamic>>(
+                  stream: streakService.getStreakStream(userId),
+                  builder: (context, snapshot) {
+                    final streak = snapshot.data?['currentStreak'] ?? 0;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withAlpha(40),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.orange.withAlpha(100),
                         ),
                       ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🔥', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$streak day streak',
+                            style: const TextStyle(
+                              color: Colors.orange,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Right: Activity Ring
+          _ActivityRing(
+            progress: progress,
+            completedCount: completedCount,
+            totalCount: totalCount,
+            animation: ringProgressAnim,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Activity Ring ────────────────────────────────────────────────────────────
+
+class _ActivityRing extends StatelessWidget {
+  final double progress;
+  final int completedCount;
+  final int totalCount;
+  final Animation<double> animation;
+
+  const _ActivityRing({
+    required this.progress,
+    required this.completedCount,
+    required this.totalCount,
+    required this.animation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        final animatedProgress = animation.value * progress;
+        return SizedBox(
+          width: 100,
+          height: 100,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Outer glow
+              Container(
+                width: 94,
+                height: 94,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withAlpha(40),
+                      blurRadius: 16,
+                      spreadRadius: 4,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Habits list
-              habits.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 32),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.add_circle_outline,
-                              size: 48,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No habits yet',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: habits.length,
-                      itemBuilder: (context, index) {
-                        final habit = habits[index];
-                        final isSelected = selectedHabitIndex == index;
-
-                        return GestureDetector(
-                          onTap: () {
-                            setModalState(() {
-                              selectedHabitIndex = isSelected ? null : index;
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: habit.isDone == true
-                                  ? Colors.grey[800]
-                                  : AppColors.surfaceAlt,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: habit.isDone == true
-                                    ? Colors.grey[700]!
-                                    : AppColors.border,
-                                width: 1,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    // Checkbox
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          habits[index] = habit.copyWith(
-                                            isDone: !habit.isDone,
-                                          );
-                                        });
-                                      },
-                                      child: Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: habit.isDone == true
-                                                ? AppColors.primary
-                                                : AppColors.textSecondary,
-                                            width: 2,
-                                          ),
-                                          color: habit.isDone == true
-                                              ? AppColors.primary
-                                              : Colors.transparent,
-                                        ),
-                                        child: habit.isDone == true
-                                            ? const Icon(
-                                                Icons.check,
-                                                size: 14,
-                                                color: Colors.white,
-                                              )
-                                            : null,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            habit.name,
-                                            style: AppTextStyles.heading5,
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            habit.isDone == true
-                                                ? 'Completed ✓'
-                                                : 'Not completed',
-                                            style: AppTextStyles.bodySmall
-                                                .copyWith(
-                                                  color: habit.isDone == true
-                                                      ? AppColors.primary
-                                                      : AppColors.textSecondary,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // Show edit/delete buttons only when selected
-                                if (isSelected) ...[
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      // Mark as Done button
-                                      GestureDetector(
-                                        onTap: () async {
-                                          await _habitService.toggleHabit(
-                                            habit.id,
-                                            habit.isDone ?? false,
-                                            userId,
-                                          );
-                                          setModalState(() {
-                                            selectedHabitIndex = null;
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            border: Border.all(
-                                              color: Color(0xFFF39C12),
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                habit.isDone == true
-                                                    ? Icons.check_circle
-                                                    : Icons.circle_outlined,
-                                                color: Color(0xFFF39C12),
-                                                size: 16,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                habit.isDone == true
-                                                    ? 'Done'
-                                                    : 'Mark Done',
-                                                style: const TextStyle(
-                                                  color: Color(0xFFF39C12),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      // Edit button
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  CreateEditHabitPage(
-                                                    habit: habit,
-                                                    userId: userId,
-                                                  ),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            border: Border.all(
-                                              color: Color(0xFFF39C12),
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.edit,
-                                                color: Color(0xFFF39C12),
-                                                size: 16,
-                                              ),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                'Edit',
-                                                style: TextStyle(
-                                                  color: Color(0xFFF39C12),
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      // Delete button
-                                      GestureDetector(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              backgroundColor:
-                                                  AppColors.surface,
-                                              title: const Text(
-                                                'Delete Habit?',
-                                                style: AppTextStyles.heading4,
-                                              ),
-                                              content: const Text(
-                                                'This action cannot be undone.',
-                                                style: AppTextStyles.bodySmall,
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.pop(context),
-                                                  child: const Text(
-                                                    'Cancel',
-                                                    style: AppTextStyles
-                                                        .labelMedium,
-                                                  ),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    _habitService.deleteHabit(
-                                                      habit.id,
-                                                    );
-                                                    Navigator.pop(context);
-                                                    setModalState(() {
-                                                      selectedHabitIndex = null;
-                                                    });
-                                                  },
-                                                  child: Text(
-                                                    'Delete',
-                                                    style: AppTextStyles
-                                                        .labelMedium
-                                                        .copyWith(
-                                                          color:
-                                                              AppColors.error,
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            border: Border.all(
-                                              color: AppColors.error,
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.delete,
-                                                color: AppColors.error,
-                                                size: 16,
-                                              ),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                'Delete',
-                                                style: TextStyle(
-                                                  color: AppColors.error,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+              CustomPaint(
+                size: const Size(100, 100),
+                painter: _RingPainter(
+                  progress: animatedProgress,
+                  backgroundColor: AppColors.surfaceAlt,
+                  foregroundColor: AppColors.primary,
+                  strokeWidth: 10,
+                ),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${(animatedProgress * 100).toInt()}%',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  Text(
+                    '$completedCount/$totalCount',
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(160),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         );
       },
     );
   }
-
-  Widget _buildStatsPage() {
-    final user = _authService.currentUser;
-    final userId = user?.uid ?? '';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Page Title
-          const Text('Progress Analytics', style: AppTextStyles.heading2),
-          const SizedBox(height: 24),
-
-          // Streak Stats
-          StreamBuilder<Map<String, dynamic>>(
-            stream: _streakService.getStreakStream(userId),
-            builder: (context, snapshot) {
-              final streakData = snapshot.data ?? {};
-              final currentStreak = streakData['currentStreak'] ?? 0;
-              final longestStreak = streakData['longestStreak'] ?? 0;
-
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RepaintBoundary(
-                          child: _buildAnalyticsCard(
-                            'Current Streak',
-                            '$currentStreak',
-                            'days',
-                            Icons.local_fire_department,
-                            const Color(0xFFFF6B6B),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: RepaintBoundary(
-                          child: _buildAnalyticsCard(
-                            'Longest Streak',
-                            '$longestStreak',
-                            'days',
-                            Icons.emoji_events,
-                            const Color(0xFFFFD93D),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // Habits Overview
-          StreamBuilder<List<Habit>>(
-            stream: _habitService.getHabitsStream(userId),
-            builder: (context, snapshot) {
-              final habits = snapshot.data ?? [];
-              final totalHabits = habits.length;
-              final completedToday = habits
-                  .where((h) => h.isDone == true)
-                  .length;
-              final completionRate = totalHabits > 0
-                  ? ((completedToday / totalHabits) * 100).toStringAsFixed(0)
-                  : '0';
-
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RepaintBoundary(
-                          child: _buildAnalyticsCard(
-                            'Total Habits',
-                            '$totalHabits',
-                            'habits',
-                            Icons.list_alt,
-                            const Color(0xFF4ECDC4),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: RepaintBoundary(
-                          child: _buildAnalyticsCard(
-                            'Today\'s Rate',
-                            '$completionRate%',
-                            'completed',
-                            Icons.trending_up,
-                            const Color(0xFF95E1D3),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-
-          // This Week Section
-          Column(
-            children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'This Week',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border, width: 1),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: _buildWeekDays(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Habits Breakdown
-          _HabitsBreakdownWidget(
-            userId: userId,
-            buildHabitProgressCard: _buildHabitProgressCard,
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnalyticsCard(
-    String title,
-    String value,
-    String subtitle,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withAlpha(26),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withAlpha(77), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(value, style: AppTextStyles.heading3.copyWith(color: color)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: AppTextStyles.captionSmall),
-          const SizedBox(height: 4),
-          Text(title, style: AppTextStyles.labelMedium),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildWeekDays() {
-    final now = DateTime.now();
-    final weekDays = List.generate(7, (index) {
-      return now.subtract(Duration(days: now.weekday - 1 - index));
-    });
-    final userId = _authService.currentUser?.uid ?? '';
-
-    return weekDays.asMap().entries.map((entry) {
-      final index = entry.key;
-      final day = entry.value;
-      final dayName = [
-        'Mon',
-        'Tue',
-        'Wed',
-        'Thu',
-        'Fri',
-        'Sat',
-        'Sun',
-      ][day.weekday - 1];
-      final isToday = day.day == now.day && day.month == now.month;
-
-      return StreamBuilder<List<CalendarEvent>>(
-        stream: CalendarEventService().getEventsForDate(userId, day),
-        builder: (context, snapshot) {
-          final hasEvents = (snapshot.data ?? []).isNotEmpty;
-
-          return Column(
-            children: [
-              Text(
-                dayName,
-                style: TextStyle(
-                  color: isToday
-                      ? const Color(0xFFF39C12)
-                      : AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: isToday
-                      ? const Color(0xFFF39C12).withAlpha(38)
-                      : AppColors.surfaceAlt,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isToday
-                        ? const Color(0xFFF39C12).withAlpha(102)
-                        : AppColors.border,
-                    width: 2,
-                  ),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      '${day.day}',
-                      style: TextStyle(
-                        color: isToday
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    // Event dot
-                    if (hasEvents)
-                      Positioned(
-                        bottom: 2,
-                        child: Container(
-                          width: 4,
-                          height: 4,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF39C12),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    }).toList();
-  }
-
-  Widget _buildHabitProgressCard(Habit habit, int index) {
-    // Gradient colors for cards
-    final gradients = [
-      [AppColors.streakStart, AppColors.streakEnd],
-      [AppColors.primary, AppColors.primaryDark],
-      [AppColors.accent, AppColors.accentDark],
-      [const Color(0xFF6C5CE7), const Color(0xFFA29BFE)],
-      [const Color(0xFFFF6B9D), const Color(0xFFC44569)],
-      [const Color(0xFF00D2FF), const Color(0xFF3A7BD5)],
-    ];
-
-    final gradient = gradients[index % gradients.length];
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: gradient[0].withAlpha(77),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    habit.name,
-                    style: AppTextStyles.heading5.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.textPrimary.withAlpha(51),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    habit.isDone ? Icons.check_circle : Icons.circle_outlined,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  habit.isDone ? 'Completed today' : 'Not completed yet',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary.withAlpha(230),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Tap to view details',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textPrimary.withAlpha(179),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPageIndicator(int count) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(count, (index) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: _currentHabitPage == index ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: _currentHabitPage == index
-                ? AppColors.primary
-                : AppColors.textSecondary.withAlpha(77),
-            borderRadius: BorderRadius.circular(4),
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildEmptyHabitsState() {
-    return Container(
-      padding: const EdgeInsets.all(48),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(Icons.insights, size: 64, color: AppColors.textSecondary),
-            const SizedBox(height: 16),
-            const Text('No habits yet', style: AppTextStyles.heading5),
-            const SizedBox(height: 8),
-            const Text(
-              'Create habits to see your progress analytics',
-              style: AppTextStyles.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-class _WeeklyProgressWidget extends StatefulWidget {
-  final String userId;
+class _RingPainter extends CustomPainter {
+  final double progress;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final double strokeWidth;
 
-  const _WeeklyProgressWidget({required this.userId});
+  _RingPainter({
+    required this.progress,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.strokeWidth,
+  });
 
   @override
-  State<_WeeklyProgressWidget> createState() => _WeeklyProgressWidgetState();
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+    final bgPaint = Paint()
+      ..color = backgroundColor
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, bgPaint);
+
+    if (progress > 0) {
+      final fgPaint = Paint()
+        ..shader = LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(Rect.fromCircle(center: center, radius: radius))
+        ..strokeWidth = strokeWidth
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -math.pi / 2,
+        2 * math.pi * progress,
+        false,
+        fgPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) =>
+      old.progress != progress;
 }
 
-class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
-  int? _selectedDayIndex;
+// ─── Quick Stats Row ──────────────────────────────────────────────────────────
+
+class _QuickStatsRow extends StatelessWidget {
+  final StreakService streakService;
+  final String userId;
+  final int completedCount;
+  final int totalCount;
+
+  const _QuickStatsRow({
+    required this.streakService,
+    required this.userId,
+    required this.completedCount,
+    required this.totalCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: streakService.getStreakStream(userId),
+      builder: (context, snapshot) {
+        final streakData = snapshot.data ?? {};
+        final currentStreak = streakData['currentStreak'] ?? 0;
+        final longestStreak = streakData['longestStreak'] ?? 0;
+        final completionRate = totalCount > 0
+            ? ((completedCount / totalCount) * 100).toInt()
+            : 0;
+
+        return Row(
+          children: [
+            Expanded(
+              child: _StatChip(
+                icon: Icons.local_fire_department,
+                iconColor: const Color(0xFFFF6B6B),
+                label: 'Streak',
+                value: '$currentStreak d',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatChip(
+                icon: Icons.emoji_events_rounded,
+                iconColor: const Color(0xFFFFD93D),
+                label: 'Best',
+                value: '$longestStreak d',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatChip(
+                icon: Icons.trending_up_rounded,
+                iconColor: AppColors.primary,
+                label: 'Rate',
+                value: '$completionRate%',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  const _StatChip({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withAlpha(80)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Habit Grid Card ──────────────────────────────────────────────────────────
+
+class _HabitGridCard extends StatelessWidget {
+  final Habit habit;
+  final int index;
+  final VoidCallback onTap;
+
+  const _HabitGridCard({
+    required this.habit,
+    required this.index,
+    required this.onTap,
+  });
+
+  static const _gradients = [
+    [Color(0xFF84FAB0), Color(0xFF8FD3F4)],
+    [Color(0xFFFA709A), Color(0xFFFEE140)],
+    [Color(0xFFFF9A56), Color(0xFFFF6A88)],
+    [Color(0xFF667EEA), Color(0xFF764BA2)],
+    [Color(0xFFF093FB), Color(0xFFF5576C)],
+    [Color(0xFF4FACFE), Color(0xFF00F2FE)],
+  ];
+
+  IconData _getHabitIcon() {
+    if (habit.icon != null) return _iconFromString(habit.icon!);
+    final name = habit.name.toLowerCase();
+    if (name.contains('run') || name.contains('jog')) return Icons.directions_run;
+    if (name.contains('read')) return Icons.menu_book;
+    if (name.contains('water') || name.contains('drink')) return Icons.water_drop;
+    if (name.contains('exercise') || name.contains('workout')) return Icons.fitness_center;
+    if (name.contains('meditat') || name.contains('yoga')) return Icons.self_improvement;
+    if (name.contains('sleep')) return Icons.bedtime;
+    if (name.contains('eat') || name.contains('meal')) return Icons.restaurant;
+    if (name.contains('study') || name.contains('learn')) return Icons.school;
+    if (name.contains('walk')) return Icons.directions_walk;
+    return Icons.check_circle_outline;
+  }
+
+  IconData _iconFromString(String s) {
+    const map = {
+      'directions_run': Icons.directions_run,
+      'fitness_center': Icons.fitness_center,
+      'self_improvement': Icons.self_improvement,
+      'menu_book': Icons.menu_book,
+      'water_drop': Icons.water_drop,
+      'restaurant': Icons.restaurant,
+      'bedtime': Icons.bedtime,
+      'school': Icons.school,
+      'code': Icons.code,
+      'music_note': Icons.music_note,
+      'brush': Icons.brush,
+      'camera_alt': Icons.camera_alt,
+      'favorite': Icons.favorite,
+      'wb_sunny': Icons.wb_sunny,
+      'nightlight': Icons.nightlight,
+      'local_cafe': Icons.local_cafe,
+    };
+    return map[s] ?? Icons.check_circle_outline;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = habit.isDone
+        ? [const Color(0xFF3A3A3A), const Color(0xFF2A2A2A)]
+        : _gradients[index % _gradients.length];
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: colors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: colors[0].withAlpha(habit.isDone ? 20 : 80),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Decorative background icon
+            Positioned(
+              right: -10,
+              bottom: -10,
+              child: Opacity(
+                opacity: 0.12,
+                child: Icon(
+                  _getHabitIcon(),
+                  size: 70,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(_getHabitIcon(), color: Colors.white, size: 20),
+                      if (habit.isDone)
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(40),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Text(
+                    habit.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    habit.isDone ? 'Done ✓' : 'Pending',
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(180),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Empty Habits State ───────────────────────────────────────────────────────
+
+class _EmptyHabitsState extends StatelessWidget {
+  final VoidCallback onAddHabit;
+  const _EmptyHabitsState({required this.onAddHabit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withAlpha(30),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.fitness_center,
+            size: 40,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'No habits yet',
+          style: AppTextStyles.heading4,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Start building your fitness routine\nby adding your first habit',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
+          onPressed: onAddHabit,
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: const Text(
+            'Add First Habit',
+            style: TextStyle(color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Check-In Tab ─────────────────────────────────────────────────────────────
+
+class _CheckInTab extends StatefulWidget {
+  final List<Habit> habits;
+  final String userId;
+  final HabitService habitService;
+  final VoidCallback onAddHabit;
+
+  const _CheckInTab({
+    required this.habits,
+    required this.userId,
+    required this.habitService,
+    required this.onAddHabit,
+  });
+
+  @override
+  State<_CheckInTab> createState() => _CheckInTabState();
+}
+
+class _CheckInTabState extends State<_CheckInTab> {
+  @override
+  Widget build(BuildContext context) {
+    final habits = widget.habits;
+    final completed = habits.where((h) => h.isDone).length;
+    final total = habits.length;
+    final progress = total > 0 ? completed / total : 0.0;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // Header
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Daily Check-In', style: AppTextStyles.heading3),
+                GestureDetector(
+                  onTap: widget.onAddHabit,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withAlpha(30),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      color: AppColors.primary,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Progress Card
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: _CheckInProgressCard(
+              completed: completed,
+              total: total,
+              progress: progress,
+            ),
+          ),
+        ),
+
+        // Habit List
+        habits.isEmpty
+            ? SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.checklist_rounded,
+                        size: 64,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No habits to check in',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: widget.onAddHabit,
+                        child: Text(
+                          'Add your first habit →',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _CheckInHabitCard(
+                      habit: habits[index],
+                      userId: widget.userId,
+                      habitService: widget.habitService,
+                      onEditTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateEditHabitPage(
+                            habit: habits[index],
+                            userId: widget.userId,
+                          ),
+                        ),
+                      ),
+                      onDeleteTap: () => _confirmDelete(habits[index]),
+                    ),
+                    childCount: habits.length,
+                  ),
+                ),
+              ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 30)),
+      ],
+    );
+  }
+
+  void _confirmDelete(Habit habit) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Habit?', style: AppTextStyles.heading4),
+        content: Text(
+          'Are you sure you want to delete "${habit.name}"?',
+          style: AppTextStyles.bodySmall,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              widget.habitService.deleteHabit(habit.id);
+              Navigator.pop(ctx);
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckInProgressCard extends StatelessWidget {
+  final int completed;
+  final int total;
+  final double progress;
+
+  const _CheckInProgressCard({
+    required this.completed,
+    required this.total,
+    required this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (progress * 100).toInt();
+    final Color barColor = pct >= 80
+        ? AppColors.success
+        : pct >= 50
+            ? AppColors.warning
+            : AppColors.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            barColor.withAlpha(30),
+            barColor.withAlpha(10),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: barColor.withAlpha(60)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Today's Progress",
+                    style: AppTextStyles.heading5,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$completed of $total habits done',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: barColor.withAlpha(30),
+                  border: Border.all(color: barColor.withAlpha(80), width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    '$pct%',
+                    style: TextStyle(
+                      color: barColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 800),
+              builder: (context, val, child) => LinearProgressIndicator(
+                value: val,
+                minHeight: 8,
+                backgroundColor: AppColors.border,
+                valueColor: AlwaysStoppedAnimation<Color>(barColor),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckInHabitCard extends StatefulWidget {
+  final Habit habit;
+  final String userId;
+  final HabitService habitService;
+  final VoidCallback onEditTap;
+  final VoidCallback onDeleteTap;
+
+  const _CheckInHabitCard({
+    required this.habit,
+    required this.userId,
+    required this.habitService,
+    required this.onEditTap,
+    required this.onDeleteTap,
+  });
+
+  @override
+  State<_CheckInHabitCard> createState() => _CheckInHabitCardState();
+}
+
+class _CheckInHabitCardState extends State<_CheckInHabitCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDone = widget.habit.isDone;
+
+    return GestureDetector(
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: isDone ? const Color(0xFF1E2E1E) : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDone
+                ? AppColors.success.withAlpha(80)
+                : AppColors.border.withAlpha(80),
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  // Checkbox
+                  GestureDetector(
+                    onTap: () async {
+                      await widget.habitService.toggleHabit(
+                        widget.habit.id,
+                        widget.habit.isDone,
+                        widget.userId,
+                      );
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isDone ? AppColors.success : Colors.transparent,
+                        border: Border.all(
+                          color: isDone
+                              ? AppColors.success
+                              : AppColors.textSecondary,
+                          width: 2,
+                        ),
+                      ),
+                      child: isDone
+                          ? const Icon(Icons.check, size: 16, color: Colors.white)
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.habit.name,
+                          style: AppTextStyles.heading5.copyWith(
+                            decoration: isDone
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: isDone
+                                ? AppColors.textSecondary
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          isDone ? 'Completed ✓' : 'Tap checkbox to complete',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: isDone
+                                ? AppColors.success
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: AppColors.textSecondary,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+            // Expanded actions
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                      child: Row(
+                        children: [
+                          _ActionBtn(
+                            label: 'Edit',
+                            icon: Icons.edit_outlined,
+                            color: AppColors.primary,
+                            onTap: widget.onEditTap,
+                          ),
+                          const SizedBox(width: 8),
+                          _ActionBtn(
+                            label: 'Delete',
+                            icon: Icons.delete_outline,
+                            color: AppColors.error,
+                            onTap: widget.onDeleteTap,
+                          ),
+                          const SizedBox(width: 8),
+                          _ActionBtn(
+                            label: 'Details',
+                            icon: Icons.info_outline,
+                            color: AppColors.accent,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    HabitDetailPage(habit: widget.habit),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionBtn({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withAlpha(20),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withAlpha(80)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Stats Tab ────────────────────────────────────────────────────────────────
+
+class _StatsTab extends StatelessWidget {
+  final String userId;
+  final List<Habit> habits;
+  final StreakService streakService;
+
+  const _StatsTab({
+    required this.userId,
+    required this.habits,
+    required this.streakService,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final completed = habits.where((h) => h.isDone).length;
+    final total = habits.length;
+    final rate = total > 0 ? ((completed / total) * 100).toInt() : 0;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        // Title
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Text('Progress Analytics', style: AppTextStyles.heading2),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            child: Text(
+              'Keep pushing your limits every day',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
+
+        // Streak Cards
+        SliverToBoxAdapter(
+          child: StreamBuilder<Map<String, dynamic>>(
+            stream: streakService.getStreakStream(userId),
+            builder: (context, snapshot) {
+              final data = snapshot.data ?? {};
+              final current = data['currentStreak'] ?? 0;
+              final longest = data['longestStreak'] ?? 0;
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _AnalyticsCard(
+                        title: 'Current Streak',
+                        value: '$current',
+                        unit: 'days',
+                        icon: Icons.local_fire_department,
+                        color: const Color(0xFFFF6B6B),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _AnalyticsCard(
+                        title: 'Longest Streak',
+                        value: '$longest',
+                        unit: 'days',
+                        icon: Icons.emoji_events,
+                        color: const Color(0xFFFFD93D),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+
+        // Habit stats
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _AnalyticsCard(
+                    title: 'Total Habits',
+                    value: '$total',
+                    unit: 'habits',
+                    icon: Icons.list_alt,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _AnalyticsCard(
+                    title: "Today's Rate",
+                    value: '$rate%',
+                    unit: 'completed',
+                    icon: Icons.trending_up,
+                    color: const Color(0xFF95E1D3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Weekly Bar Chart
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 28, 20, 8),
+            child: Text('This Week', style: AppTextStyles.heading4),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _WeeklyBarChart(userId: userId),
+          ),
+        ),
+
+        // Habits breakdown carousel
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 28, 20, 8),
+            child: Text('Habits Breakdown', style: AppTextStyles.heading4),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: _HabitsCarousel(
+            habits: habits,
+          ),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      ],
+    );
+  }
+}
+
+class _AnalyticsCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String unit;
+  final IconData icon;
+  final Color color;
+
+  const _AnalyticsCard({
+    required this.title,
+    required this.value,
+    required this.unit,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withAlpha(60)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(30),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  unit,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Weekly Bar Chart ─────────────────────────────────────────────────────────
+
+class _WeeklyBarChart extends StatefulWidget {
+  final String userId;
+  const _WeeklyBarChart({required this.userId});
+
+  @override
+  State<_WeeklyBarChart> createState() => _WeeklyBarChartState();
+}
+
+class _WeeklyBarChartState extends State<_WeeklyBarChart> {
+  int? _selectedDay;
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final weekDays = List.generate(7, (index) {
-      return now.subtract(Duration(days: 6 - index));
-    });
+    final weekDays = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
 
-    return Column(
-      children: [
-        // Header without expand/collapse
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'This Week',
-              style: TextStyle(
-                color: Color(0xFFF39C12),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        // Always visible content
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border, width: 1),
-          ),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withAlpha(80)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekDays.asMap().entries.map((entry) {
-              final index = entry.key;
-              final day = entry.value;
-              final dayName = [
-                'Mon',
-                'Tue',
-                'Wed',
-                'Thu',
-                'Fri',
-                'Sat',
-                'Sun',
-              ][day.weekday - 1];
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: weekDays.asMap().entries.map((e) {
+              final idx = e.key;
+              final day = e.value;
               final isToday = day.day == now.day && day.month == now.month;
-              final isSelected = _selectedDayIndex == index;
+              final isSelected = _selectedDay == idx;
+              final dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+              final dayName = dayNames[day.weekday - 1];
+
+              // Simulated fill heights based on weekday (replace with real data later)
+              final fillHeights = [0.7, 0.5, 0.9, 0.4, 0.8, 0.3, isToday ? 0.6 : 0.2];
+              final fill = fillHeights[idx];
+              final barColor = isToday || isSelected
+                  ? AppColors.primary
+                  : AppColors.textSecondary.withAlpha(80);
 
               return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedDayIndex = index;
-                  });
-                },
+                onTap: () => setState(
+                  () => _selectedDay = _selectedDay == idx ? null : idx,
+                ),
                 child: Column(
                   children: [
-                    Text(
-                      dayName,
-                      style: TextStyle(
-                        color: isSelected
-                            ? const Color(0xFFF39C12)
-                            : (isToday
-                                  ? const Color(0xFFF39C12)
-                                  : AppColors.textSecondary),
-                        fontSize: 12,
-                        fontWeight: (isSelected || isToday)
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                    // Bar
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 400),
+                      width: 32,
+                      height: 80,
+                      alignment: Alignment.bottomCenter,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 600),
+                        curve: Curves.easeOut,
+                        width: 18,
+                        height: 80 * fill,
+                        decoration: BoxDecoration(
+                          color: barColor,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
+                    // Day bubble
                     Container(
-                      width: 32,
-                      height: 32,
+                      width: 30,
+                      height: 30,
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFFF39C12).withAlpha(51)
-                            : (isToday
-                                  ? const Color(0xFFF39C12).withAlpha(38)
-                                  : AppColors.surfaceAlt),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? const Color(0xFFF39C12).withAlpha(153)
-                              : (isToday
-                                    ? const Color(0xFFF39C12).withAlpha(102)
-                                    : AppColors.border),
-                          width: 2,
-                        ),
+                        color: (isToday || isSelected)
+                            ? AppColors.primary.withAlpha(30)
+                            : Colors.transparent,
+                        border: (isToday || isSelected)
+                            ? Border.all(
+                                color: AppColors.primary.withAlpha(100))
+                            : null,
                       ),
-                      child: Center(
-                        child: Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            color: (isSelected || isToday)
-                                ? AppColors.textPrimary
-                                : AppColors.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            dayName,
+                            style: TextStyle(
+                              color: (isToday || isSelected)
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: (isToday || isSelected)
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 9,
                       ),
                     ),
                   ],
@@ -1569,144 +1926,441 @@ class _WeeklyProgressWidgetState extends State<_WeeklyProgressWidget> {
               );
             }).toList(),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Habits Carousel ──────────────────────────────────────────────────────────
+
+class _HabitsCarousel extends StatefulWidget {
+  final List<Habit> habits;
+  const _HabitsCarousel({required this.habits});
+
+  @override
+  State<_HabitsCarousel> createState() => _HabitsCarouselState();
+}
+
+class _HabitsCarouselState extends State<_HabitsCarousel> {
+  late PageController _controller;
+  int _current = 0;
+
+  static const _gradients = [
+    [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+    [Color(0xFF4ECDC4), Color(0xFF2A9D8F)],
+    [Color(0xFFFFD93D), Color(0xFFFFC300)],
+    [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+    [Color(0xFFFF6B9D), Color(0xFFC44569)],
+    [Color(0xFF00D2FF), Color(0xFF3A7BD5)],
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController(viewportFraction: 0.82);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final habits = widget.habits;
+
+    if (habits.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border.withAlpha(80)),
+        ),
+        child: const Center(
+          child: Column(
+            children: [
+              Icon(Icons.insights, size: 48, color: AppColors.textSecondary),
+              SizedBox(height: 12),
+              Text('No habits yet', style: AppTextStyles.heading5),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: habits.length,
+            onPageChanged: (i) => setState(() => _current = i),
+            itemBuilder: (context, i) {
+              final habit = habits[i];
+              final grad = _gradients[i % _gradients.length];
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HabitDetailPage(habit: habit),
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: i == 0 ? 20 : 8,
+                    right: i == habits.length - 1 ? 20 : 8,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: grad,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: grad[0].withAlpha(80),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                habit.name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha(40),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  habit.isDone
+                                      ? Icons.check_circle
+                                      : Icons.circle_outlined,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                habit.isDone
+                                    ? '✅ Completed today!'
+                                    : '⏳ Not done yet',
+                                style: TextStyle(
+                                  color: Colors.white.withAlpha(220),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Tap to view details',
+                                style: TextStyle(
+                                  color: Colors.white.withAlpha(160),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 14),
+        // Dot indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(habits.length, (i) {
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _current == i ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _current == i
+                    ? AppColors.primary
+                    : AppColors.textSecondary.withAlpha(77),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
         ),
       ],
     );
   }
 }
 
-class _HabitsBreakdownWidget extends StatefulWidget {
-  final String userId;
-  final Widget Function(Habit, int) buildHabitProgressCard;
+// ─── Profile Bottom Sheet ────────────────────────────────────────────────────
 
-  const _HabitsBreakdownWidget({
-    required this.userId,
-    required this.buildHabitProgressCard,
+class _ProfileSheet extends StatelessWidget {
+  final dynamic user;
+  final UserModel? userData;
+  final AuthService authService;
+  final String joinedDate;
+
+  const _ProfileSheet({
+    required this.user,
+    required this.userData,
+    required this.authService,
+    required this.joinedDate,
   });
 
   @override
-  State<_HabitsBreakdownWidget> createState() => _HabitsBreakdownWidgetState();
+  Widget build(BuildContext context) {
+    final displayName =
+        '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim();
+    final name = displayName.isEmpty
+        ? user?.email?.split('@')[0] ?? 'User'
+        : displayName;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF141414),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            // drag handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 28,
+                  horizontal: 24,
+                ),
+                child: Column(
+                  children: [
+                    // Avatar
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [AppColors.primary, AppColors.primaryDark],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withAlpha(80),
+                            blurRadius: 20,
+                            spreadRadius: 4,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(3),
+                      child: CircleAvatar(
+                        radius: 48,
+                        backgroundColor: AppColors.surface,
+                        backgroundImage:
+                            (userData?.photoUrl != null &&
+                                userData!.photoUrl.isNotEmpty)
+                            ? NetworkImage(userData!.photoUrl)
+                            : null,
+                        child: (userData?.photoUrl == null ||
+                                userData!.photoUrl.isEmpty)
+                            ? Text(
+                                user?.email
+                                        ?.substring(0, 1)
+                                        .toUpperCase() ??
+                                    'U',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 36,
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(name, style: AppTextStyles.heading4),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Joined $joinedDate',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Edit Profile Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Edit Profile — Coming soon'),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: const Text(
+                          'EDIT PROFILE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Menu items
+                    _SheetMenuItem(
+                      icon: Icons.apps_outlined,
+                      title: 'Connected Apps & Devices',
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Connected Apps — Coming soon'),
+                          ),
+                        );
+                      },
+                    ),
+                    _SheetMenuItem(
+                      icon: Icons.notifications_outlined,
+                      title: 'Notifications',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _SheetMenuItem(
+                      icon: Icons.local_offer_outlined,
+                      title: 'Offers',
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Offers — Coming soon')),
+                        );
+                      },
+                    ),
+                    _SheetMenuItem(
+                      icon: Icons.settings_outlined,
+                      title: 'Settings',
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Settings — Coming soon'),
+                          ),
+                        );
+                      },
+                    ),
+                    _SheetMenuItem(
+                      icon: Icons.logout,
+                      title: 'Logout',
+                      isDestructive: true,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await authService.signOut();
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _HabitsBreakdownWidgetState extends State<_HabitsBreakdownWidget> {
-  late PageController _habitPageController;
-  int _currentHabitPage = 0;
-  final HabitService _habitService = HabitService();
+class _SheetMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final bool isDestructive;
 
-  @override
-  void initState() {
-    super.initState();
-    _habitPageController = PageController(viewportFraction: 0.85);
-  }
-
-  @override
-  void dispose() {
-    _habitPageController.dispose();
-    super.dispose();
-  }
+  const _SheetMenuItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.isDestructive = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Habits Breakdown', style: AppTextStyles.heading4),
-        const SizedBox(height: 16),
-        StreamBuilder<List<Habit>>(
-          stream: _habitService.getHabitsStream(widget.userId),
-          builder: (context, snapshot) {
-            final habits = snapshot.data ?? [];
-
-            if (habits.isEmpty) {
-              return Container(
-                padding: const EdgeInsets.all(48),
-                child: Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.insights,
-                        size: 64,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'No habits yet',
-                        style: AppTextStyles.heading5,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Create habits to see your progress analytics',
-                        style: AppTextStyles.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return Column(
-              children: [
-                SizedBox(
-                  height: 180,
-                  child: PageView.builder(
-                    controller: _habitPageController,
-                    physics: const BouncingScrollPhysics(),
-                    scrollDirection: Axis.horizontal,
-                    padEnds: false,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentHabitPage = index;
-                      });
-                    },
-                    itemCount: habits.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          left: index == 0 ? 0 : 8,
-                          right: index == habits.length - 1 ? 0 : 8,
-                        ),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    HabitDetailPage(habit: habits[index]),
-                              ),
-                            );
-                          },
-                          child: widget.buildHabitProgressCard(
-                            habits[index],
-                            index,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(habits.length, (index) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: _currentHabitPage == index ? 24 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _currentHabitPage == index
-                            ? AppColors.primary
-                            : AppColors.textSecondary.withAlpha(77),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            );
-          },
+    final color = isDestructive ? AppColors.error : AppColors.textPrimary;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
         ),
-      ],
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTextStyles.bodyMedium.copyWith(color: color),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 22),
+          ],
+        ),
+      ),
     );
   }
 }
