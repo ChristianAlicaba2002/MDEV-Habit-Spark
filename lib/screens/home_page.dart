@@ -109,11 +109,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final userInitial = user?.email?.substring(0, 1).toUpperCase() ?? 'U';
 
     return Scaffold(
-      extendBody: false,
-      backgroundColor: _selectedIndex == 3 
-          ? const Color(0xFF35393F) // Lighter gray for Profile
-          : AppColors.background,
+      extendBody: true,
+      backgroundColor: AppColors.background,
       body: SafeArea(
+        bottom: false,
         child: StreamBuilder<List<Habit>>(
           stream: _habitService.getHabitsStream(userId),
           builder: (context, snapshot) {
