@@ -2634,7 +2634,7 @@ class _HeaderSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const _SkeletonBlock(width: 50, height: 50, shape: BoxShape.circle),
+        const _SkeletonBlock(width: 54, height: 54, shape: BoxShape.circle),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,

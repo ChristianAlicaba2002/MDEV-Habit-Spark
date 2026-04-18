@@ -43,7 +43,7 @@ class AppHeader extends StatelessWidget {
                 ),
               ),
               child: CircleAvatar(
-                radius: 20,
+                radius: 25,
                 backgroundColor: AppColors.surface,
                 backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty)
                     ? NetworkImage(photoUrl!)
@@ -53,7 +53,7 @@ class AppHeader extends StatelessWidget {
                         userInitial,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       )
