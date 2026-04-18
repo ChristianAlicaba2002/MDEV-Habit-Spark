@@ -170,6 +170,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 _ProfileTab(
                   userId: userId,
                   authService: _authService,
+                  streakService: _streakService,
+                  habits: habits,
+                  onBackTap: () => setState(() => _selectedIndex = 0),
                 ),
               ],
             );
@@ -2150,10 +2153,16 @@ class _HabitsCarouselState extends State<_HabitsCarousel> {
 class _ProfileTab extends StatelessWidget {
   final String userId;
   final AuthService authService;
+  final StreakService streakService;
+  final List<Habit> habits;
+  final VoidCallback onBackTap;
 
   const _ProfileTab({
     required this.userId,
     required this.authService,
+    required this.streakService,
+    required this.habits,
+    required this.onBackTap,
   });
 
   String _getJoinedDate() {
@@ -2167,6 +2176,10 @@ class _ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final completedCount = habits.where((h) => h.isDone).length;
+    final totalCount = habits.length;
+    final completionRate = totalCount > 0 ? (completedCount / totalCount) : 0.0;
+
     return StreamBuilder<UserModel?>(
       stream: authService.getUserDataStream(userId),
       builder: (context, snapshot) {
@@ -2181,153 +2194,318 @@ class _ProfileTab extends StatelessWidget {
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
+            // ── Custom Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-                child: Column(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Profile', style: AppTextStyles.heading2),
-                        IconButton(
-                          icon: const Icon(CupertinoIcons.settings, color: Colors.white),
-                          onPressed: () {
-                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Settings — Coming soon')),
-                            );
-                          },
-                        ),
-                      ],
+                    _RoundIconButton(
+                      icon: CupertinoIcons.arrow_left,
+                      onTap: onBackTap,
                     ),
-                    const SizedBox(height: 32),
-                    
-                    // Avatar
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primary, AppColors.primaryDark],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withAlpha(80),
-                            blurRadius: 20,
-                            spreadRadius: 4,
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(4),
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: AppColors.surface,
-                        backgroundImage:
-                            (userData?.photoUrl != null &&
-                                userData!.photoUrl.isNotEmpty)
-                            ? NetworkImage(userData!.photoUrl)
-                            : null,
-                        child: (userData?.photoUrl == null ||
-                                userData!.photoUrl.isEmpty)
-                            ? Text(
-                                user?.email
-                                        ?.substring(0, 1)
-                                        .toUpperCase() ??
-                                    'U',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 48,
-                                ),
-                              )
-                            : null,
+                    const Text(
+                      'Profile',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(name, style: AppTextStyles.heading3),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Joined ${_getJoinedDate()}',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Edit Profile Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Edit Profile — Coming soon'),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Edit Profile',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-
-                    // Menu List
-                    _ProfileMenuItem(
-                      icon: CupertinoIcons.app_badge,
-                      title: 'Connected Apps',
-                      onTap: () {},
-                    ),
-                    _ProfileMenuItem(
-                      icon: CupertinoIcons.bell,
-                      title: 'Notifications',
+                    _RoundIconButton(
+                      icon: CupertinoIcons.settings,
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const NotificationsPage(),
-                          ),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Settings — Coming soon')),
                         );
                       },
-                    ),
-                    _ProfileMenuItem(
-                      icon: CupertinoIcons.tag,
-                      title: 'Special Offers',
-                      onTap: () {},
-                    ),
-                    _ProfileMenuItem(
-                      icon: CupertinoIcons.shield_lefthalf_fill,
-                      title: 'Privacy & Security',
-                      onTap: () {},
-                    ),
-                    const SizedBox(height: 20),
-                    _ProfileMenuItem(
-                      icon: CupertinoIcons.square_arrow_right,
-                      title: 'Logout',
-                      isDestructive: true,
-                      onTap: () => authService.signOut(),
                     ),
                   ],
                 ),
               ),
             ),
+
+            // ── Avatar Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30),
+                child: Column(
+                  children: [
+                    Stack(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withAlpha(20),
+                              width: 1,
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 60,
+                            backgroundColor: AppColors.surface,
+                            backgroundImage: (userData?.photoUrl != null &&
+                                    userData!.photoUrl.isNotEmpty)
+                                ? NetworkImage(userData!.photoUrl)
+                                : null,
+                            child: (userData?.photoUrl == null ||
+                                    userData!.photoUrl.isEmpty)
+                                ? Text(
+                                    user?.email
+                                            ?.substring(0, 1)
+                                            .toUpperCase() ??
+                                        'U',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 40,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 5,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFD93D).withAlpha(180),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.black, width: 2),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.star_fill,
+                              color: Colors.black,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withAlpha(60)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(CupertinoIcons.sparkles,
+                              color: Colors.white, size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            'Premium',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Tracking Header
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: Text(
+                  'Tracking',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Tracking Grid
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: StreamBuilder<Map<String, dynamic>>(
+                stream: streakService.getStreakStream(userId),
+                builder: (context, streakSnap) {
+                  final streakData = streakSnap.data ?? {};
+                  final currentStreak = streakData['currentStreak'] ?? 0;
+                  final longestStreak = streakData['longestStreak'] ?? 0;
+
+                  return SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 1.1,
+                    ),
+                    delegate: SliverChildListDelegate([
+                      _TrackingCard(
+                        title: 'Today\'s Progress',
+                        value: '${(completionRate * 100).toInt()}%',
+                        icon: CupertinoIcons.chart_bar,
+                      ),
+                      _TrackingCard(
+                        title: 'Total Activities',
+                        value: '$totalCount',
+                        icon: CupertinoIcons.calendar,
+                      ),
+                      _TrackingCard(
+                        title: 'Current Streak',
+                        value: '$currentStreak days',
+                        icon: CupertinoIcons.flame,
+                      ),
+                      _TrackingCard(
+                        title: 'Achievements',
+                        value: '$longestStreak',
+                        icon: CupertinoIcons.checkmark_seal_fill,
+                      ),
+                    ]),
+                  );
+                },
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+
+            // ── Profile Menu List
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _ProfileMenuItem(
+                    icon: CupertinoIcons.bell,
+                    title: 'Notifications',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _ProfileMenuItem(
+                    icon: CupertinoIcons.shield_lefthalf_fill,
+                    title: 'Privacy & Security',
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  _ProfileMenuItem(
+                    icon: CupertinoIcons.square_arrow_right,
+                    title: 'Logout',
+                    isDestructive: true,
+                    onTap: () => authService.signOut(),
+                  ),
+                ]),
+              ),
+            ),
+
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         );
       },
+    );
+  }
+}
+
+class _RoundIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _RoundIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.white.withAlpha(15),
+          shape: BoxShape.circle,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackingCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const _TrackingCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(10),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white.withAlpha(200), size: 18),
+          ),
+          const Spacer(),
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.white.withAlpha(140),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
