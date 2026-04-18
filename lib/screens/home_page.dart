@@ -109,10 +109,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final userInitial = user?.email?.substring(0, 1).toUpperCase() ?? 'U';
 
     return Scaffold(
-      extendBody: true,
-      backgroundColor: AppColors.background,
+      extendBody: false,
+      backgroundColor: _selectedIndex == 3 
+          ? const Color(0xFF35393F) // Lighter gray for Profile
+          : AppColors.background,
       body: SafeArea(
-        bottom: false,
         child: StreamBuilder<List<Habit>>(
           stream: _habitService.getHabitsStream(userId),
           builder: (context, snapshot) {
@@ -323,7 +324,7 @@ class _NavItem extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: selected ? Colors.white : Colors.transparent,
+                color: selected ? Colors.white : Colors.white.withAlpha(15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -2213,13 +2214,56 @@ class _ProfileTab extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    _RoundIconButton(
-                      icon: CupertinoIcons.settings,
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Settings — Coming soon')),
-                        );
+                    PopupMenuButton<String>(
+                      offset: const Offset(0, 50),
+                      color: const Color(0xFF1A1A1A),
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.white.withAlpha(20)),
+                      ),
+                      padding: EdgeInsets.zero,
+                      tooltip: 'Show settings',
+                      child: const _RoundIconButton(
+                        icon: CupertinoIcons.settings,
+                        onTap: null, // Transparent to PopupMenuButton
+                      ),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Edit Profile — Coming soon')),
+                          );
+                        } else if (value == 'logout') {
+                          authService.signOut();
+                        }
                       },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          height: 40,
+                          child: Text(
+                            'Edit Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'logout',
+                          height: 40,
+                          child: Text(
+                            'Log out',
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -2338,40 +2382,6 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
-
-            // ── Profile Menu List
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _ProfileMenuItem(
-                    icon: CupertinoIcons.bell,
-                    title: 'Notifications',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NotificationsPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _ProfileMenuItem(
-                    icon: CupertinoIcons.shield_lefthalf_fill,
-                    title: 'Privacy & Security',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 12),
-                  _ProfileMenuItem(
-                    icon: CupertinoIcons.square_arrow_right,
-                    title: 'Logout',
-                    isDestructive: true,
-                    onTap: () => authService.signOut(),
-                  ),
-                ]),
-              ),
-            ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
@@ -2383,29 +2393,33 @@ class _ProfileTab extends StatelessWidget {
 
 class _RoundIconButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
-  const _RoundIconButton({required this.icon, required this.onTap});
+  const _RoundIconButton({required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: Colors.white.withAlpha(15),
-          shape: BoxShape.circle,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
+    final Widget content = Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(15),
+        shape: BoxShape.circle,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Icon(icon, color: Colors.white, size: 20),
         ),
       ),
+    );
+
+    if (onTap == null) return content;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: content,
     );
   }
 }
