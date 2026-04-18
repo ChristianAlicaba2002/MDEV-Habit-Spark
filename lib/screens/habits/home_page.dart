@@ -3,14 +3,15 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
-import 'package:habit_spark/screens/notifications_page.dart';
-import 'package:habit_spark/screens/habit_detail_page.dart';
-import 'package:habit_spark/screens/create_edit_habit_page.dart';
-import 'package:habit_spark/screens/training_calendar_page.dart';
+import 'package:habit_spark/screens/misc/notifications_page.dart';
+import 'package:habit_spark/screens/habits/habit_detail_page.dart';
+import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
+import 'package:habit_spark/screens/calendar/training_calendar_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/widgets/app_header.dart';
@@ -132,9 +133,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           stream: _habitStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              );
+              return const _DashboardSkeleton();
             }
             if (snapshot.hasError) {
               return _ErrorView(onRetry: () => setState(() {}));
@@ -2555,6 +2554,133 @@ class _ProfileMenuItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Skeleton Loading ────────────────────────────────────────────────────────
+
+class _DashboardSkeleton extends StatelessWidget {
+  const _DashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.white.withAlpha(15),
+      highlightColor: Colors.white.withAlpha(30),
+      child: Column(
+        children: [
+          // Header Skeleton
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: _HeaderSkeleton(),
+          ),
+          const SizedBox(height: 24),
+          // Motivational Text Skeleton
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _SkeletonBlock(width: 200, height: 32),
+                SizedBox(height: 8),
+                _SkeletonBlock(width: 150, height: 32),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Search Bar Skeleton
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child:
+                _SkeletonBlock(width: double.infinity, height: 50, borderRadius: 25),
+          ),
+          const SizedBox(height: 32),
+          // Section Header Skeleton
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                _SkeletonBlock(width: 120, height: 24),
+                _SkeletonBlock(width: 60, height: 16),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Habit Grid Skeleton
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.1,
+              ),
+              itemCount: 4,
+              itemBuilder: (context, index) => const _SkeletonBlock(
+                width: double.infinity,
+                height: double.infinity,
+                borderRadius: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderSkeleton extends StatelessWidget {
+  const _HeaderSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const _SkeletonBlock(width: 50, height: 50, shape: BoxShape.circle),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            _SkeletonBlock(width: 120, height: 20),
+            SizedBox(height: 8),
+            _SkeletonBlock(width: 80, height: 14),
+          ],
+        ),
+        const Spacer(),
+        const _SkeletonBlock(width: 40, height: 40, shape: BoxShape.circle),
+      ],
+    );
+  }
+}
+
+class _SkeletonBlock extends StatelessWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+  final BoxShape shape;
+
+  const _SkeletonBlock({
+    required this.width,
+    required this.height,
+    this.borderRadius = 8,
+    this.shape = BoxShape.rectangle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: shape,
+        borderRadius:
+            shape == BoxShape.circle ? null : BorderRadius.circular(borderRadius),
       ),
     );
   }

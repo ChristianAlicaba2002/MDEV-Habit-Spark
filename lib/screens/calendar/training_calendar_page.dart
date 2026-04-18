@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:habit_spark/models/calendar_event.dart';
 import 'package:habit_spark/services/calendar_event_service.dart';
 import 'package:habit_spark/services/auth_service.dart';
-import 'package:habit_spark/screens/event_form_dialog.dart';
+import 'package:habit_spark/screens/calendar/event_form_dialog.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/constants/app_ui_components.dart';

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
-import 'package:habit_spark/screens/signup_page.dart';
+import 'package:habit_spark/screens/auth/signup_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
-import 'package:habit_spark/screens/home_page.dart';
-import 'package:habit_spark/screens/onboarding_page.dart';
+import 'package:habit_spark/screens/habits/home_page.dart';
+import 'package:habit_spark/screens/auth/onboarding_page.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:habit_spark/screens/login_page.dart';
+import 'package:habit_spark/screens/auth/login_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
