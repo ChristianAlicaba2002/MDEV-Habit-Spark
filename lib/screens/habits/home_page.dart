@@ -198,14 +198,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           },
         ),
       ),
-      floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 1)
-          ? FloatingActionButton(
-              onPressed: _showAddHabitDialog,
-              backgroundColor: AppColors.primary,
-              elevation: 6,
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
+      floatingActionButton: null,
       bottomNavigationBar: _BottomNav(
         selectedIndex: _selectedIndex,
         onTap: (i) => setState(() => _selectedIndex = i),
