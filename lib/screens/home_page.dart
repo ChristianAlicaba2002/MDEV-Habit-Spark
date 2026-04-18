@@ -323,7 +323,7 @@ class _NavItem extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: selected ? Colors.white : Colors.white.withAlpha(15),
+                color: selected ? Colors.white : Colors.transparent,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -2232,58 +2232,37 @@ class _ProfileTab extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 30),
                 child: Column(
                   children: [
-                    Stack(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withAlpha(20),
-                              width: 1,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 60,
-                            backgroundColor: AppColors.surface,
-                            backgroundImage: (userData?.photoUrl != null &&
-                                    userData!.photoUrl.isNotEmpty)
-                                ? NetworkImage(userData!.photoUrl)
-                                : null,
-                            child: (userData?.photoUrl == null ||
-                                    userData!.photoUrl.isEmpty)
-                                ? Text(
-                                    user?.email
-                                            ?.substring(0, 1)
-                                            .toUpperCase() ??
-                                        'U',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 40,
-                                    ),
-                                  )
-                                : null,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withAlpha(20),
+                          width: 1,
                         ),
-                        Positioned(
-                          right: 0,
-                          top: 5,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFD93D).withAlpha(180),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.black, width: 2),
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.star_fill,
-                              color: Colors.black,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: AppColors.surface,
+                        backgroundImage: (userData?.photoUrl != null &&
+                                userData!.photoUrl.isNotEmpty)
+                            ? NetworkImage(userData!.photoUrl)
+                            : null,
+                        child: (userData?.photoUrl == null ||
+                                userData!.photoUrl.isEmpty)
+                            ? Text(
+                                user?.email
+                                        ?.substring(0, 1)
+                                        .toUpperCase() ??
+                                    'U',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 40,
+                                ),
+                              )
+                            : null,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -2292,31 +2271,6 @@ class _ProfileTab extends StatelessWidget {
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withAlpha(60)),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(CupertinoIcons.sparkles,
-                              color: Colors.white, size: 16),
-                          SizedBox(width: 8),
-                          Text(
-                            'Premium',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
