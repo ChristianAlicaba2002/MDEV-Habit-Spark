@@ -445,37 +445,7 @@ class _DashboardTab extends StatelessWidget {
           ),
         ),
 
-        // ── Hero Banner
-        SliverToBoxAdapter(
-          child: FadeTransition(
-            opacity: heroFadeAnim,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-              child: _HeroBanner(
-                userName: userName,
-                completedCount: completedCount,
-                totalCount: totalCount,
-                progress: progress,
-                ringProgressAnim: ringProgressAnim,
-                streakService: streakService,
-                userId: userId,
-              ),
-            ),
-          ),
-        ),
 
-        // ── Quick Stats Row
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: _QuickStatsRow(
-              streakService: streakService,
-              userId: userId,
-              completedCount: completedCount,
-              totalCount: totalCount,
-            ),
-          ),
-        ),
 
         // ── Today's Habits Header
         SliverToBoxAdapter(
@@ -662,51 +632,8 @@ class _HeroBanner extends StatelessWidget {
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 16),
-                StreamBuilder<Map<String, dynamic>>(
-                  stream: streakService.getStreakStream(userId),
-                  builder: (context, snapshot) {
-                    final streak = snapshot.data?['currentStreak'] ?? 0;
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withAlpha(40),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.orange.withAlpha(100),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('🔥', style: TextStyle(fontSize: 14)),
-                          const SizedBox(width: 6),
-                          Text(
-                            '$streak day streak',
-                            style: const TextStyle(
-                              color: Colors.orange,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
               ],
             ),
-          ),
-          const SizedBox(width: 16),
-          // Right: Activity Ring
-          _ActivityRing(
-            progress: progress,
-            completedCount: completedCount,
-            totalCount: totalCount,
-            animation: ringProgressAnim,
           ),
         ],
       ),

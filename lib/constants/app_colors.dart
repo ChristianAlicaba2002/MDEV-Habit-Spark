@@ -16,7 +16,7 @@ class AppColors {
   static const Color accentDark = Color(0xFFFFC300); // Dark Yellow
 
   // Dark Theme
-  static const Color darkBg = Color(0xFF1A1A1A); // Dark grey background
+  static const Color darkBg = Color(0xFF35393F); // Lighter gray background
   static const Color darkCard = Color(0xFF252525); // Dark card
   static const Color darkCardAlt = Color(0xFF2D2D2D); // Alternative dark card
 
