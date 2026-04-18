@@ -32,15 +32,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final StreakService _streakService = StreakService();
 
   int _selectedIndex = 0;
+  final _searchController = TextEditingController(); // Added
+  String _searchQuery = ''; // Added
+
   late AnimationController _heroAnimController;
   late AnimationController _ringAnimController;
   late Animation<double> _heroFadeAnim;
   late Animation<double> _ringProgressAnim;
   double _currentRingProgress = 0;
+  Stream<List<Habit>>? _habitStream;
 
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
     _heroAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -57,11 +66,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       CurvedAnimation(parent: _ringAnimController, curve: Curves.easeInOut),
     );
     _heroAnimController.forward();
+    final userId = _authService.currentUser?.uid ?? '';
+    if (userId.isNotEmpty) {
+      _habitStream = _habitService.getHabitsStream(userId);
+    }
     _initializeUserData();
   }
 
   @override
   void dispose() {
+    _searchController.dispose(); // Added
     _heroAnimController.dispose();
     _ringAnimController.dispose();
     super.dispose();
@@ -115,7 +129,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<List<Habit>>(
-          stream: _habitService.getHabitsStream(userId),
+          stream: _habitStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -127,6 +141,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             }
 
             final habits = snapshot.data ?? [];
+            final filteredHabits = habits
+                .where((h) =>
+                    h.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+                .toList();
             final completedCount = habits.where((h) => h.isDone == true).length;
             final totalCount = habits.length;
             final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
@@ -145,7 +163,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   userId: userId,
                   userName: userName,
                   userInitial: userInitial,
-                  habits: habits,
+                  habits: filteredHabits,
                   completedCount: completedCount,
                   totalCount: totalCount,
                   progress: progress,
@@ -154,6 +172,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   notificationService: _notificationService,
                   streakService: _streakService,
                   authService: _authService,
+                  searchController: _searchController,
                   onAddHabit: _showAddHabitDialog,
                   onProfileTap: () => setState(() => _selectedIndex = 3),
                 ),
@@ -385,6 +404,7 @@ class _DashboardTab extends StatelessWidget {
   final NotificationService notificationService;
   final StreakService streakService;
   final AuthService authService;
+  final TextEditingController searchController; // Added
   final VoidCallback onAddHabit;
   final VoidCallback onProfileTap;
 
@@ -401,6 +421,7 @@ class _DashboardTab extends StatelessWidget {
     required this.notificationService,
     required this.streakService,
     required this.authService,
+    required this.searchController, // Added
     required this.onAddHabit,
     required this.onProfileTap,
   });
@@ -517,23 +538,41 @@ class _DashboardTab extends StatelessWidget {
                 color: Colors.white.withAlpha(15),
                 borderRadius: BorderRadius.circular(25),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Icon(
-                    CupertinoIcons.search,
-                    color: Colors.white.withAlpha(100),
-                    size: 20,
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  inputDecorationTheme: const InputDecorationTheme(
+                    border: InputBorder.none,
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Search',
-                    style: TextStyle(
+                ),
+                child: TextField(
+                  controller: searchController,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  cursorColor: AppColors.primary,
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    hintStyle: TextStyle(
                       color: Colors.white.withAlpha(100),
                       fontSize: 16,
                     ),
+                    prefixIcon: Icon(
+                      CupertinoIcons.search,
+                      color: Colors.white.withAlpha(100),
+                      size: 20,
+                    ),
+                    suffixIcon: searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.white.withAlpha(100),
+                              size: 20,
+                            ),
+                            onPressed: () => searchController.clear(),
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ],
+                ),
               ),
             ),
           ),
