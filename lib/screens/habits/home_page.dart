@@ -461,61 +461,74 @@ class _DashboardTab extends StatelessWidget {
         // ── Motivational Hero
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Excellence is not an act,',
-                        style: GoogleFonts.poppins(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                          height: 1.1,
-                        ),
-                      ),
-                      Text(
-                        'but a habit.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.white,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/hero_bg.png'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black45,
+                    BlendMode.darken,
                   ),
                 ),
-                GestureDetector(
-                  onTap: onAddHabit,
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF1E1E1E), // Near black
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 24,
+                    bottom: 32,
+                    right: 80,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Preparing',
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          'for the big move.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.white,
+                            height: 1.1,
+                            letterSpacing: -0.5,
+                          ),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 28,
+                  ),
+                  Positioned(
+                    right: 20,
+                    bottom: 32,
+                    child: GestureDetector(
+                      onTap: onAddHabit,
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -527,8 +540,12 @@ class _DashboardTab extends StatelessWidget {
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha(15),
-                borderRadius: BorderRadius.circular(25),
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.05),
+                  width: 1,
+                ),
               ),
               child: Theme(
                 data: Theme.of(context).copyWith(
@@ -543,13 +560,14 @@ class _DashboardTab extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: 'Search',
                     hintStyle: TextStyle(
-                      color: Colors.white.withAlpha(100),
+                      color: Colors.white.withOpacity(0.35),
                       fontSize: 16,
+                      fontWeight: FontWeight.w400,
                     ),
                     prefixIcon: Icon(
                       CupertinoIcons.search,
-                      color: Colors.white.withAlpha(100),
-                      size: 20,
+                      color: Colors.white.withOpacity(0.35),
+                      size: 22,
                     ),
                     suffixIcon: searchController.text.isNotEmpty
                         ? IconButton(
@@ -573,23 +591,23 @@ class _DashboardTab extends StatelessWidget {
         // ── Goal Crusher Header
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 const Text(
                   "Goal Crusher",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 Text(
                   "View all",
                   style: TextStyle(
-                    color: Colors.white.withAlpha(100),
+                    color: Colors.white.withOpacity(0.4),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -599,41 +617,30 @@ class _DashboardTab extends StatelessWidget {
           ),
         ),
 
-        // ── Habit Grid
-        habits.isEmpty
-            ? SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(48),
-                  child: _EmptyHabitsState(onAddHabit: onAddHabit),
-                ),
-              )
-            : SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.9,
+        // ── Goal Crusher Horizontal List
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 180,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: habits.length,
+              itemBuilder: (context, index) {
+                final habit = habits[index];
+                return _GoalCrusherCard(
+                  habit: habit,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => HabitDetailPage(habit: habit),
+                    ),
                   ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final habit = habits[index];
-                      return _HabitGridCard(
-                        habit: habit,
-                        index: index,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => HabitDetailPage(habit: habit),
-                          ),
-                        ),
-                      );
-                    },
-                    childCount: habits.length,
-                  ),
-                ),
-              ),
+                );
+              },
+            ),
+          ),
+        ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 120)),
       ],
@@ -975,152 +982,119 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-// ─── Habit Grid Card ──────────────────────────────────────────────────────────
 
-class _HabitGridCard extends StatelessWidget {
+// ─── Goal Crusher Card ────────────────────────────────────────────────────────
+class _GoalCrusherCard extends StatelessWidget {
   final Habit habit;
-  final int index;
   final VoidCallback onTap;
 
-  const _HabitGridCard({
-    required this.habit,
-    required this.index,
-    required this.onTap,
-  });
-
-  static const _gradients = [
-    [Color(0xFF84FAB0), Color(0xFF8FD3F4)],
-    [Color(0xFFFA709A), Color(0xFFFEE140)],
-    [Color(0xFFFF9A56), Color(0xFFFF6A88)],
-    [Color(0xFF667EEA), Color(0xFF764BA2)],
-    [Color(0xFFF093FB), Color(0xFFF5576C)],
-    [Color(0xFF4FACFE), Color(0xFF00F2FE)],
-  ];
-
-  IconData _getHabitIcon() {
-    if (habit.icon != null) return _iconFromString(habit.icon!);
-    final name = habit.name.toLowerCase();
-    if (name.contains('run') || name.contains('jog')) return Icons.directions_run;
-    if (name.contains('read')) return Icons.menu_book;
-    if (name.contains('water') || name.contains('drink')) return Icons.water_drop;
-    if (name.contains('exercise') || name.contains('workout')) return Icons.fitness_center;
-    if (name.contains('meditat') || name.contains('yoga')) return Icons.self_improvement;
-    if (name.contains('sleep')) return Icons.bedtime;
-    if (name.contains('eat') || name.contains('meal')) return Icons.restaurant;
-    if (name.contains('study') || name.contains('learn')) return Icons.school;
-    if (name.contains('walk')) return Icons.directions_walk;
-    return Icons.check_circle_outline;
-  }
-
-  IconData _iconFromString(String s) {
-    const map = {
-      'directions_run': Icons.directions_run,
-      'fitness_center': Icons.fitness_center,
-      'self_improvement': Icons.self_improvement,
-      'menu_book': Icons.menu_book,
-      'water_drop': Icons.water_drop,
-      'restaurant': Icons.restaurant,
-      'bedtime': Icons.bedtime,
-      'school': Icons.school,
-      'code': Icons.code,
-      'music_note': Icons.music_note,
-      'brush': Icons.brush,
-      'camera_alt': Icons.camera_alt,
-      'favorite': Icons.favorite,
-      'wb_sunny': Icons.wb_sunny,
-      'nightlight': Icons.nightlight,
-      'local_cafe': Icons.local_cafe,
-    };
-    return map[s] ?? Icons.check_circle_outline;
-  }
+  const _GoalCrusherCard({required this.habit, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final colors = habit.isDone
-        ? [const Color(0xFF3A3A3A), const Color(0xFF2A2A2A)]
-        : _gradients[index % _gradients.length];
+    // Determine info based on habit name or type
+    String mainValue = "0";
+    String title = habit.name;
+    String subtext = "0%";
+    IconData ringIcon = Icons.fitness_center;
+    Color ringColor = AppColors.primary;
+
+    if (habit.name.toLowerCase().contains('run') ||
+        habit.name.toLowerCase().contains('walk')) {
+      mainValue = "42.2 km";
+      title = "This Week";
+      subtext = "12%";
+      ringIcon = Icons.directions_run;
+      ringColor = const Color(0xFF4ECDC4);
+    } else if (habit.name.toLowerCase().contains('streak')) {
+      mainValue = "7 Days";
+      title = "Streak";
+      subtext = "Keep it up!";
+      ringIcon = Icons.local_fire_department;
+      ringColor = const Color(0xFFFF6B6B);
+    } else {
+      mainValue = habit.isDone ? "1" : "0";
+      title = habit.name;
+      subtext = habit.isDone ? "100%" : "0%";
+      ringIcon = Icons.check_circle_outline;
+    }
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: colors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          color: Colors.white.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.05),
+            width: 1,
           ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: colors[0].withAlpha(habit.isDone ? 20 : 80),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Decorative background icon
-            Positioned(
-              right: -10,
-              bottom: -10,
-              child: Opacity(
-                opacity: 0.12,
-                child: Icon(
-                  _getHabitIcon(),
-                  size: 70,
-                  color: Colors.white,
-                ),
+            Text(
+              title,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.4),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Icon(_getHabitIcon(), color: Colors.white, size: 20),
-                      if (habit.isDone)
-                        Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(40),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 12,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Text(
-                    habit.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    habit.isDone ? 'Done ✓' : 'Pending',
-                    style: TextStyle(
-                      color: Colors.white.withAlpha(180),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 6),
+            Text(
+              mainValue,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+            const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    subtext,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: CircularProgressIndicator(
+                        value: 0.7,
+                        strokeWidth: 3,
+                        backgroundColor: Colors.white.withOpacity(0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                      ),
+                    ),
+                    Icon(
+                      ringIcon,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),

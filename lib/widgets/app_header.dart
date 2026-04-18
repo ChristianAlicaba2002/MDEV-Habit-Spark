@@ -34,16 +34,27 @@ class AppHeader extends StatelessWidget {
           GestureDetector(
             onTap: onProfileTap,
             child: Container(
-              padding: const EdgeInsets.all(2),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withAlpha(20),
-                  width: 1,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.05),
+                  ],
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: CircleAvatar(
-                radius: 25,
+                radius: 28,
                 backgroundColor: AppColors.surface,
                 backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty)
                     ? NetworkImage(photoUrl!)
@@ -53,7 +64,7 @@ class AppHeader extends StatelessWidget {
                         userInitial,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       )
@@ -61,7 +72,7 @@ class AppHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
 
           // ── Middle: Greeting & Progress
           Expanded(
@@ -73,25 +84,25 @@ class AppHeader extends StatelessWidget {
                   'Hello, $userName',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.2,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(
                       CupertinoIcons.bolt_fill,
-                      color: Colors.white.withAlpha(160),
-                      size: 12,
+                      color: AppColors.primary,
+                      size: 14,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Progress: ${(progress * 100).toInt()}%',
                       style: TextStyle(
-                        color: Colors.white.withAlpha(160),
-                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -105,11 +116,22 @@ class AppHeader extends StatelessWidget {
           GestureDetector(
             onTap: onNotificationTap,
             child: Container(
-              width: 44,
-              height: 44,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha(15),
+                color: const Color(0xFF2D2D2D),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.05),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Stack(
                 alignment: Alignment.center,
@@ -117,18 +139,22 @@ class AppHeader extends StatelessWidget {
                   const Icon(
                     CupertinoIcons.bell,
                     color: Colors.white,
-                    size: 20,
+                    size: 24,
                   ),
                   if (notificationCount > 0)
                     Positioned(
-                      right: 12,
-                      top: 12,
+                      right: 14,
+                      top: 14,
                       child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
                           color: AppColors.error,
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF2D2D2D),
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
