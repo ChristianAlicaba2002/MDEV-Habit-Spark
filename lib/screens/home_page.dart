@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
@@ -429,9 +430,12 @@ class _DashboardTab extends StatelessWidget {
                       ),
                       onProfileTap: onProfileTap,
                       notificationCount: unreadCount,
-                      userInitial: userInitial,
+                      userInitial: (userSnap.data?.firstName != null &&
+                              userSnap.data!.firstName.isNotEmpty)
+                          ? userSnap.data!.firstName[0].toUpperCase()
+                          : userInitial,
                       photoUrl: userSnap.data?.photoUrl,
-                      userName: userName,
+                      userName: userSnap.data?.firstName ?? userName,
                       progress: progress,
                     );
                   },
@@ -441,57 +445,122 @@ class _DashboardTab extends StatelessWidget {
           ),
         ),
 
+        // ── Motivational Hero
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Excellence is not an act,',
+                        style: GoogleFonts.poppins(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                          height: 1.1,
+                        ),
+                      ),
+                      Text(
+                        'but a habit.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white,
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: onAddHabit,
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF1E1E1E), // Near black
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
 
+        // ── Search Bar
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(15),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Icon(
+                    CupertinoIcons.search,
+                    color: Colors.white.withAlpha(100),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Search',
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(100),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
 
-        // ── Today's Habits Header
+        // ── Goal Crusher Header
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Today's Habits", style: AppTextStyles.heading4),
-                    Text(
-                      '$completedCount of $totalCount completed',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                const Text(
+                  "Goal Crusher",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                GestureDetector(
-                  onTap: onAddHabit,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(30),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.primary.withAlpha(80),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.add,
-                          color: AppColors.primary,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Add',
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
+                Text(
+                  "View all",
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(100),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
