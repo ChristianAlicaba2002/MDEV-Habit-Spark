@@ -428,15 +428,11 @@ class _DashboardTab extends StatelessWidget {
                         ),
                       ),
                       onProfileTap: onProfileTap,
-                      onCalendarTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const TrainingCalendarPage(),
-                        ),
-                      ),
                       notificationCount: unreadCount,
                       userInitial: userInitial,
                       photoUrl: userSnap.data?.photoUrl,
+                      userName: userName,
+                      progress: progress,
                     );
                   },
                 );
