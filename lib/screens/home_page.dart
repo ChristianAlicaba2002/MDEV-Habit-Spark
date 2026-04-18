@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
@@ -89,27 +91,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _showProfileMenu() async {
-    final user = _authService.currentUser;
-    final userId = user?.uid;
-    UserModel? userData;
-    if (userId != null) {
-      userData = await _authService.getUserData(userId);
-    }
-    if (!mounted) return;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => _ProfileSheet(
-        user: user,
-        userData: userData,
-        authService: _authService,
-        joinedDate: _getJoinedDate(),
-      ),
-    );
-  }
 
   String _getJoinedDate() {
     final now = DateTime.now();
@@ -128,8 +109,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final userInitial = user?.email?.substring(0, 1).toUpperCase() ?? 'U';
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: AppColors.background,
       body: SafeArea(
+        bottom: false,
         child: StreamBuilder<List<Habit>>(
           stream: _habitService.getHabitsStream(userId),
           builder: (context, snapshot) {
@@ -171,7 +154,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   streakService: _streakService,
                   authService: _authService,
                   onAddHabit: _showAddHabitDialog,
-                  onProfileTap: _showProfileMenu,
+                  onProfileTap: () => setState(() => _selectedIndex = 3),
                 ),
                 _CheckInTab(
                   habits: habits,
@@ -184,12 +167,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   habits: habits,
                   streakService: _streakService,
                 ),
+                _ProfileTab(
+                  userId: userId,
+                  authService: _authService,
+                ),
               ],
             );
           },
         ),
       ),
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: (_selectedIndex == 0 || _selectedIndex == 1)
           ? FloatingActionButton(
               onPressed: _showAddHabitDialog,
               backgroundColor: AppColors.primary,
@@ -215,43 +202,67 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF141414),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(120),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                icon: Icons.home_rounded,
-                label: 'Home',
-                selected: selectedIndex == 0,
-                onTap: () => onTap(0),
-              ),
-              _NavItem(
-                icon: Icons.task_alt_rounded,
-                label: 'Check-In',
-                selected: selectedIndex == 1,
-                onTap: () => onTap(1),
-              ),
-              _NavItem(
-                icon: Icons.insights_rounded,
-                label: 'Progress',
-                selected: selectedIndex == 2,
-                onTap: () => onTap(2),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+        child: Container(
+          height: 70,
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(35),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(35),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _NavItem(
+                      icon: CupertinoIcons.house,
+                      activeIcon: CupertinoIcons.house_fill,
+                      label: 'Home',
+                      selected: selectedIndex == 0,
+                      onTap: () => onTap(0),
+                    ),
+                    _NavItem(
+                      icon: CupertinoIcons.checkmark_square,
+                      activeIcon: CupertinoIcons.checkmark_square_fill,
+                      label: 'Check-In',
+                      selected: selectedIndex == 1,
+                      onTap: () => onTap(1),
+                    ),
+                    _NavItem(
+                      icon: CupertinoIcons.chart_bar,
+                      activeIcon: CupertinoIcons.chart_bar_fill,
+                      label: 'Stats',
+                      selected: selectedIndex == 2,
+                      onTap: () => onTap(2),
+                    ),
+                    _NavItem(
+                      icon: CupertinoIcons.person,
+                      activeIcon: CupertinoIcons.person_fill,
+                      label: 'Profile',
+                      selected: selectedIndex == 3,
+                      onTap: () => onTap(3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -261,12 +272,14 @@ class _BottomNav extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
+    required this.activeIcon,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -278,29 +291,42 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary.withAlpha(30)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        height: 54,
+        padding: EdgeInsets.only(
+          left: selected ? 18 : 0,
+          right: 0,
         ),
-        child: Column(
+        decoration: BoxDecoration(
+          color: selected ? Colors.black.withOpacity(0.8) : Colors.transparent,
+          borderRadius: BorderRadius.circular(27),
+        ),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 26,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-                color: selected ? AppColors.primary : AppColors.textSecondary,
+            if (selected) ...[
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: selected ? Colors.white : Colors.white.withAlpha(15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                selected ? activeIcon : icon,
+                size: 20,
+                color: selected ? Colors.black : Colors.white.withAlpha(200),
               ),
             ),
           ],
@@ -540,7 +566,7 @@ class _DashboardTab extends StatelessWidget {
                 ),
               ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 96)),
+        const SliverToBoxAdapter(child: SizedBox(height: 120)),
       ],
     );
   }
@@ -1261,7 +1287,7 @@ class _CheckInTabState extends State<_CheckInTab> {
                 ),
               ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 30)),
+        const SliverToBoxAdapter(child: SizedBox(height: 120)),
       ],
     );
   }
@@ -1734,7 +1760,7 @@ class _StatsTab extends StatelessWidget {
           ),
         ),
 
-        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+        const SliverToBoxAdapter(child: SizedBox(height: 120)),
       ],
     );
   }
@@ -2119,60 +2145,64 @@ class _HabitsCarouselState extends State<_HabitsCarousel> {
   }
 }
 
-// ─── Profile Bottom Sheet ────────────────────────────────────────────────────
+// ─── Profile Tab ─────────────────────────────────────────────────────────────
 
-class _ProfileSheet extends StatelessWidget {
-  final dynamic user;
-  final UserModel? userData;
+class _ProfileTab extends StatelessWidget {
+  final String userId;
   final AuthService authService;
-  final String joinedDate;
 
-  const _ProfileSheet({
-    required this.user,
-    required this.userData,
+  const _ProfileTab({
+    required this.userId,
     required this.authService,
-    required this.joinedDate,
   });
+
+  String _getJoinedDate() {
+    final now = DateTime.now();
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[now.month - 1]} ${now.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final displayName =
-        '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim();
-    final name = displayName.isEmpty
-        ? user?.email?.split('@')[0] ?? 'User'
-        : displayName;
+    return StreamBuilder<UserModel?>(
+      stream: authService.getUserDataStream(userId),
+      builder: (context, snapshot) {
+        final userData = snapshot.data;
+        final user = authService.currentUser;
+        final displayName =
+            '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim();
+        final name = displayName.isEmpty
+            ? user?.email?.split('@')[0] ?? 'User'
+            : displayName;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (_, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF141414),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            // drag handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 28,
-                  horizontal: 24,
-                ),
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
                 child: Column(
                   children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Profile', style: AppTextStyles.heading2),
+                        IconButton(
+                          icon: const Icon(CupertinoIcons.settings, color: Colors.white),
+                          onPressed: () {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Settings — Coming soon')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    
                     // Avatar
                     Container(
                       decoration: BoxDecoration(
@@ -2188,9 +2218,9 @@ class _ProfileSheet extends StatelessWidget {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(3),
+                      padding: const EdgeInsets.all(4),
                       child: CircleAvatar(
-                        radius: 48,
+                        radius: 60,
                         backgroundColor: AppColors.surface,
                         backgroundImage:
                             (userData?.photoUrl != null &&
@@ -2207,29 +2237,28 @@ class _ProfileSheet extends StatelessWidget {
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 36,
+                                  fontSize: 48,
                                 ),
                               )
                             : null,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(name, style: AppTextStyles.heading4),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 24),
+                    Text(name, style: AppTextStyles.heading3),
+                    const SizedBox(height: 6),
                     Text(
-                      'Joined $joinedDate',
+                      'Joined ${_getJoinedDate()}',
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
 
                     // Edit Profile Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Edit Profile — Coming soon'),
@@ -2238,40 +2267,34 @@ class _ProfileSheet extends StatelessWidget {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                           ),
+                          elevation: 0,
                         ),
                         child: const Text(
-                          'EDIT PROFILE',
+                          'Edit Profile',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
 
-                    // Menu items
-                    _SheetMenuItem(
-                      icon: Icons.apps_outlined,
-                      title: 'Connected Apps & Devices',
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Connected Apps — Coming soon'),
-                          ),
-                        );
-                      },
+                    // Menu List
+                    _ProfileMenuItem(
+                      icon: CupertinoIcons.app_badge,
+                      title: 'Connected Apps',
+                      onTap: () {},
                     ),
-                    _SheetMenuItem(
-                      icon: Icons.notifications_outlined,
+                    _ProfileMenuItem(
+                      icon: CupertinoIcons.bell,
                       title: 'Notifications',
                       onTap: () {
-                        Navigator.pop(context);
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -2280,56 +2303,42 @@ class _ProfileSheet extends StatelessWidget {
                         );
                       },
                     ),
-                    _SheetMenuItem(
-                      icon: Icons.local_offer_outlined,
-                      title: 'Offers',
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Offers — Coming soon')),
-                        );
-                      },
+                    _ProfileMenuItem(
+                      icon: CupertinoIcons.tag,
+                      title: 'Special Offers',
+                      onTap: () {},
                     ),
-                    _SheetMenuItem(
-                      icon: Icons.settings_outlined,
-                      title: 'Settings',
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Settings — Coming soon'),
-                          ),
-                        );
-                      },
+                    _ProfileMenuItem(
+                      icon: CupertinoIcons.shield_lefthalf_fill,
+                      title: 'Privacy & Security',
+                      onTap: () {},
                     ),
-                    _SheetMenuItem(
-                      icon: Icons.logout,
+                    const SizedBox(height: 20),
+                    _ProfileMenuItem(
+                      icon: CupertinoIcons.square_arrow_right,
                       title: 'Logout',
                       isDestructive: true,
-                      onTap: () async {
-                        Navigator.pop(context);
-                        await authService.signOut();
-                      },
+                      onTap: () => authService.signOut(),
                     ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),
             ),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-class _SheetMenuItem extends StatelessWidget {
+class _ProfileMenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
   final bool isDestructive;
 
-  const _SheetMenuItem({
+  const _ProfileMenuItem({
     required this.icon,
     required this.title,
     required this.onTap,
@@ -2341,11 +2350,14 @@ class _SheetMenuItem extends StatelessWidget {
     final color = isDestructive ? AppColors.error : AppColors.textPrimary;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border.withAlpha(40)),
         ),
         child: Row(
           children: [
@@ -2354,10 +2366,17 @@ class _SheetMenuItem extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: AppTextStyles.bodyMedium.copyWith(color: color),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 22),
+            Icon(
+              CupertinoIcons.chevron_right,
+              color: AppColors.textSecondary.withAlpha(100),
+              size: 16,
+            ),
           ],
         ),
       ),
