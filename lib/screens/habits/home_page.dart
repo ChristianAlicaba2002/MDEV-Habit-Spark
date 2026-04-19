@@ -467,7 +467,6 @@ class _DashboardTab extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 image: const DecorationImage(
-                  image: AssetImage('assets/images/hero_bg.png'),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
                     Colors.black45,
@@ -596,7 +595,7 @@ class _DashboardTab extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Goal Crusher",
+                  "My Habits",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -638,6 +637,61 @@ class _DashboardTab extends StatelessWidget {
                   ),
                 );
               },
+            ),
+          ),
+        ),
+
+        // ── Recent Activities Header
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Recent Activities",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                Text(
+                  "View all",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Recent Activities List
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                const _RecentActivityCard(
+                  title: 'Ran',
+                  subtitle: 'Today',
+                  value1: '8.8km',
+                  value2: '45:32',
+                  icon: Icons.directions_run,
+                ),
+                const SizedBox(height: 12),
+                const _RecentActivityCard(
+                  title: 'Cycle',
+                  subtitle: 'Yesterday',
+                  value1: '24.5km',
+                  value2: '1:12:15',
+                  icon: Icons.directions_bike,
+                ),
+              ],
             ),
           ),
         ),
@@ -1098,6 +1152,105 @@ class _GoalCrusherCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Recent Activity Card ─────────────────────────────────────────────────────
+
+class _RecentActivityCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String value1;
+  final String value2;
+  final IconData icon;
+
+  const _RecentActivityCard({
+    required this.title,
+    required this.subtitle,
+    required this.value1,
+    required this.value2,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.05),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white.withOpacity(0.8),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value1,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value2,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
