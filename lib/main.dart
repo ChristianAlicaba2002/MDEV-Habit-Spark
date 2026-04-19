@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:habit_spark/firebase_options.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/fcm_service.dart';
-import 'package:habit_spark/screens/login_page.dart';
-import 'package:habit_spark/screens/home_page.dart';
-import 'package:habit_spark/screens/onboarding_page.dart';
+import 'package:habit_spark/screens/auth/login_page.dart';
+import 'package:habit_spark/screens/habits/home_page.dart';
+import 'package:habit_spark/screens/auth/onboarding_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
