@@ -2139,7 +2139,7 @@ class _ProfileTab extends StatelessWidget {
                         ),
                       ),
                       Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
-                      const _SettingsSoundRow(),
+                      const _SettingsThemeRow(),
                     ],
                   ),
                 ),
@@ -2351,17 +2351,17 @@ class _SettingsRow extends StatelessWidget {
   }
 }
 
-// ── Settings Sound Row (with toggle) ─────────────────────────────────────────
+// ── Settings Theme Row (with toggle) ─────────────────────────────────────────
 
-class _SettingsSoundRow extends StatefulWidget {
-  const _SettingsSoundRow();
+class _SettingsThemeRow extends StatefulWidget {
+  const _SettingsThemeRow();
 
   @override
-  State<_SettingsSoundRow> createState() => _SettingsSoundRowState();
+  State<_SettingsThemeRow> createState() => _SettingsThemeRowState();
 }
 
-class _SettingsSoundRowState extends State<_SettingsSoundRow> {
-  bool _soundOn = true;
+class _SettingsThemeRowState extends State<_SettingsThemeRow> {
+  bool _isDarkMode = true;
 
   @override
   Widget build(BuildContext context) {
@@ -2376,12 +2376,12 @@ class _SettingsSoundRowState extends State<_SettingsSoundRow> {
               color: const Color(0xFF3A3A3C),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(CupertinoIcons.volume_up, color: Colors.grey[400], size: 18),
+            child: Icon(CupertinoIcons.moon_fill, color: Colors.grey[400], size: 18),
           ),
           const SizedBox(width: 14),
           const Expanded(
             child: Text(
-              'Sound',
+              'Dark Mode',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 15,
@@ -2390,9 +2390,9 @@ class _SettingsSoundRowState extends State<_SettingsSoundRow> {
             ),
           ),
           CupertinoSwitch(
-            value: _soundOn,
+            value: _isDarkMode,
             activeColor: Colors.grey[600]!,
-            onChanged: (val) => setState(() => _soundOn = val),
+            onChanged: (val) => setState(() => _isDarkMode = val),
           ),
         ],
       ),
