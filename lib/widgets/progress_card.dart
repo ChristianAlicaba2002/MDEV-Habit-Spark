@@ -21,11 +21,11 @@ class ProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: AppColors.border.withOpacity(0.2),
             spreadRadius: 2,
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -38,14 +38,8 @@ class ProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Today\'s Progress',
-                style: AppTextStyles.bodyMedium,
-              ),
-              Text(
-                '$percentage%',
-                style: AppTextStyles.heading3,
-              ),
+              const Text('Today\'s Progress', style: AppTextStyles.bodyMedium),
+              Text('$percentage%', style: AppTextStyles.heading3),
             ],
           ),
           const SizedBox(height: 12),
@@ -54,13 +48,13 @@ class ProgressCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: totalHabits > 0 ? completedHabits / totalHabits : 0,
               minHeight: 12,
-              backgroundColor: Colors.grey[200],
+              backgroundColor: AppColors.surfaceAlt,
               valueColor: AlwaysStoppedAnimation<Color>(
                 percentage >= 80
                     ? AppColors.success
                     : percentage >= 50
-                        ? AppColors.warning
-                        : AppColors.error,
+                    ? AppColors.warning
+                    : AppColors.error,
               ),
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/constants/app_text_styles.dart';
 
 class CompletedCard extends StatelessWidget {
   final int completedCount;
@@ -31,38 +32,14 @@ class CompletedCard extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.white,
-                size: 28,
-              ),
+              Icon(Icons.check_circle, color: AppColors.textPrimary, size: 28),
               SizedBox(width: 8),
-              Text(
-                'Completed',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text('Completed', style: AppTextStyles.labelMedium),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            '$completedCount',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Text(
-            'habits today',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
+          Text('$completedCount', style: AppTextStyles.display1),
+          const Text('habits today', style: AppTextStyles.bodySmall),
         ],
       ),
     );

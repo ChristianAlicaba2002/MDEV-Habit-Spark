@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/models/user_model.dart';
+import 'package:habit_spark/services/fcm_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -41,7 +42,16 @@ class AuthService {
   // Save user data to Firestore
   Future<void> saveUserModel(UserModel user) async {
     try {
-      await _firestore.collection('users').doc(user.uuid).set(user.toMap());
+      // Get FCM token
+      final fcmToken = await FCMService().getToken();
+      
+      // Add FCM token to user data
+      final userData = user.toMap();
+      if (fcmToken != null) {
+        userData['fcmToken'] = fcmToken;
+      }
+      
+      await _firestore.collection('users').doc(user.uuid).set(userData);
     } catch (e) {
       throw 'Failed to save user data: $e';
     }
@@ -79,10 +89,28 @@ class AuthService {
     throw 'Google sign-in is not configured yet';
   }
 
-  // Reset password
+  // Reset password via email
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Update profile fields in Firestore
+  Future<void> updateProfile(String userId, Map<String, dynamic> fields) async {
+    try {
+      await _firestore.collection('users').doc(userId).update(fields);
+    } catch (e) {
+      throw 'Failed to update profile: $e';
+    }
+  }
+
+  // Change password (requires recent login)
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _auth.currentUser?.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }

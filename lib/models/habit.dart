@@ -4,7 +4,8 @@ class Habit {
   final bool isDone;
   final DateTime createdAt;
   final String userId;
-  final String? icon; // Icon name to store
+  final String? icon;
+  final String? imageUrl;
 
   Habit({
     required this.id,
@@ -13,18 +14,20 @@ class Habit {
     required this.createdAt,
     required this.userId,
     this.icon,
+    this.imageUrl,
   });
 
   factory Habit.fromMap(Map<String, dynamic> map, String id) {
     return Habit(
       id: id,
       name: map['name'] ?? '',
-      isDone: map['isDone'] ?? false,
+      isDone: (map['isDone'] as bool?) ?? false,
       createdAt: map['createdAt'] != null 
           ? (map['createdAt'] as dynamic).toDate() 
           : DateTime.now(),
       userId: map['userId'] ?? '',
       icon: map['icon'] as String?,
+      imageUrl: map['imageUrl'] as String?,
     );
   }
 
@@ -35,6 +38,7 @@ class Habit {
       'createdAt': createdAt,
       'userId': userId,
       if (icon != null) 'icon': icon,
+      if (imageUrl != null) 'imageUrl': imageUrl,
     };
   }
 
@@ -45,6 +49,7 @@ class Habit {
     DateTime? createdAt,
     String? userId,
     String? icon,
+    String? imageUrl,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -53,6 +58,7 @@ class Habit {
       createdAt: createdAt ?? this.createdAt,
       userId: userId ?? this.userId,
       icon: icon ?? this.icon,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 }
