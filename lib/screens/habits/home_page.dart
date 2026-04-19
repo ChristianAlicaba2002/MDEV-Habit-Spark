@@ -9,6 +9,7 @@ import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
+import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/screens/habits/habit_detail_page.dart';
 import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/calendar/training_calendar_page.dart';
@@ -2060,23 +2061,23 @@ class _ProfileTab extends StatelessWidget {
                             Expanded(
                               child: _ProfileStatBox(
                                 label: 'Age',
-                                value: ageStr,
+                                value: userData?.age != null ? '${userData!.age}' : ageStr,
                                 unit: 'y.o',
                               ),
                             ),
                             const SizedBox(width: 10),
-                            const Expanded(
+                            Expanded(
                               child: _ProfileStatBox(
                                 label: 'Height',
-                                value: '--',
+                                value: userData?.height != null ? '${userData!.height!.toInt()}' : '--',
                                 unit: 'cm',
                               ),
                             ),
                             const SizedBox(width: 10),
-                            const Expanded(
+                            Expanded(
                               child: _ProfileStatBox(
                                 label: 'Weight',
-                                value: '--',
+                                value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '--',
                                 unit: 'kg',
                               ),
                             ),
@@ -2118,8 +2119,15 @@ class _ProfileTab extends StatelessWidget {
                       _SettingsRow(
                         icon: CupertinoIcons.person,
                         label: 'Personal Information',
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Personal Information — Coming soon')),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PersonalInformationPage(
+                              userId: userId,
+                              authService: authService,
+                              initialData: userData,
+                            ),
+                          ),
                         ),
                       ),
                       Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),

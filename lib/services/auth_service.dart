@@ -89,10 +89,28 @@ class AuthService {
     throw 'Google sign-in is not configured yet';
   }
 
-  // Reset password
+  // Reset password via email
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Update profile fields in Firestore
+  Future<void> updateProfile(String userId, Map<String, dynamic> fields) async {
+    try {
+      await _firestore.collection('users').doc(userId).update(fields);
+    } catch (e) {
+      throw 'Failed to update profile: $e';
+    }
+  }
+
+  // Change password (requires recent login)
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _auth.currentUser?.updatePassword(newPassword);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     }
