@@ -254,9 +254,9 @@ class _BottomNav extends StatelessWidget {
                       onTap: () => onTap(0),
                     ),
                     _NavItem(
-                      icon: CupertinoIcons.checkmark_square,
-                      activeIcon: CupertinoIcons.checkmark_square_fill,
-                      label: 'Check-In',
+                      icon: CupertinoIcons.bolt,
+                      activeIcon: CupertinoIcons.bolt_fill,
+                      label: 'Activity',
                       selected: selectedIndex == 1,
                       onTap: () => onTap(1),
                     ),
@@ -1332,7 +1332,7 @@ class _CheckInTabState extends State<_CheckInTab> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Daily Check-In', style: AppTextStyles.heading3),
+                const Text('Activity', style: AppTextStyles.heading3),
                 GestureDetector(
                   onTap: widget.onAddHabit,
                   child: Container(
