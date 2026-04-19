@@ -261,9 +261,9 @@ class _BottomNav extends StatelessWidget {
                       onTap: () => onTap(1),
                     ),
                     _NavItem(
-                      icon: CupertinoIcons.chart_bar,
-                      activeIcon: CupertinoIcons.chart_bar_fill,
-                      label: 'Stats',
+                      icon: CupertinoIcons.book,
+                      activeIcon: CupertinoIcons.book_fill,
+                      label: 'Record',
                       selected: selectedIndex == 2,
                       onTap: () => onTap(2),
                     ),
@@ -1329,22 +1329,27 @@ class _CheckInTabState extends State<_CheckInTab> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                const Text('Activity', style: AppTextStyles.heading3),
-                GestureDetector(
-                  onTap: widget.onAddHabit,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withAlpha(30),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: AppColors.primary,
-                      size: 22,
+                const Center(
+                  child: Text('Activity', style: AppTextStyles.heading3),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: widget.onAddHabit,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(30),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: AppColors.primary,
+                        size: 22,
+                      ),
                     ),
                   ),
                 ),
@@ -1759,7 +1764,7 @@ class _ActionBtn extends StatelessWidget {
   }
 }
 
-// ─── Stats Tab ────────────────────────────────────────────────────────────────
+// ─── Record Tab ───────────────────────────────────────────────────────────────
 
 class _StatsTab extends StatelessWidget {
   final String userId;
@@ -1774,506 +1779,54 @@ class _StatsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completed = habits.where((h) => h.isDone).length;
-    final total = habits.length;
-    final rate = total > 0 ? ((completed / total) * 100).toInt() : 0;
-
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // Title
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Text('Progress Analytics', style: AppTextStyles.heading2),
-          ),
-        ),
+        // Header
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-            child: Text(
-              'Keep pushing your limits every day',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: const Center(
+              child: Text('Record', style: AppTextStyles.heading3),
             ),
           ),
         ),
 
-        // Streak Cards
-        SliverToBoxAdapter(
-          child: StreamBuilder<Map<String, dynamic>>(
-            stream: streakService.getStreakStream(userId),
-            builder: (context, snapshot) {
-              final data = snapshot.data ?? {};
-              final current = data['currentStreak'] ?? 0;
-              final longest = data['longestStreak'] ?? 0;
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _AnalyticsCard(
-                        title: 'Current Streak',
-                        value: '$current',
-                        unit: 'days',
-                        icon: Icons.local_fire_department,
-                        color: const Color(0xFFFF6B6B),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _AnalyticsCard(
-                        title: 'Longest Streak',
-                        value: '$longest',
-                        unit: 'days',
-                        icon: Icons.emoji_events,
-                        color: const Color(0xFFFFD93D),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-
-        // Habit stats
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Row(
+        // Empty state
+        SliverFillRemaining(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: _AnalyticsCard(
-                    title: 'Total Habits',
-                    value: '$total',
-                    unit: 'habits',
-                    icon: Icons.list_alt,
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.book,
+                    size: 36,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _AnalyticsCard(
-                    title: "Today's Rate",
-                    value: '$rate%',
-                    unit: 'completed',
-                    icon: Icons.trending_up,
-                    color: const Color(0xFF95E1D3),
+                const SizedBox(height: 20),
+                const Text(
+                  'No records yet',
+                  style: AppTextStyles.heading4,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your activity records will appear here',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
-        ),
-
-        // Weekly Bar Chart
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 28, 20, 8),
-            child: Text('This Week', style: AppTextStyles.heading4),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _WeeklyBarChart(userId: userId),
-          ),
-        ),
-
-        // Habits breakdown carousel
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 28, 20, 8),
-            child: Text('Habits Breakdown', style: AppTextStyles.heading4),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: _HabitsCarousel(
-            habits: habits,
-          ),
-        ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 120)),
-      ],
-    );
-  }
-}
-
-class _AnalyticsCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String unit;
-  final IconData icon;
-  final Color color;
-
-  const _AnalyticsCard({
-    required this.title,
-    required this.value,
-    required this.unit,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withAlpha(60)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(30),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  unit,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Weekly Bar Chart ─────────────────────────────────────────────────────────
-
-class _WeeklyBarChart extends StatefulWidget {
-  final String userId;
-  const _WeeklyBarChart({required this.userId});
-
-  @override
-  State<_WeeklyBarChart> createState() => _WeeklyBarChartState();
-}
-
-class _WeeklyBarChartState extends State<_WeeklyBarChart> {
-  int? _selectedDay;
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final weekDays = List.generate(7, (i) => now.subtract(Duration(days: 6 - i)));
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border.withAlpha(80)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: weekDays.asMap().entries.map((e) {
-              final idx = e.key;
-              final day = e.value;
-              final isToday = day.day == now.day && day.month == now.month;
-              final isSelected = _selectedDay == idx;
-              final dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-              final dayName = dayNames[day.weekday - 1];
-
-              // Simulated fill heights based on weekday (replace with real data later)
-              final fillHeights = [0.7, 0.5, 0.9, 0.4, 0.8, 0.3, isToday ? 0.6 : 0.2];
-              final fill = fillHeights[idx];
-              final barColor = isToday || isSelected
-                  ? AppColors.primary
-                  : AppColors.textSecondary.withAlpha(80);
-
-              return GestureDetector(
-                onTap: () => setState(
-                  () => _selectedDay = _selectedDay == idx ? null : idx,
-                ),
-                child: Column(
-                  children: [
-                    // Bar
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 400),
-                      width: 32,
-                      height: 80,
-                      alignment: Alignment.bottomCenter,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeOut,
-                        width: 18,
-                        height: 80 * fill,
-                        decoration: BoxDecoration(
-                          color: barColor,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Day bubble
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: (isToday || isSelected)
-                            ? AppColors.primary.withAlpha(30)
-                            : Colors.transparent,
-                        border: (isToday || isSelected)
-                            ? Border.all(
-                                color: AppColors.primary.withAlpha(100))
-                            : null,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            dayName,
-                            style: TextStyle(
-                              color: (isToday || isSelected)
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                              fontSize: 11,
-                              fontWeight: (isToday || isSelected)
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${day.day}',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 9,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Habits Carousel ──────────────────────────────────────────────────────────
-
-class _HabitsCarousel extends StatefulWidget {
-  final List<Habit> habits;
-  const _HabitsCarousel({required this.habits});
-
-  @override
-  State<_HabitsCarousel> createState() => _HabitsCarouselState();
-}
-
-class _HabitsCarouselState extends State<_HabitsCarousel> {
-  late PageController _controller;
-  int _current = 0;
-
-  static const _gradients = [
-    [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-    [Color(0xFF4ECDC4), Color(0xFF2A9D8F)],
-    [Color(0xFFFFD93D), Color(0xFFFFC300)],
-    [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
-    [Color(0xFFFF6B9D), Color(0xFFC44569)],
-    [Color(0xFF00D2FF), Color(0xFF3A7BD5)],
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = PageController(viewportFraction: 0.82);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final habits = widget.habits;
-
-    if (habits.isEmpty) {
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.all(40),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border.withAlpha(80)),
-        ),
-        child: const Center(
-          child: Column(
-            children: [
-              Icon(Icons.insights, size: 48, color: AppColors.textSecondary),
-              SizedBox(height: 12),
-              Text('No habits yet', style: AppTextStyles.heading5),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        SizedBox(
-          height: 180,
-          child: PageView.builder(
-            controller: _controller,
-            itemCount: habits.length,
-            onPageChanged: (i) => setState(() => _current = i),
-            itemBuilder: (context, i) {
-              final habit = habits[i];
-              final grad = _gradients[i % _gradients.length];
-              return GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => HabitDetailPage(habit: habit),
-                  ),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: i == 0 ? 20 : 8,
-                    right: i == habits.length - 1 ? 20 : 8,
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: grad,
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: grad[0].withAlpha(80),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                habit.name,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha(40),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  habit.isDone
-                                      ? Icons.check_circle
-                                      : Icons.circle_outlined,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                habit.isDone
-                                    ? '✅ Completed today!'
-                                    : '⏳ Not done yet',
-                                style: TextStyle(
-                                  color: Colors.white.withAlpha(220),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Tap to view details',
-                                style: TextStyle(
-                                  color: Colors.white.withAlpha(160),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 14),
-        // Dot indicator
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(habits.length, (i) {
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: _current == i ? 24 : 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: _current == i
-                    ? AppColors.primary
-                    : AppColors.textSecondary.withAlpha(77),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            );
-          }),
         ),
       ],
     );
