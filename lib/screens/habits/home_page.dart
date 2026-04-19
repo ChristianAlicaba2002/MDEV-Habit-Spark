@@ -1954,64 +1954,147 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
 
-            // ── Avatar Section
+            // ── Profile Card (avatar + name + location + stats) — single container
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withAlpha(20),
-                          width: 1,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: AppColors.surface,
-                        backgroundImage: (userData?.photoUrl != null &&
-                                userData!.photoUrl.isNotEmpty)
-                            ? NetworkImage(userData!.photoUrl)
-                            : null,
-                        child: (userData?.photoUrl == null ||
-                                userData!.photoUrl.isEmpty)
-                            ? Text(
-                                user?.email
-                                        ?.substring(0, 1)
-                                        .toUpperCase() ??
-                                    'U',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 40,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Builder(builder: (context) {
+                  // Calculate age from birthDate if available
+                  String ageStr = '--';
+                  if (userData?.birthDate != null &&
+                      userData!.birthDate.isNotEmpty) {
+                    try {
+                      final parts = userData!.birthDate.split('-');
+                      if (parts.length == 3) {
+                        final dob = DateTime(
+                          int.parse(parts[0]),
+                          int.parse(parts[1]),
+                          int.parse(parts[2]),
+                        );
+                        final now = DateTime.now();
+                        int age = now.year - dob.year;
+                        if (now.month < dob.month ||
+                            (now.month == dob.month && now.day < dob.day)) {
+                          age--;
+                        }
+                        ageStr = '$age';
+                      }
+                    } catch (_) {}
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2C2C2E),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      children: [
+                        // ── Top: avatar + name + location
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 36,
+                              backgroundColor: const Color(0xFF3A3A3C),
+                              backgroundImage: (userData?.photoUrl != null &&
+                                      userData!.photoUrl.isNotEmpty)
+                                  ? NetworkImage(userData!.photoUrl)
+                                  : null,
+                              child: (userData?.photoUrl == null ||
+                                      userData!.photoUrl.isEmpty)
+                                  ? Text(
+                                      (user?.email
+                                              ?.substring(0, 1)
+                                              .toUpperCase()) ??
+                                          'U',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 28,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              )
-                            : null,
-                      ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.location_solid,
+                                      size: 13,
+                                      color: Colors.grey[500],
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      userData?.email.isNotEmpty == true
+                                          ? userData!.email.split('@')[0]
+                                          : 'Location not set',
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // ── Bottom: Age / Height / Weight
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ProfileStatBox(
+                                label: 'Age',
+                                value: ageStr,
+                                unit: 'y.o',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: _ProfileStatBox(
+                                label: 'Height',
+                                value: '--',
+                                unit: 'cm',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: _ProfileStatBox(
+                                label: 'Weight',
+                                value: '--',
+                                unit: 'kg',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                }),
               ),
             ),
 
-            // ── Tracking Header
+            // ── Account Settings Header
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+                padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
                 child: Text(
-                  'Tracking',
+                  'Account settings',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -2021,51 +2104,39 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
 
-            // ── Tracking Grid
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: StreamBuilder<Map<String, dynamic>>(
-                stream: streakService.getStreakStream(userId),
-                builder: (context, streakSnap) {
-                  final streakData = streakSnap.data ?? {};
-                  final currentStreak = streakData['currentStreak'] ?? 0;
-                  final longestStreak = streakData['longestStreak'] ?? 0;
-
-                  return SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 1.1,
-                    ),
-                    delegate: SliverChildListDelegate([
-                      _TrackingCard(
-                        title: 'Today\'s Progress',
-                        value: '${(completionRate * 100).toInt()}%',
-                        icon: CupertinoIcons.chart_bar,
+            // ── Settings Items
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C2C2E),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      _SettingsRow(
+                        icon: CupertinoIcons.person,
+                        label: 'Personal Information',
+                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Personal Information — Coming soon')),
+                        ),
                       ),
-                      _TrackingCard(
-                        title: 'Total Activities',
-                        value: '$totalCount',
-                        icon: CupertinoIcons.calendar,
+                      Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
+                      _SettingsRow(
+                        icon: CupertinoIcons.bell,
+                        label: 'Reminder',
+                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Reminder — Coming soon')),
+                        ),
                       ),
-                      _TrackingCard(
-                        title: 'Current Streak',
-                        value: '$currentStreak days',
-                        icon: CupertinoIcons.flame,
-                      ),
-                      _TrackingCard(
-                        title: 'Achievements',
-                        value: '$longestStreak',
-                        icon: CupertinoIcons.checkmark_seal_fill,
-                      ),
-                    ]),
-                  );
-                },
+                      Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
+                      const _SettingsSoundRow(),
+                    ],
+                  ),
+                ),
               ),
             ),
-
 
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
@@ -2155,6 +2226,165 @@ class _TrackingCard extends StatelessWidget {
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Profile Stat Box ──────────────────────────────────────────────────────────
+
+class _ProfileStatBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+
+  const _ProfileStatBox({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(
+                  text: '  $unit',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Settings Row ──────────────────────────────────────────────────────────────
+
+class _SettingsRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SettingsRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFF3A3A3C),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: Colors.grey[400], size: 18),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(CupertinoIcons.chevron_right, color: Colors.grey[600], size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Settings Sound Row (with toggle) ─────────────────────────────────────────
+
+class _SettingsSoundRow extends StatefulWidget {
+  const _SettingsSoundRow();
+
+  @override
+  State<_SettingsSoundRow> createState() => _SettingsSoundRowState();
+}
+
+class _SettingsSoundRowState extends State<_SettingsSoundRow> {
+  bool _soundOn = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3A3A3C),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(CupertinoIcons.volume_up, color: Colors.grey[400], size: 18),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Text(
+              'Sound',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          CupertinoSwitch(
+            value: _soundOn,
+            activeColor: Colors.grey[600]!,
+            onChanged: (val) => setState(() => _soundOn = val),
           ),
         ],
       ),
