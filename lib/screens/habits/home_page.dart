@@ -128,7 +128,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<List<Habit>>(
@@ -1163,10 +1163,10 @@ class _RecentActivityCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: Theme.of(context).dividerColor.withAlpha(50),
           width: 1,
         ),
       ),
@@ -1177,15 +1177,15 @@ class _RecentActivityCard extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.05),
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(15),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1),
+                color: Theme.of(context).dividerColor.withAlpha(30),
                 width: 1.5,
               ),
             ),
             child: Icon(
               icon,
-              color: Colors.white.withOpacity(0.8),
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(200),
               size: 24,
             ),
           ),
@@ -1196,8 +1196,8 @@ class _RecentActivityCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1206,7 +1206,7 @@ class _RecentActivityCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
+                    color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
                     fontSize: 13,
                   ),
                 ),
@@ -1218,8 +1218,8 @@ class _RecentActivityCard extends StatelessWidget {
             children: [
               Text(
                 value1,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1228,7 +1228,7 @@ class _RecentActivityCard extends StatelessWidget {
               Text(
                 value2,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
                   fontSize: 12,
                 ),
               ),
@@ -1596,7 +1596,7 @@ class _CheckInHabitCardState extends State<_CheckInHabitCard> {
         duration: const Duration(milliseconds: 250),
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: isDone ? const Color(0xFF1E2E1E) : AppColors.surface,
+          color: isDone ? AppColors.success.withAlpha(20) : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDone
@@ -1892,21 +1892,23 @@ class _ProfileTab extends StatelessWidget {
                       icon: CupertinoIcons.arrow_left,
                       onTap: onBackTap,
                     ),
-                    const Text(
+                    Text(
                       'Profile',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     PopupMenuButton<String>(
                       offset: const Offset(0, 50),
-                      color: const Color(0xFF1A1A1A),
+                      color: Theme.of(context).cardColor,
                       elevation: 8,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.white.withAlpha(20)),
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha(20),
+                        ),
                       ),
                       padding: EdgeInsets.zero,
                       tooltip: 'Show settings',
@@ -1925,13 +1927,13 @@ class _ProfileTab extends StatelessWidget {
                         }
                       },
                       itemBuilder: (context) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'edit',
                           height: 40,
                           child: Text(
                             'Edit Profile',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1987,7 +1989,7 @@ class _ProfileTab extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2E),
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
@@ -1997,7 +1999,7 @@ class _ProfileTab extends StatelessWidget {
                           children: [
                             CircleAvatar(
                               radius: 36,
-                              backgroundColor: const Color(0xFF3A3A3C),
+                              backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
                               backgroundImage: (userData?.photoUrl != null &&
                                       userData!.photoUrl.isNotEmpty)
                                   ? NetworkImage(userData!.photoUrl)
@@ -2009,8 +2011,8 @@ class _ProfileTab extends StatelessWidget {
                                               ?.substring(0, 1)
                                               .toUpperCase()) ??
                                           'U',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onSurface,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 28,
                                       ),
@@ -2023,8 +2025,8 @@ class _ProfileTab extends StatelessWidget {
                               children: [
                                 Text(
                                   name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -2092,13 +2094,13 @@ class _ProfileTab extends StatelessWidget {
             ),
 
             // ── Account Settings Header
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
                 child: Text(
                   'Account settings',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2112,7 +2114,7 @@ class _ProfileTab extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2C2C2E),
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
@@ -2131,7 +2133,7 @@ class _ProfileTab extends StatelessWidget {
                           ),
                         ),
                       ),
-                      Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
+                      Divider(height: 1, color: Theme.of(context).dividerColor.withAlpha(50), indent: 56, endIndent: 16),
                       _SettingsRow(
                         icon: CupertinoIcons.bell,
                         label: 'Reminder',
@@ -2167,14 +2169,18 @@ class _RoundIconButton extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(15),
+        color: Theme.of(context).colorScheme.onSurface.withAlpha(15),
         shape: BoxShape.circle,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(
+            icon,
+            color: Theme.of(context).colorScheme.onSurface,
+            size: 20,
+          ),
         ),
       ),
     );
@@ -2260,7 +2266,7 @@ class _ProfileStatBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -2279,8 +2285,8 @@ class _ProfileStatBox extends StatelessWidget {
               children: [
                 TextSpan(
                   text: value,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2328,7 +2334,7 @@ class _SettingsRow extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: const Color(0xFF3A3A3C),
+                color: Theme.of(context).colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: Colors.grey[400], size: 18),
@@ -2337,8 +2343,8 @@ class _SettingsRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -2393,17 +2399,17 @@ class _SettingsThemeRowState extends State<_SettingsThemeRow> {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: const Color(0xFF3A3A3C),
+              color: Theme.of(context).colorScheme.surfaceVariant,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(CupertinoIcons.moon_fill, color: Colors.grey[400], size: 18),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Text(
               'Dark Mode',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
@@ -2438,7 +2444,9 @@ class _ProfileMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? AppColors.error : AppColors.textPrimary;
+    final color = isDestructive 
+        ? AppColors.error 
+        : Theme.of(context).colorScheme.onSurface;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),

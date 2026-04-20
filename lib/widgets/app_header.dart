@@ -41,8 +41,8 @@ class AppHeader extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.05),
+                    Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                    Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                   ],
                 ),
                 boxShadow: [
@@ -62,8 +62,8 @@ class AppHeader extends StatelessWidget {
                 child: (photoUrl == null || photoUrl!.isEmpty)
                     ? Text(
                         userInitial,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -82,8 +82,8 @@ class AppHeader extends StatelessWidget {
               children: [
                 Text(
                   'Hello, $userName',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
@@ -101,7 +101,7 @@ class AppHeader extends StatelessWidget {
                     Text(
                       'Progress: ${(progress * 100).toInt()}%',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -119,10 +119,10 @@ class AppHeader extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: const Color(0xFF2D2D2D),
+                color: Theme.of(context).cardColor,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                   width: 1,
                 ),
                 boxShadow: [
@@ -136,9 +136,9 @@ class AppHeader extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     CupertinoIcons.bell,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     size: 24,
                   ),
                   if (notificationCount > 0)
@@ -152,7 +152,7 @@ class AppHeader extends StatelessWidget {
                           color: AppColors.error,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: const Color(0xFF2D2D2D),
+                            color: Theme.of(context).cardColor,
                             width: 2,
                           ),
                         ),

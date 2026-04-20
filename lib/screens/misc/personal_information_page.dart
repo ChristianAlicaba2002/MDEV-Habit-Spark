@@ -108,12 +108,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF2C2C2E),
+          backgroundColor: Theme.of(context).cardColor,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
             'Change Password',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -200,7 +200,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -218,12 +218,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(15),
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha(15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           CupertinoIcons.arrow_left,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                           size: 18,
                         ),
                       ),
@@ -232,7 +232,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                   const Text(
                     'Personal Information',
                     style: TextStyle(
-                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -345,7 +344,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2C2C2E),
+                            color: Theme.of(context).cardColor,
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Row(
@@ -354,21 +353,21 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3A3A3C),
+                                  color: Theme.of(context).colorScheme.surfaceVariant,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(
                                   CupertinoIcons.lock,
-                                  color: Colors.grey[400],
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   size: 18,
                                 ),
                               ),
                               const SizedBox(width: 14),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Change Password',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -376,7 +375,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                               ),
                               Icon(
                                 CupertinoIcons.chevron_right,
-                                color: Colors.grey[600],
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 size: 16,
                               ),
                             ],
@@ -499,14 +498,16 @@ class _ProfileField extends StatelessWidget {
           inputFormatters: inputFormatters,
           validator: validator,
           style: TextStyle(
-            color: readOnly ? Colors.grey[500] : Colors.white,
+            color: readOnly 
+                ? Theme.of(context).disabledColor 
+                : Theme.of(context).colorScheme.onSurface,
             fontSize: 15,
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
             filled: true,
-            fillColor: const Color(0xFF2C2C2E),
+            fillColor: Theme.of(context).cardColor,
             prefixIcon: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Icon(icon, color: Colors.grey[500], size: 18),
@@ -563,12 +564,12 @@ class _DialogField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscure,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[500]),
         filled: true,
-        fillColor: const Color(0xFF3A3A3C),
+        fillColor: Theme.of(context).colorScheme.surfaceVariant,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
