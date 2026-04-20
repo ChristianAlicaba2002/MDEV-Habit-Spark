@@ -2362,10 +2362,28 @@ class _SettingsThemeRow extends StatefulWidget {
 }
 
 class _SettingsThemeRowState extends State<_SettingsThemeRow> {
+  late ThemeService _themeService;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeService = ThemeService();
+    _themeService.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    _themeService.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    final themeService = ThemeService();
-    final isDarkMode = themeService.themeMode == ThemeMode.dark;
+    final isDarkMode = _themeService.themeMode == ThemeMode.dark;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -2394,9 +2412,9 @@ class _SettingsThemeRowState extends State<_SettingsThemeRow> {
           CupertinoSwitch(
             value: isDarkMode,
             activeColor: Colors.grey[600]!,
-            onChanged: (val) async {
+            onChanged: (val) {
               final newMode = val ? ThemeMode.dark : ThemeMode.light;
-              await themeService.setThemeMode(newMode);
+              _themeService.setThemeMode(newMode);
             },
           ),
         ],
