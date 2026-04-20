@@ -8,6 +8,10 @@ class UserModel {
   final String photoUrl;
   final String createdAt;
   final bool hasSeenOnboarding;
+  final String? username;
+  final double? height;
+  final double? weight;
+  final int? age;
 
   UserModel({
     required this.uuid,
@@ -19,6 +23,10 @@ class UserModel {
     required this.photoUrl,
     required this.createdAt,
     this.hasSeenOnboarding = false,
+    this.username,
+    this.height,
+    this.weight,
+    this.age,
   });
 
   Map<String, dynamic> toMap() {
@@ -32,6 +40,10 @@ class UserModel {
       'photoUrl': photoUrl,
       'createdAt': createdAt,
       'hasSeenOnboarding': hasSeenOnboarding,
+      if (username != null) 'username': username,
+      if (height != null) 'height': height,
+      if (weight != null) 'weight': weight,
+      if (age != null) 'age': age,
     };
   }
 
@@ -46,6 +58,10 @@ class UserModel {
       photoUrl: map['photoUrl'] ?? '',
       createdAt: map['createdAt'] ?? '',
       hasSeenOnboarding: map['hasSeenOnboarding'] ?? false,
+      username: map['username'],
+      height: (map['height'] as num?)?.toDouble(),
+      weight: (map['weight'] as num?)?.toDouble(),
+      age: map['age'] as int?,
     );
   }
 }

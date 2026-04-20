@@ -8,7 +8,9 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
+import 'package:habit_spark/services/theme_service.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
+import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/screens/habits/habit_detail_page.dart';
 import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/calendar/training_calendar_page.dart';
@@ -126,7 +128,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<List<Habit>>(
@@ -1161,10 +1163,10 @@ class _RecentActivityCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: Theme.of(context).dividerColor.withAlpha(50),
           width: 1,
         ),
       ),
@@ -1175,15 +1177,15 @@ class _RecentActivityCard extends StatelessWidget {
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.05),
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(15),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1),
+                color: Theme.of(context).dividerColor.withAlpha(30),
                 width: 1.5,
               ),
             ),
             child: Icon(
               icon,
-              color: Colors.white.withOpacity(0.8),
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(200),
               size: 24,
             ),
           ),
@@ -1194,8 +1196,8 @@ class _RecentActivityCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1204,7 +1206,7 @@ class _RecentActivityCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
+                    color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
                     fontSize: 13,
                   ),
                 ),
@@ -1216,8 +1218,8 @@ class _RecentActivityCard extends StatelessWidget {
             children: [
               Text(
                 value1,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1226,7 +1228,7 @@ class _RecentActivityCard extends StatelessWidget {
               Text(
                 value2,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
                   fontSize: 12,
                 ),
               ),
@@ -1594,7 +1596,7 @@ class _CheckInHabitCardState extends State<_CheckInHabitCard> {
         duration: const Duration(milliseconds: 250),
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
-          color: isDone ? const Color(0xFF1E2E1E) : AppColors.surface,
+          color: isDone ? AppColors.success.withAlpha(20) : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDone
@@ -1890,21 +1892,23 @@ class _ProfileTab extends StatelessWidget {
                       icon: CupertinoIcons.arrow_left,
                       onTap: onBackTap,
                     ),
-                    const Text(
+                    Text(
                       'Profile',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     PopupMenuButton<String>(
                       offset: const Offset(0, 50),
-                      color: const Color(0xFF1A1A1A),
+                      color: Theme.of(context).cardColor,
                       elevation: 8,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.white.withAlpha(20)),
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.onSurface.withAlpha(20),
+                        ),
                       ),
                       padding: EdgeInsets.zero,
                       tooltip: 'Show settings',
@@ -1923,13 +1927,13 @@ class _ProfileTab extends StatelessWidget {
                         }
                       },
                       itemBuilder: (context) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'edit',
                           height: 40,
                           child: Text(
                             'Edit Profile',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1954,66 +1958,149 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
 
-            // ── Avatar Section
+            // ── Profile Card (avatar + name + location + stats) — single container
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withAlpha(20),
-                          width: 1,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: AppColors.surface,
-                        backgroundImage: (userData?.photoUrl != null &&
-                                userData!.photoUrl.isNotEmpty)
-                            ? NetworkImage(userData!.photoUrl)
-                            : null,
-                        child: (userData?.photoUrl == null ||
-                                userData!.photoUrl.isEmpty)
-                            ? Text(
-                                user?.email
-                                        ?.substring(0, 1)
-                                        .toUpperCase() ??
-                                    'U',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 40,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Builder(builder: (context) {
+                  // Calculate age from birthDate if available
+                  String ageStr = '--';
+                  if (userData?.birthDate != null &&
+                      userData!.birthDate.isNotEmpty) {
+                    try {
+                      final parts = userData!.birthDate.split('-');
+                      if (parts.length == 3) {
+                        final dob = DateTime(
+                          int.parse(parts[0]),
+                          int.parse(parts[1]),
+                          int.parse(parts[2]),
+                        );
+                        final now = DateTime.now();
+                        int age = now.year - dob.year;
+                        if (now.month < dob.month ||
+                            (now.month == dob.month && now.day < dob.day)) {
+                          age--;
+                        }
+                        ageStr = '$age';
+                      }
+                    } catch (_) {}
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      children: [
+                        // ── Top: avatar + name + location
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 36,
+                              backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                              backgroundImage: (userData?.photoUrl != null &&
+                                      userData!.photoUrl.isNotEmpty)
+                                  ? NetworkImage(userData!.photoUrl)
+                                  : null,
+                              child: (userData?.photoUrl == null ||
+                                      userData!.photoUrl.isEmpty)
+                                  ? Text(
+                                      (user?.email
+                                              ?.substring(0, 1)
+                                              .toUpperCase()) ??
+                                          'U',
+                                      style: TextStyle(
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 28,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              )
-                            : null,
-                      ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      CupertinoIcons.location_solid,
+                                      size: 13,
+                                      color: Colors.grey[500],
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      userData?.email.isNotEmpty == true
+                                          ? userData!.email.split('@')[0]
+                                          : 'Location not set',
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // ── Bottom: Age / Height / Weight
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ProfileStatBox(
+                                label: 'Age',
+                                value: userData?.age != null ? '${userData!.age}' : ageStr,
+                                unit: 'y.o',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _ProfileStatBox(
+                                label: 'Height',
+                                value: userData?.height != null ? '${userData!.height!.toInt()}' : '--',
+                                unit: 'cm',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _ProfileStatBox(
+                                label: 'Weight',
+                                value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '--',
+                                unit: 'kg',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                }),
               ),
             ),
 
-            // ── Tracking Header
-            const SliverToBoxAdapter(
+            // ── Account Settings Header
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+                padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
                 child: Text(
-                  'Tracking',
+                  'Account settings',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -2021,51 +2108,46 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
 
-            // ── Tracking Grid
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: StreamBuilder<Map<String, dynamic>>(
-                stream: streakService.getStreakStream(userId),
-                builder: (context, streakSnap) {
-                  final streakData = streakSnap.data ?? {};
-                  final currentStreak = streakData['currentStreak'] ?? 0;
-                  final longestStreak = streakData['longestStreak'] ?? 0;
-
-                  return SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 1.1,
-                    ),
-                    delegate: SliverChildListDelegate([
-                      _TrackingCard(
-                        title: 'Today\'s Progress',
-                        value: '${(completionRate * 100).toInt()}%',
-                        icon: CupertinoIcons.chart_bar,
+            // ── Settings Items
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      _SettingsRow(
+                        icon: CupertinoIcons.person,
+                        label: 'Personal Information',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PersonalInformationPage(
+                              userId: userId,
+                              authService: authService,
+                              initialData: userData,
+                            ),
+                          ),
+                        ),
                       ),
-                      _TrackingCard(
-                        title: 'Total Activities',
-                        value: '$totalCount',
-                        icon: CupertinoIcons.calendar,
+                      Divider(height: 1, color: Theme.of(context).dividerColor.withAlpha(50), indent: 56, endIndent: 16),
+                      _SettingsRow(
+                        icon: CupertinoIcons.bell,
+                        label: 'Reminder',
+                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Reminder — Coming soon')),
+                        ),
                       ),
-                      _TrackingCard(
-                        title: 'Current Streak',
-                        value: '$currentStreak days',
-                        icon: CupertinoIcons.flame,
-                      ),
-                      _TrackingCard(
-                        title: 'Achievements',
-                        value: '$longestStreak',
-                        icon: CupertinoIcons.checkmark_seal_fill,
-                      ),
-                    ]),
-                  );
-                },
+                      Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
+                      const _SettingsThemeRow(),
+                    ],
+                  ),
+                ),
               ),
             ),
-
 
             const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
@@ -2087,14 +2169,18 @@ class _RoundIconButton extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(15),
+        color: Theme.of(context).colorScheme.onSurface.withAlpha(15),
         shape: BoxShape.circle,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(
+            icon,
+            color: Theme.of(context).colorScheme.onSurface,
+            size: 20,
+          ),
         ),
       ),
     );
@@ -2162,6 +2248,187 @@ class _TrackingCard extends StatelessWidget {
   }
 }
 
+// ── Profile Stat Box ──────────────────────────────────────────────────────────
+
+class _ProfileStatBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+
+  const _ProfileStatBox({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextSpan(
+                  text: '  $unit',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Settings Row ──────────────────────────────────────────────────────────────
+
+class _SettingsRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SettingsRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: Colors.grey[400], size: 18),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(CupertinoIcons.chevron_right, color: Colors.grey[600], size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Settings Theme Row (with toggle) ─────────────────────────────────────────
+
+class _SettingsThemeRow extends StatefulWidget {
+  const _SettingsThemeRow();
+
+  @override
+  State<_SettingsThemeRow> createState() => _SettingsThemeRowState();
+}
+
+class _SettingsThemeRowState extends State<_SettingsThemeRow> {
+  late ThemeService _themeService;
+
+  @override
+  void initState() {
+    super.initState();
+    _themeService = ThemeService();
+    _themeService.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    _themeService.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = _themeService.themeMode == ThemeMode.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(CupertinoIcons.moon_fill, color: Colors.grey[400], size: 18),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Dark Mode',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          CupertinoSwitch(
+            value: isDarkMode,
+            activeColor: Colors.grey[600]!,
+            onChanged: (val) {
+              final newMode = val ? ThemeMode.dark : ThemeMode.light;
+              _themeService.setThemeMode(newMode);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProfileMenuItem extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -2177,7 +2444,9 @@ class _ProfileMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? AppColors.error : AppColors.textPrimary;
+    final color = isDestructive 
+        ? AppColors.error 
+        : Theme.of(context).colorScheme.onSurface;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
