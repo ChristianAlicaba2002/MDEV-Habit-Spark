@@ -8,6 +8,7 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
+import 'package:habit_spark/services/theme_service.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/screens/habits/habit_detail_page.dart';
@@ -2361,10 +2362,11 @@ class _SettingsThemeRow extends StatefulWidget {
 }
 
 class _SettingsThemeRowState extends State<_SettingsThemeRow> {
-  bool _isDarkMode = true;
-
   @override
   Widget build(BuildContext context) {
+    final themeService = ThemeService();
+    final isDarkMode = themeService.themeMode == ThemeMode.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -2390,9 +2392,12 @@ class _SettingsThemeRowState extends State<_SettingsThemeRow> {
             ),
           ),
           CupertinoSwitch(
-            value: _isDarkMode,
+            value: isDarkMode,
             activeColor: Colors.grey[600]!,
-            onChanged: (val) => setState(() => _isDarkMode = val),
+            onChanged: (val) async {
+              final newMode = val ? ThemeMode.dark : ThemeMode.light;
+              await themeService.setThemeMode(newMode);
+            },
           ),
         ],
       ),
