@@ -82,17 +82,24 @@ class _LoginPageState extends State<LoginPage>
       }
     } catch (e) {
       if (mounted) {
-        if (e.toString().contains('Wrong password') ||
-            e.toString().contains('wrong-password')) {
+        String errorMessage = 'Incorrect Username or Password';
+        
+        // You can customize error messages for specific cases if needed
+        if (e.toString().contains('network')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (e.toString().contains('too-many-requests')) {
+          errorMessage = 'Too many login attempts. Please try again later.';
         }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(errorMessage),
             backgroundColor: const Color(0xFFE74C3C),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -140,7 +147,15 @@ class _LoginPageState extends State<LoginPage>
           ),
           TextButton(
             onPressed: () async {
-              if (emailController.text.isEmpty) return;
+              if (emailController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter your email address'),
+                    backgroundColor: Color(0xFFE74C3C),
+                  ),
+                );
+                return;
+              }
               try {
                 await _authService.resetPassword(emailController.text.trim());
                 if (context.mounted) {
@@ -150,14 +165,29 @@ class _LoginPageState extends State<LoginPage>
                       content: Text(
                         'Password reset email sent! Check your inbox.',
                       ),
+                      backgroundColor: Color(0xFF2ECC71),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 4),
                     ),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(e.toString())));
+                  String errorMessage = 'Unable to send reset email';
+                  if (e.toString().contains('user-not-found')) {
+                    errorMessage = 'No account found with this email';
+                  } else if (e.toString().contains('network')) {
+                    errorMessage = 'Network error. Please try again.';
+                  }
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(errorMessage),
+                      backgroundColor: const Color(0xFFE74C3C),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
                 }
               }
             },
