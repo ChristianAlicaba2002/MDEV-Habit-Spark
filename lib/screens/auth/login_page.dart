@@ -19,6 +19,7 @@ class _LoginPageState extends State<LoginPage>
   final _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String? _authError; // Add this to track auth errors
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -66,6 +67,7 @@ class _LoginPageState extends State<LoginPage>
 
     setState(() {
       _isLoading = true;
+      _authError = null; // Clear previous errors
     });
 
     bool isNavigating = false;
@@ -91,17 +93,9 @@ class _LoginPageState extends State<LoginPage>
           errorMessage = 'Too many login attempts. Please try again later.';
         }
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: const Color(0xFFE74C3C),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        setState(() {
+          _authError = errorMessage;
+        });
       }
     } finally {
       if (mounted && !isNavigating) setState(() => _isLoading = false);
@@ -344,6 +338,22 @@ class _LoginPageState extends State<LoginPage>
               },
             ),
 
+            // Auth Error Message
+            if (_authError != null) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  _authError!,
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B6B),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+
             // Forgot password
             Align(
               alignment: Alignment.centerRight,
@@ -419,6 +429,14 @@ class _LoginPageState extends State<LoginPage>
       style: const TextStyle(color: Colors.white, fontSize: 16),
       validator: validator,
       cursorColor: const Color(0xFF4ECDC4),
+      onChanged: (value) {
+        // Clear auth error when user starts typing
+        if (_authError != null) {
+          setState(() {
+            _authError = null;
+          });
+        }
+      },
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 14),
