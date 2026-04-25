@@ -2160,7 +2160,7 @@ class _ProfileTab extends StatelessWidget {
             // ── Account Settings Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Text(
                   'Account settings',
                   style: TextStyle(
@@ -2175,7 +2175,7 @@ class _ProfileTab extends StatelessWidget {
             // ── Settings Items
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF2C2C2E),
