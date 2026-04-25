@@ -1870,7 +1870,7 @@ class _StatsTabState extends State<_StatsTab> {
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Container(
-              height: 200,
+              height: 150,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -1955,7 +1955,7 @@ class _StatsTabState extends State<_StatsTab> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Container(
-              height: 200,
+              height: 150,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
               ),
