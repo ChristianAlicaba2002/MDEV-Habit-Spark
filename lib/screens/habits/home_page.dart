@@ -10,6 +10,7 @@ import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:habit_spark/screens/misc/personal_information_page.dart';
+import 'package:habit_spark/screens/misc/reminder_settings_page.dart';
 import 'package:habit_spark/screens/habits/habit_detail_page.dart';
 import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/calendar/training_calendar_page.dart';
@@ -2134,8 +2135,15 @@ class _ProfileTab extends StatelessWidget {
                       _SettingsRow(
                         icon: CupertinoIcons.bell,
                         label: 'Reminder',
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Reminder — Coming soon')),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReminderSettingsPage(
+                              userId: userId,
+                              habitId: 'general',
+                              habitName: 'General Reminders',
+                            ),
+                          ),
                         ),
                       ),
                       Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
