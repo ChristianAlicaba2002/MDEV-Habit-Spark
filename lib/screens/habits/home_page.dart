@@ -2106,6 +2106,72 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
 
+            // ── Tracking Stats Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tracking',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.0,
+                      children: [
+                        _TrackingCard(
+                          icon: CupertinoIcons.arrow_up_right,
+                          label: 'Total Distance',
+                          value: '${(habits.length * 2.5).toStringAsFixed(1)} km',
+                        ),
+                        _TrackingCard(
+                          icon: CupertinoIcons.calendar,
+                          label: 'Total Activities',
+                          value: '${habits.length}',
+                        ),
+                        _TrackingCard(
+                          icon: CupertinoIcons.target,
+                          label: 'Monthly Goal',
+                          value: '${(completionRate * 100).toStringAsFixed(0)}%',
+                        ),
+                        _TrackingCard(
+                          icon: CupertinoIcons.star_fill,
+                          label: 'Achievements',
+                          value: '${completedCount}',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Account Settings Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: Text(
+                  'Account settings',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
             // ── Settings Items
             SliverToBoxAdapter(
               child: Padding(
@@ -2302,6 +2368,72 @@ class _ProfileStatBox extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Tracking Card ─────────────────────────────────────────────────────────────
+
+class _TrackingCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _TrackingCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3A3A3C),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: AppColors.primary,
+              size: 24,
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(150),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
