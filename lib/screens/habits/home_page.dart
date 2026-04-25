@@ -1949,32 +1949,6 @@ class _StatsTabState extends State<_StatsTab> {
             ),
           ),
         ),
-
-        // Empty state
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.play_circle,
-                  size: 64,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Coming Soon',
-                  style: TextStyle(
-                    color: Colors.white.withAlpha(150),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }
