@@ -11,6 +11,7 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/theme_service.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:habit_spark/screens/misc/personal_information_page.dart';
+import 'package:habit_spark/screens/misc/reminder_settings_page.dart';
 import 'package:habit_spark/screens/habits/habit_detail_page.dart';
 import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/calendar/training_calendar_page.dart';
@@ -263,8 +264,8 @@ class _BottomNav extends StatelessWidget {
                       onTap: () => onTap(1),
                     ),
                     _NavItem(
-                      icon: CupertinoIcons.book,
-                      activeIcon: CupertinoIcons.book_fill,
+                      icon: CupertinoIcons.play_fill,
+                      activeIcon: CupertinoIcons.play_fill,
                       label: 'Record',
                       selected: selectedIndex == 2,
                       onTap: () => onTap(2),
@@ -1768,7 +1769,7 @@ class _ActionBtn extends StatelessWidget {
 
 // ─── Record Tab ───────────────────────────────────────────────────────────────
 
-class _StatsTab extends StatelessWidget {
+class _StatsTab extends StatefulWidget {
   final String userId;
   final List<Habit> habits;
   final StreakService streakService;
@@ -1778,6 +1779,77 @@ class _StatsTab extends StatelessWidget {
     required this.habits,
     required this.streakService,
   });
+
+  @override
+  State<_StatsTab> createState() => _StatsTabState();
+}
+
+class _StatsTabState extends State<_StatsTab> {
+  bool _isTracking = false;
+  double _distance = 0.0;
+  int _duration = 0; // in seconds
+  double _pace = 0.0;
+  int _calories = 0;
+  late Stopwatch _stopwatch;
+
+  @override
+  void initState() {
+    super.initState();
+    _stopwatch = Stopwatch();
+  }
+
+  void _toggleTracking() {
+    setState(() {
+      if (_isTracking) {
+        _stopwatch.stop();
+      } else {
+        _stopwatch.start();
+      }
+      _isTracking = !_isTracking;
+    });
+
+    if (_isTracking) {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (_isTracking && mounted) {
+        setState(() {
+          _duration = _stopwatch.elapsed.inSeconds;
+          // Simulate distance increase (0.1 km per 10 seconds)
+          _distance = (_duration / 10) * 0.1;
+          // Calculate pace (km/h)
+          if (_duration > 0) {
+            _pace = (_distance / (_duration / 3600)).isFinite
+                ? _distance / (_duration / 3600)
+                : 0.0;
+            // Calculate calories (rough estimate: 60 calories per km)
+            _calories = (_distance * 60).toInt();
+          }
+        });
+        _startTimer();
+      }
+    });
+  }
+
+  void _resetTracking() {
+    setState(() {
+      _stopwatch.reset();
+      _isTracking = false;
+      _distance = 0.0;
+      _duration = 0;
+      _pace = 0.0;
+      _calories = 0;
+    });
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1794,45 +1866,366 @@ class _StatsTab extends StatelessWidget {
           ),
         ),
 
-        // Empty state
-        SliverFillRemaining(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(25),
-                    shape: BoxShape.circle,
+        // Running Workout Card
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Stack(
+                children: [
+                  // Background image - running man
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/images/Running.jpg'),
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    CupertinoIcons.book,
-                    size: 36,
-                    color: AppColors.primary,
+                  // Dark overlay gradient
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.black.withAlpha(120),
+                            Colors.black.withAlpha(60),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'No records yet',
-                  style: AppTextStyles.heading4,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Your activity records will appear here',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Running',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Go',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Jogging Workout Card
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Stack(
+                children: [
+                  // Background image - jogging
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        image: const DecorationImage(
+                          image: AssetImage('assets/images/Jogging.jpg'),
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Dark overlay gradient
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.black.withAlpha(120),
+                            Colors.black.withAlpha(60),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Jogging',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Go',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ],
     );
   }
+
+  @override
+  void dispose() {
+    _stopwatch.stop();
+    super.dispose();
+  }
+}
+
+// ── Stat Card Widget ──────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatCard({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withAlpha(150),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Map Painter ───────────────────────────────────────────────────────────────
+
+class RunningFigurePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withAlpha(200)
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = Colors.white.withAlpha(200)
+      ..style = PaintingStyle.fill;
+
+    // Head
+    canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.15), 6, fillPaint);
+
+    // Body
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.22),
+      Offset(size.width * 0.5, size.height * 0.45),
+      paint,
+    );
+
+    // Left arm (back, extended)
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.28),
+      Offset(size.width * 0.3, size.height * 0.35),
+      paint,
+    );
+
+    // Right arm (forward, bent)
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.28),
+      Offset(size.width * 0.65, size.height * 0.22),
+      paint,
+    );
+
+    // Left leg (forward, bent)
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.45),
+      Offset(size.width * 0.55, size.height * 0.7),
+      paint,
+    );
+
+    // Right leg (back, extended)
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.45),
+      Offset(size.width * 0.35, size.height * 0.65),
+      paint,
+    );
+
+    // Motion lines to show running
+    final motionPaint = Paint()
+      ..color = Colors.white.withAlpha(100)
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+
+    // Motion line 1
+    canvas.drawLine(
+      Offset(size.width * 0.2, size.height * 0.5),
+      Offset(size.width * 0.05, size.height * 0.5),
+      motionPaint,
+    );
+
+    // Motion line 2
+    canvas.drawLine(
+      Offset(size.width * 0.25, size.height * 0.65),
+      Offset(size.width * 0.05, size.height * 0.65),
+      motionPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(RunningFigurePainter oldDelegate) => false;
+}
+
+class MapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withAlpha(50)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    // Draw wavy lines to simulate map
+    final path = Path();
+    path.moveTo(0, size.height * 0.3);
+    path.quadraticBezierTo(
+      size.width * 0.25,
+      size.height * 0.2,
+      size.width * 0.5,
+      size.height * 0.35,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.75,
+      size.height * 0.5,
+      size.width,
+      size.height * 0.4,
+    );
+    canvas.drawPath(path, paint);
+
+    // Draw more lines
+    final path2 = Path();
+    path2.moveTo(0, size.height * 0.6);
+    path2.quadraticBezierTo(
+      size.width * 0.3,
+      size.height * 0.5,
+      size.width * 0.6,
+      size.height * 0.65,
+    );
+    path2.quadraticBezierTo(
+      size.width * 0.8,
+      size.height * 0.75,
+      size.width,
+      size.height * 0.6,
+    );
+    canvas.drawPath(path2, paint);
+
+    // Draw vertical lines
+    canvas.drawLine(
+      Offset(size.width * 0.3, 0),
+      Offset(size.width * 0.35, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.7, 0),
+      Offset(size.width * 0.65, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(MapPainter oldDelegate) => false;
 }
 
 // ─── Profile Tab ─────────────────────────────────────────────────────────────
@@ -2108,10 +2501,76 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
 
+            // ── Tracking Stats Section
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tracking',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.0,
+                      children: [
+                        _TrackingCard(
+                          title: 'Total Distance',
+                          value: '${(habits.length * 2.5).toStringAsFixed(1)} km',
+                          icon: CupertinoIcons.arrow_up_right,
+                        ),
+                        _TrackingCard(
+                          title: 'Total Activities',
+                          value: '${habits.length}',
+                          icon: CupertinoIcons.calendar,
+                        ),
+                        _TrackingCard(
+                          title: 'Monthly Goal',
+                          value: '${(completionRate * 100).toStringAsFixed(0)}%',
+                          icon: CupertinoIcons.checkmark_circle,
+                        ),
+                        _TrackingCard(
+                          title: 'Achievements',
+                          value: '${completedCount}',
+                          icon: CupertinoIcons.star_fill,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Account Settings Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Text(
+                  'Account settings',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
             // ── Settings Items
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
@@ -2137,8 +2596,15 @@ class _ProfileTab extends StatelessWidget {
                       _SettingsRow(
                         icon: CupertinoIcons.bell,
                         label: 'Reminder',
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Reminder — Coming soon')),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReminderSettingsPage(
+                              userId: userId,
+                              habitId: 'general',
+                              habitName: 'General Reminders',
+                            ),
+                          ),
                         ),
                       ),
                       Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
@@ -2210,37 +2676,47 @@ class _TrackingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(10),
-        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: Colors.white.withAlpha(15),
+              color: const Color(0xFF3A3A3C),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.white.withAlpha(200), size: 18),
-          ),
-          const Spacer(),
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white.withAlpha(140),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+            child: Icon(
+              icon,
+              color: AppColors.primary,
+              size: 20,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(150),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),

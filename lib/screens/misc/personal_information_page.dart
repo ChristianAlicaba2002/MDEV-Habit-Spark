@@ -392,9 +392,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         child: ElevatedButton(
                           onPressed: _isSaving ? null : _save,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: Colors.black,
                             disabledBackgroundColor:
-                                AppColors.primary.withAlpha(100),
+                                Colors.black.withAlpha(100),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),

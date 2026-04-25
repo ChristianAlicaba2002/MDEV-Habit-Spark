@@ -19,6 +19,7 @@ class _LoginPageState extends State<LoginPage>
   final _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String? _authError; // Add this to track auth errors
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -66,6 +67,7 @@ class _LoginPageState extends State<LoginPage>
 
     setState(() {
       _isLoading = true;
+      _authError = null; // Clear previous errors
     });
 
     bool isNavigating = false;
@@ -82,19 +84,18 @@ class _LoginPageState extends State<LoginPage>
       }
     } catch (e) {
       if (mounted) {
-        if (e.toString().contains('Wrong password') ||
-            e.toString().contains('wrong-password')) {
+        String errorMessage = 'Incorrect Username or Password';
+        
+        // You can customize error messages for specific cases if needed
+        if (e.toString().contains('network')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (e.toString().contains('too-many-requests')) {
+          errorMessage = 'Too many login attempts. Please try again later.';
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: const Color(0xFFE74C3C),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+        
+        setState(() {
+          _authError = errorMessage;
+        });
       }
     } finally {
       if (mounted && !isNavigating) setState(() => _isLoading = false);
@@ -140,7 +141,15 @@ class _LoginPageState extends State<LoginPage>
           ),
           TextButton(
             onPressed: () async {
-              if (emailController.text.isEmpty) return;
+              if (emailController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter your email address'),
+                    backgroundColor: Color(0xFFE74C3C),
+                  ),
+                );
+                return;
+              }
               try {
                 await _authService.resetPassword(emailController.text.trim());
                 if (context.mounted) {
@@ -150,14 +159,29 @@ class _LoginPageState extends State<LoginPage>
                       content: Text(
                         'Password reset email sent! Check your inbox.',
                       ),
+                      backgroundColor: Color(0xFF2ECC71),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 4),
                     ),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(e.toString())));
+                  String errorMessage = 'Unable to send reset email';
+                  if (e.toString().contains('user-not-found')) {
+                    errorMessage = 'No account found with this email';
+                  } else if (e.toString().contains('network')) {
+                    errorMessage = 'Network error. Please try again.';
+                  }
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(errorMessage),
+                      backgroundColor: const Color(0xFFE74C3C),
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
                 }
               }
             },
@@ -314,6 +338,22 @@ class _LoginPageState extends State<LoginPage>
               },
             ),
 
+            // Auth Error Message
+            if (_authError != null) ...[
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  _authError!,
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B6B),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+
             // Forgot password
             Align(
               alignment: Alignment.centerRight,
@@ -389,6 +429,14 @@ class _LoginPageState extends State<LoginPage>
       style: const TextStyle(color: Colors.white, fontSize: 16),
       validator: validator,
       cursorColor: const Color(0xFF4ECDC4),
+      onChanged: (value) {
+        // Clear auth error when user starts typing
+        if (_authError != null) {
+          setState(() {
+            _authError = null;
+          });
+        }
+      },
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 14),
@@ -421,8 +469,8 @@ class _LoginPageState extends State<LoginPage>
       child: ElevatedButton(
         onPressed: _isLoading ? null : _signInWithEmail,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4ECDC4),
-          foregroundColor: const Color(0xFF0F172A),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -439,7 +487,7 @@ class _LoginPageState extends State<LoginPage>
                 width: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  color: Color(0xFF0F172A),
+                  color: Colors.white,
                 ),
               )
             : const Text('Sign In'),
@@ -457,7 +505,7 @@ class _LoginPageState extends State<LoginPage>
         padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 24),
         side: BorderSide(color: Colors.white.withAlpha(40), width: 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: Colors.white.withAlpha(10),
+        backgroundColor: Colors.white.withAlpha(5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
