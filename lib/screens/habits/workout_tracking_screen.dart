@@ -32,35 +32,77 @@ class _WorkoutTrackingScreenState extends State<WorkoutTrackingScreen> {
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
           children: [
-            Icon(
-              CupertinoIcons.play_circle,
-              size: 64,
-              color: Colors.white,
+            _buildStatCard(
+              icon: CupertinoIcons.time,
+              label: 'Duration',
+              value: '0:00',
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Workout Tracking',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+            _buildStatCard(
+              icon: CupertinoIcons.location,
+              label: 'Distance',
+              value: '0.0 km',
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming Soon',
-              style: TextStyle(
-                color: Colors.white.withAlpha(150),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+            _buildStatCard(
+              icon: CupertinoIcons.flame,
+              label: 'Calories',
+              value: '0 kcal',
+            ),
+            _buildStatCard(
+              icon: CupertinoIcons.speedometer,
+              label: 'Pace',
+              value: '0:00/km',
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 32,
+            color: Colors.white,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withAlpha(150),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
