@@ -2433,24 +2433,24 @@ class _ProfileTab extends StatelessWidget {
                       childAspectRatio: 1.0,
                       children: [
                         _TrackingCard(
-                          icon: CupertinoIcons.arrow_up_right,
                           title: 'Total Distance',
                           value: '${(habits.length * 2.5).toStringAsFixed(1)} km',
+                          icon: CupertinoIcons.arrow_up_right,
                         ),
                         _TrackingCard(
-                          icon: CupertinoIcons.calendar,
                           title: 'Total Activities',
                           value: '${habits.length}',
+                          icon: CupertinoIcons.calendar,
                         ),
                         _TrackingCard(
-                          icon: CupertinoIcons.checkmark_circle,
                           title: 'Monthly Goal',
                           value: '${(completionRate * 100).toStringAsFixed(0)}%',
+                          icon: CupertinoIcons.checkmark_circle,
                         ),
                         _TrackingCard(
-                          icon: CupertinoIcons.star_fill,
                           title: 'Achievements',
                           value: '${completedCount}',
+                          icon: CupertinoIcons.star_fill,
                         ),
                       ],
                     ),
@@ -2579,35 +2579,26 @@ class _TrackingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(10),
-        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.white.withAlpha(200), size: 18),
-          ),
-          const Spacer(),
           Text(
             title,
             style: TextStyle(
-              color: Colors.white.withAlpha(140),
+              color: Colors.white.withAlpha(150),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
