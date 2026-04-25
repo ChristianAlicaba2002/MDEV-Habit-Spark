@@ -469,8 +469,8 @@ class _LoginPageState extends State<LoginPage>
       child: ElevatedButton(
         onPressed: _isLoading ? null : _signInWithEmail,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4ECDC4),
-          foregroundColor: const Color(0xFF0F172A),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -487,7 +487,7 @@ class _LoginPageState extends State<LoginPage>
                 width: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  color: Color(0xFF0F172A),
+                  color: Colors.white,
                 ),
               )
             : const Text('Sign In'),
@@ -505,7 +505,7 @@ class _LoginPageState extends State<LoginPage>
         padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 24),
         side: BorderSide(color: Colors.white.withAlpha(40), width: 1),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: Colors.white.withAlpha(10),
+        backgroundColor: Colors.white.withAlpha(5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
