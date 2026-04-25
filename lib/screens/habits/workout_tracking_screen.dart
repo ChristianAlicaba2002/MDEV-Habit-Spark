@@ -32,32 +32,92 @@ class _WorkoutTrackingScreenState extends State<WorkoutTrackingScreen> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
+        child: Column(
           children: [
-            _buildStatCard(
-              icon: CupertinoIcons.time,
-              label: 'Duration',
-              value: '0:00',
+            // 4 Stat Cards Grid
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                _buildStatCard(
+                  icon: CupertinoIcons.time,
+                  label: 'Duration',
+                  value: '0:00',
+                ),
+                _buildStatCard(
+                  icon: CupertinoIcons.location,
+                  label: 'Distance',
+                  value: '0.0 km',
+                ),
+                _buildStatCard(
+                  icon: CupertinoIcons.flame,
+                  label: 'Calories',
+                  value: '0 kcal',
+                ),
+                _buildStatCard(
+                  icon: CupertinoIcons.speedometer,
+                  label: 'Pace',
+                  value: '0:00/km',
+                ),
+              ],
             ),
-            _buildStatCard(
-              icon: CupertinoIcons.location,
-              label: 'Distance',
-              value: '0.0 km',
-            ),
-            _buildStatCard(
-              icon: CupertinoIcons.flame,
-              label: 'Calories',
-              value: '0 kcal',
-            ),
-            _buildStatCard(
-              icon: CupertinoIcons.speedometer,
-              label: 'Pace',
-              value: '0:00/km',
+            
+            const SizedBox(height: 20),
+            
+            // Steps Today Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C2C2E),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.person_2,
+                        size: 28,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Steps Today',
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(150),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '0',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'steps',
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(150),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
