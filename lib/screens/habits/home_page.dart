@@ -14,6 +14,7 @@ import 'package:habit_spark/screens/misc/reminder_settings_page.dart';
 import 'package:habit_spark/screens/habits/habit_detail_page.dart';
 import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/calendar/training_calendar_page.dart';
+import 'package:habit_spark/screens/habits/workout_tracking_screen.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/widgets/app_header.dart';
@@ -1923,21 +1924,33 @@ class _StatsTabState extends State<_StatsTab> {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Go',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WorkoutTrackingScreen(
+                                  workoutType: 'Running',
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Go',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -2008,21 +2021,33 @@ class _StatsTabState extends State<_StatsTab> {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Go',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const WorkoutTrackingScreen(
+                                  workoutType: 'Jogging',
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Go',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
