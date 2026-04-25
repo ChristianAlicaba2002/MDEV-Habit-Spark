@@ -1870,7 +1870,7 @@ class _StatsTabState extends State<_StatsTab> {
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Container(
-              height: 180,
+              height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -1884,6 +1884,7 @@ class _StatsTabState extends State<_StatsTab> {
                         image: const DecorationImage(
                           image: AssetImage('assets/images/Running.jpg'),
                           fit: BoxFit.cover,
+                          alignment: Alignment.center,
                         ),
                       ),
                     ),
