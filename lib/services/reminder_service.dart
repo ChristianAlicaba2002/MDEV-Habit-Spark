@@ -65,7 +65,7 @@ class ReminderService {
         '⏰ Habit Reminder',
         'Don\'t forget to complete "$habitName" today!',
         scheduledDate,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'habit_reminders',
             'Habit Reminders',
@@ -75,7 +75,7 @@ class ReminderService {
             enableVibration: true,
             playSound: true,
           ),
-          iOS: DarwinNotificationDetails(
+          iOS: const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
