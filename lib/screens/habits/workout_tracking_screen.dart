@@ -72,49 +72,41 @@ class _WorkoutTrackingScreenState extends State<WorkoutTrackingScreen> {
             // Steps Today Card
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
                 color: const Color(0xFF2C2C2E),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        CupertinoIcons.person_2,
-                        size: 28,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Steps Today',
-                        style: TextStyle(
-                          color: Colors.white.withAlpha(150),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  Icon(
+                    Icons.directions_walk,
+                    size: 32,
+                    color: Colors.white.withAlpha(180),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(width: 16),
+                  Text(
+                    'Steps today',
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(180),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
                   Text(
                     '0',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 48,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'steps',
-                    style: TextStyle(
-                      color: Colors.white.withAlpha(150),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    CupertinoIcons.chevron_right,
+                    size: 20,
+                    color: Colors.white.withAlpha(180),
                   ),
                 ],
               ),
