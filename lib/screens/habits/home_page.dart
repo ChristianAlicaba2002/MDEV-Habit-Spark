@@ -1768,7 +1768,7 @@ class _ActionBtn extends StatelessWidget {
 
 // ─── Record Tab ───────────────────────────────────────────────────────────────
 
-class _StatsTab extends StatelessWidget {
+class _StatsTab extends StatefulWidget {
   final String userId;
   final List<Habit> habits;
   final StreakService streakService;
@@ -1778,6 +1778,77 @@ class _StatsTab extends StatelessWidget {
     required this.habits,
     required this.streakService,
   });
+
+  @override
+  State<_StatsTab> createState() => _StatsTabState();
+}
+
+class _StatsTabState extends State<_StatsTab> {
+  bool _isTracking = false;
+  double _distance = 0.0;
+  int _duration = 0; // in seconds
+  double _pace = 0.0;
+  int _calories = 0;
+  late Stopwatch _stopwatch;
+
+  @override
+  void initState() {
+    super.initState();
+    _stopwatch = Stopwatch();
+  }
+
+  void _toggleTracking() {
+    setState(() {
+      if (_isTracking) {
+        _stopwatch.stop();
+      } else {
+        _stopwatch.start();
+      }
+      _isTracking = !_isTracking;
+    });
+
+    if (_isTracking) {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (_isTracking && mounted) {
+        setState(() {
+          _duration = _stopwatch.elapsed.inSeconds;
+          // Simulate distance increase (0.1 km per 10 seconds)
+          _distance = (_duration / 10) * 0.1;
+          // Calculate pace (km/h)
+          if (_duration > 0) {
+            _pace = (_distance / (_duration / 3600)).isFinite
+                ? _distance / (_duration / 3600)
+                : 0.0;
+            // Calculate calories (rough estimate: 60 calories per km)
+            _calories = (_distance * 60).toInt();
+          }
+        });
+        _startTimer();
+      }
+    });
+  }
+
+  void _resetTracking() {
+    setState(() {
+      _stopwatch.reset();
+      _isTracking = false;
+      _distance = 0.0;
+      _duration = 0;
+      _pace = 0.0;
+      _calories = 0;
+    });
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1794,45 +1865,276 @@ class _StatsTab extends StatelessWidget {
           ),
         ),
 
-        // Empty state
-        SliverFillRemaining(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        // Map placeholder
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C2C2E),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Map background with lines
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3A3A3C),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: CustomPaint(
+                      painter: MapPainter(),
+                      size: Size.infinite,
+                    ),
+                  ),
+                  // Play button
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(200),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.play_fill,
+                      color: Colors.black,
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Stats Grid
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.2,
               children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withAlpha(25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.book,
-                    size: 36,
-                    color: AppColors.primary,
-                  ),
+                _StatCard(
+                  label: 'Distance',
+                  value: '${_distance.toStringAsFixed(2)} km',
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'No records yet',
-                  style: AppTextStyles.heading4,
+                _StatCard(
+                  label: 'Duration',
+                  value: _formatDuration(_duration),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Your activity records will appear here',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
+                _StatCard(
+                  label: 'Pace',
+                  value: '${_pace.toStringAsFixed(2)} /km',
+                ),
+                _StatCard(
+                  label: 'Calories',
+                  value: '$_calories kcal',
                 ),
               ],
             ),
           ),
         ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+        // Start/Stop Button
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Center(
+              child: GestureDetector(
+                onTap: _toggleTracking,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withAlpha(100),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _isTracking
+                        ? CupertinoIcons.pause_fill
+                        : CupertinoIcons.play_fill,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 40),
+            child: Center(
+              child: Text(
+                _isTracking ? 'Tap to pause tracking' : 'Tap to start tracking',
+                style: TextStyle(
+                  color: Colors.white.withAlpha(150),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Reset button
+        if (_distance > 0 || _duration > 0)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _resetTracking,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Reset',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
+
+  @override
+  void dispose() {
+    _stopwatch.stop();
+    super.dispose();
+  }
+}
+
+// ── Stat Card Widget ──────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatCard({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withAlpha(150),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Map Painter ───────────────────────────────────────────────────────────────
+
+class MapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withAlpha(50)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    // Draw wavy lines to simulate map
+    final path = Path();
+    path.moveTo(0, size.height * 0.3);
+    path.quadraticBezierTo(
+      size.width * 0.25,
+      size.height * 0.2,
+      size.width * 0.5,
+      size.height * 0.35,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.75,
+      size.height * 0.5,
+      size.width,
+      size.height * 0.4,
+    );
+    canvas.drawPath(path, paint);
+
+    // Draw more lines
+    final path2 = Path();
+    path2.moveTo(0, size.height * 0.6);
+    path2.quadraticBezierTo(
+      size.width * 0.3,
+      size.height * 0.5,
+      size.width * 0.6,
+      size.height * 0.65,
+    );
+    path2.quadraticBezierTo(
+      size.width * 0.8,
+      size.height * 0.75,
+      size.width,
+      size.height * 0.6,
+    );
+    canvas.drawPath(path2, paint);
+
+    // Draw vertical lines
+    canvas.drawLine(
+      Offset(size.width * 0.3, 0),
+      Offset(size.width * 0.35, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.7, 0),
+      Offset(size.width * 0.65, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(MapPainter oldDelegate) => false;
 }
 
 // ─── Profile Tab ─────────────────────────────────────────────────────────────
