@@ -18,9 +18,10 @@ class _WorkoutTrackingScreenState extends State<WorkoutTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1E),
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1E),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(CupertinoIcons.back, color: Colors.white),
@@ -32,10 +33,21 @@ class _WorkoutTrackingScreenState extends State<WorkoutTrackingScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color(0xFF2C2C2E),
+              const Color(0xFF1C1C1E),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 100, 20, 20),
+          child: Column(
+            children: [
             // 4 Stat Cards Grid
             GridView.count(
               shrinkWrap: true,
@@ -113,6 +125,7 @@ class _WorkoutTrackingScreenState extends State<WorkoutTrackingScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

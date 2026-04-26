@@ -129,9 +129,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
+      backgroundColor: Colors.black,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.black,
+              Color(0xFF6E6E6E),
+            ],
+            stops: [0.0, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
         child: StreamBuilder<List<Habit>>(
           stream: _habitStream,
           builder: (context, snapshot) {
@@ -200,6 +212,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             );
           },
         ),
+      ),
       ),
       floatingActionButton: null,
       bottomNavigationBar: _BottomNav(
@@ -732,7 +745,7 @@ class _HeroBanner extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+          colors: [Color(0xFF383842), Color(0xFF1C1C22), Color(0xFF050505)],
         ),
         boxShadow: [
           BoxShadow(

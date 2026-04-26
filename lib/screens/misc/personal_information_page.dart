@@ -200,10 +200,22 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
+      backgroundColor: Colors.black,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.black,
+              Color(0xFF6E6E6E),
+            ],
+            stops: [0.0, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
             // ── Header ───────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -428,6 +440,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
