@@ -253,14 +253,14 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
                       // ── Account section
                       _SectionLabel('Account'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       _ProfileField(
                         controller: _usernameCtrl,
                         label: 'Username',
                         icon: CupertinoIcons.at,
                         hint: 'Enter your username',
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       _ProfileField(
                         controller: _firstNameCtrl,
                         label: 'First Name',
@@ -270,7 +270,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ? 'Required'
                             : null,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       _ProfileField(
                         controller: _lastNameCtrl,
                         label: 'Last Name',
@@ -280,7 +280,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                             ? 'Required'
                             : null,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       _ProfileField(
                         controller: _emailCtrl,
                         label: 'Email',
@@ -294,7 +294,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
                       // ── Body stats section
                       _SectionLabel('Body Stats'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
@@ -337,7 +337,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
 
                       // ── Security section
                       _SectionLabel('Security'),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       GestureDetector(
                         onTap: _showChangePasswordDialog,
                         child: Container(
@@ -536,7 +536,7 @@ class _ProfileField extends StatelessWidget {
                   const BorderSide(color: AppColors.error, width: 1.5),
             ),
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           ),
         ),
       ],
