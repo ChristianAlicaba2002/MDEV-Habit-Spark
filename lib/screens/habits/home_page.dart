@@ -2014,13 +2014,15 @@ class _StatsTabState extends State<_StatsTab> {
                                           child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 16),
                                         ),
                                         const SizedBox(width: 12),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Text('Calories', style: TextStyle(color: Colors.white, fontSize: 14)),
-                                            const Text('143 kcal', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                          ],
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Text('Calories', overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 14)),
+                                              const Text('143 kcal', overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -2039,13 +2041,15 @@ class _StatsTabState extends State<_StatsTab> {
                                           child: const Icon(CupertinoIcons.alarm, color: Colors.white, size: 16),
                                         ),
                                         const SizedBox(width: 12),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Text('Durations', style: TextStyle(color: Colors.white, fontSize: 14)),
-                                            const Text('130 minutes', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                          ],
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Text('Durations', overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 14)),
+                                              const Text('130 minutes', overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
