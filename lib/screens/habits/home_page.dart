@@ -2354,7 +2354,7 @@ class _ProfileTab extends StatelessWidget {
             // ── Profile Card (avatar + name + location + stats) — single container
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                 child: Builder(builder: (context) {
                   // Calculate age from birthDate if available
                   String ageStr = '--';
@@ -2449,118 +2449,101 @@ class _ProfileTab extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 10),
+                    const SizedBox(height: 8),
 
-                        // ── Bottom: Age / Height / Weight
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _ProfileStatBox(
-                                label: 'Age',
-                                value: userData?.age != null ? '${userData!.age}' : ageStr,
-                                unit: 'y.o',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _ProfileStatBox(
-                                label: 'Height',
-                                value: userData?.height != null ? '${userData!.height!.toInt()}' : '--',
-                                unit: 'cm',
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _ProfileStatBox(
-                                label: 'Weight',
-                                value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '--',
-                                unit: 'kg',
-                              ),
-                            ),
-                          ],
+                    // ── Bottom: Age / Height / Weight
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ProfileStatBox(
+                            label: 'Age',
+                            value: userData?.age != null ? '${userData!.age}' : ageStr,
+                            unit: 'y.o',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _ProfileStatBox(
+                            label: 'Height',
+                            value: userData?.height != null ? '${userData!.height!.toInt()}' : '--',
+                            unit: 'cm',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _ProfileStatBox(
+                            label: 'Weight',
+                            value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '--',
+                            unit: 'kg',
+                          ),
                         ),
                       ],
                     ),
-                  );
-                }),
-              ),
-            ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
 
-            // ── Account Settings Header
+
+            // ── Tracking Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, 28, 20, 12),
-                child: Text(
-                  'Account settings',
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: const Text(
+                  'Tracking',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 20,
+                    color: Colors.white,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
 
-            // ── Tracking Stats Section
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Tracking',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                      childAspectRatio: 0.85,
-                      children: [
-                        _TrackingCard(
-                          title: 'Total Distance',
-                          value: '${(habits.length * 2.5).toStringAsFixed(1)} km',
-                          icon: CupertinoIcons.arrow_up_right,
-                        ),
-                        _TrackingCard(
-                          title: 'Total Activities',
-                          value: '${habits.length}',
-                          icon: CupertinoIcons.calendar,
-                        ),
-                        _TrackingCard(
-                          title: 'Monthly Goal',
-                          value: '${(completionRate * 100).toStringAsFixed(0)}%',
-                          icon: CupertinoIcons.checkmark_circle,
-                        ),
-                        _TrackingCard(
-                          title: 'Achievements',
-                          value: '${completedCount}',
-                          icon: CupertinoIcons.star_fill,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            // ── Tracking Cards Grid
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              sliver: SliverGrid.count(
+                crossAxisCount: 2,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 1.8,
+                children: [
+                  _TrackingCard(
+                    title: 'Total Distance',
+                    value: '${(habits.length * 2.5).toStringAsFixed(1)} km',
+                    icon: CupertinoIcons.arrow_up_right,
+                  ),
+                  _TrackingCard(
+                    title: 'Total Activities',
+                    value: '${habits.length}',
+                    icon: CupertinoIcons.calendar,
+                  ),
+                  _TrackingCard(
+                    title: 'Monthly Goal',
+                    value: '${(completionRate * 100).toStringAsFixed(0)}%',
+                    icon: CupertinoIcons.checkmark_circle,
+                  ),
+                  _TrackingCard(
+                    title: 'Achievements',
+                    value: '${completedCount}',
+                    icon: CupertinoIcons.star_fill,
+                  ),
+                ],
               ),
             ),
 
             // ── Account Settings Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                 child: Text(
                   'Account settings',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -2570,11 +2553,11 @@ class _ProfileTab extends StatelessWidget {
             // ── Settings Items
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     children: [
@@ -2674,18 +2657,16 @@ class _TrackingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               color: const Color(0xFF3A3A3C),
               shape: BoxShape.circle,
@@ -2693,30 +2674,36 @@ class _TrackingCard extends StatelessWidget {
             child: Icon(
               icon,
               color: AppColors.primary,
-              size: 16,
+              size: 14,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.white.withAlpha(150),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(150),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 1),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -2740,10 +2727,10 @@ class _ProfileStatBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         children: [
@@ -2751,11 +2738,11 @@ class _ProfileStatBox extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.grey[500],
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           RichText(
             text: TextSpan(
               children: [
@@ -2763,7 +2750,7 @@ class _ProfileStatBox extends StatelessWidget {
                   text: value,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -2771,7 +2758,7 @@ class _ProfileStatBox extends StatelessWidget {
                   text: '  $unit',
                   style: TextStyle(
                     color: Colors.grey[500],
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -2803,30 +2790,30 @@ class _SettingsRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: Colors.grey[400], size: 18),
+              child: Icon(icon, color: Colors.grey[400], size: 16),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            Icon(CupertinoIcons.chevron_right, color: Colors.grey[600], size: 16),
+            Icon(CupertinoIcons.chevron_right, color: Colors.grey[600], size: 14),
           ],
         ),
       ),
