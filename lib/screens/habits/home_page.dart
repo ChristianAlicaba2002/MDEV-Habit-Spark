@@ -389,7 +389,7 @@ class _DashboardTab extends StatelessWidget {
   final NotificationService notificationService;
   final StreakService streakService;
   final AuthService authService;
-  final TextEditingController searchController; // Added
+  final TextEditingController searchController;
   final VoidCallback onAddHabit;
   final VoidCallback onProfileTap;
 
@@ -406,273 +406,523 @@ class _DashboardTab extends StatelessWidget {
     required this.notificationService,
     required this.streakService,
     required this.authService,
-    required this.searchController, // Added
+    required this.searchController,
     required this.onAddHabit,
     required this.onProfileTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        // ── App Header
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: StreamBuilder<int>(
-              stream: notificationService.getUnreadCountStream(userId),
-              builder: (context, notifSnap) {
-                final unreadCount = notifSnap.data ?? 0;
-                return StreamBuilder<UserModel?>(
-                  stream: authService.getUserDataStream(userId),
-                  builder: (context, userSnap) {
-                    return AppHeader(
-                      onNotificationTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NotificationsPage(),
-                        ),
-                      ),
-                      onProfileTap: onProfileTap,
-                      notificationCount: unreadCount,
-                      userInitial: (userSnap.data?.firstName != null &&
-                              userSnap.data!.firstName.isNotEmpty)
-                          ? userSnap.data!.firstName[0].toUpperCase()
-                          : userInitial,
-                      photoUrl: userSnap.data?.photoUrl,
-                      userName: userSnap.data?.firstName ?? userName,
-                      progress: progress,
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2C3E3E),
+            Color(0xFF4A6666),
+          ],
         ),
-
-        // ── Motivational Hero
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 20, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Preparing',
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // ── Custom App Bar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+                child: Row(
+                  children: [
+                    // Logo
+                    _AppLogo(),
+                    const Spacer(),
+                    _RoundIconButton(
+                      icon: CupertinoIcons.calendar_badge_plus,
+                      onTap: () {},
+                      outlined: true,
+                    ),
+                    const SizedBox(width: 12),
+                    Stack(
+                      children: [
+                        _RoundIconButton(
+                          icon: CupertinoIcons.bell,
+                          onTap: () {},
+                          outlined: true,
                         ),
-                      ),
-                      Text(
-                        'for the big move.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.white,
-                          height: 1.1,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                GestureDetector(
-                  onTap: onAddHabit,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: const BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // ── Search Bar
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.05),
-                  width: 1,
-                ),
-              ),
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  inputDecorationTheme: const InputDecorationTheme(
-                    border: InputBorder.none,
-                  ),
-                ),
-                child: TextField(
-                  controller: searchController,
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                  cursorColor: AppColors.primary,
-                  decoration: InputDecoration(
-                    hintText: 'Search',
-                    hintStyle: TextStyle(
-                      color: Colors.white.withOpacity(0.35),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    prefixIcon: Icon(
-                      CupertinoIcons.search,
-                      color: Colors.white.withOpacity(0.35),
-                      size: 22,
-                    ),
-                    suffixIcon: searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(
-                              Icons.clear,
-                              color: Colors.white.withAlpha(100),
-                              size: 20,
+                        Positioned(
+                          right: 12,
+                          top: 12,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
                             ),
-                            onPressed: () => searchController.clear(),
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: onProfileTap,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          image: const DecorationImage(
+                            image: NetworkImage('https://i.pravatar.cc/150?u=alex'),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Greeting & Date
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w300,
+                          height: 1.2,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Welcome, '),
+                          TextSpan(
+                            text: userName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const TextSpan(text: '! here\'s your\nhealth snapshot for today!'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Today is 01 November 2025',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Search Bar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(35),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      height: 60,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(35),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.6)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: searchController,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                hintText: 'Search...',
+                                hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ),
 
-        // ── Goal Crusher Header
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "My Habits",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Text(
-                  "View all",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            // ── Today's Stats Header
+            _DashboardSectionHeader(
+              title: "Today's stats",
+              onTap: () {},
             ),
-          ),
-        ),
 
-        // ── Goal Crusher Horizontal List
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 180,
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: habits.length,
-              itemBuilder: (context, index) {
-                final habit = habits[index];
-                return _GoalCrusherCard(
-                  habit: habit,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => HabitDetailPage(habit: habit),
+            // ── Stats Horizontal List
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 160,
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  children: [
+                    _HealthStatCard(
+                      title: 'Step to wall',
+                      value: '5,400',
+                      unit: 'steps',
+                      progress: 0.7,
+                      badge: 'Good',
+                      icon: CupertinoIcons.paw,
                     ),
+                    SizedBox(width: 16),
+                    _HealthStatCard(
+                      title: 'Cal burnt',
+                      value: '312',
+                      unit: 'KCAL',
+                      progress: 0.4,
+                      badge: 'Average',
+                      icon: CupertinoIcons.flame_fill,
+                    ),
+                    SizedBox(width: 16),
+                    _HealthStatCard(
+                      title: 'Kilometers',
+                      value: '4.2',
+                      unit: 'KM',
+                      progress: 0.8,
+                      badge: 'Good',
+                      icon: CupertinoIcons.location_fill,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Today's Workout Header
+            _DashboardSectionHeader(
+              title: "Today's workout",
+              onTap: () {},
+            ),
+
+            // ── Large Workout Card
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: _LargeWorkoutCard(
+                  title: 'Upper body\nstrength',
+                  subtitle: '16 exercises',
+                  stats: [
+                    _WorkoutBadge(icon: CupertinoIcons.stopwatch, label: '350 Cal'),
+                    _WorkoutBadge(icon: CupertinoIcons.flame_fill, label: '350 Cal'),
+                  ],
+                  imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800',
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 140)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardSectionHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onTap;
+
+  const _DashboardSectionHeader({required this.title, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            GestureDetector(
+              onTap: onTap,
+              child: Text(
+                'View more',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.6),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HealthStatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String unit;
+  final double progress;
+  final String badge;
+  final IconData icon;
+
+  const _HealthStatCard({
+    required this.title,
+    required this.value,
+    required this.unit,
+    required this.progress,
+    required this.badge,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+              ),
+              const SizedBox(height: 4),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: value,
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(
+                      text: ' $unit',
+                      style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1D3D3D),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  badge,
+                  style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            right: -10,
+            bottom: -10,
+            child: SizedBox(
+              width: 70,
+              height: 70,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 4,
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    valueColor: const AlwaysStoppedAnimation(Colors.orange),
                   ),
-                );
-              },
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                    child: Icon(icon, color: Colors.white, size: 16),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
 
-        // ── Recent Activities Header
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Recent Activities",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
+class _LargeWorkoutCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final List<_WorkoutBadge> stats;
+  final String imageUrl;
+
+  const _LargeWorkoutCard({
+    required this.title,
+    required this.subtitle,
+    required this.stats,
+    required this.imageUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(35),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: 240,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(35),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: Stack(
+            children: [
+              // Image on the right
+              Positioned(
+                right: 0,
+                bottom: 0,
+                top: 0,
+                width: 180,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(35),
+                    bottomRight: Radius.circular(35),
+                  ),
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
                   ),
                 ),
-                Text(
-                  "View all",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              // Content on the left
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 16,
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: stats,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              // Play button
+              Positioned(
+                right: 20,
+                bottom: 20,
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(CupertinoIcons.play_fill, color: Colors.black),
+                ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+}
 
-        // ── Recent Activities List
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: [
-                const _RecentActivityCard(
-                  title: 'Ran',
-                  subtitle: 'Today',
-                  value1: '8.8km',
-                  value2: '45:32',
-                  icon: Icons.directions_run,
-                ),
-                const SizedBox(height: 12),
-                const _RecentActivityCard(
-                  title: 'Cycle',
-                  subtitle: 'Yesterday',
-                  value1: '24.5km',
-                  value2: '1:12:15',
-                  icon: Icons.directions_bike,
-                ),
-              ],
-            ),
+class _WorkoutBadge extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _WorkoutBadge({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.black, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AppLogo extends StatelessWidget {
+  const _AppLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: GridView.count(
+        crossAxisCount: 3,
+        mainAxisSpacing: 2,
+        crossAxisSpacing: 2,
+        physics: const NeverScrollableScrollPhysics(),
+        children: List.generate(
+          9,
+          (index) => Container(
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
           ),
         ),
-
-        const SliverToBoxAdapter(child: SizedBox(height: 120)),
-      ],
+      ),
     );
   }
 }
