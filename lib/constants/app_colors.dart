@@ -21,8 +21,8 @@ class AppColors {
   static const Color darkCardAlt = Color(0xFF2D2D2D); // Alternative dark card
 
   // Light Theme
-  static const Color lightBg = Color(0xFFFAFAFA); // Off white
-  static const Color lightCard = Color(0xFFFFFFFF); // White
+  static const Color lightBg = Color(0xFF909090); // Moon Gray
+  static const Color lightCard = Color(0xFFF1F5F9); // Slate 100
 
   // Text Colors
   static const Color textPrimary = Color(0xFFFFFFFF); // White text

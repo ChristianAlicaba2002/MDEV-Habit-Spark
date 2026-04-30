@@ -224,10 +224,10 @@ class _BottomNav extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
         child: Container(
-          height: 70,
+          height: 80,
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(35),
+            color: const Color(0xFF0A1F1F),
+            borderRadius: BorderRadius.circular(40),
             border: Border.all(
               color: Colors.white.withOpacity(0.1),
               width: 1,
@@ -257,16 +257,16 @@ class _BottomNav extends StatelessWidget {
                       onTap: () => onTap(0),
                     ),
                     _NavItem(
-                      icon: CupertinoIcons.bolt,
-                      activeIcon: CupertinoIcons.bolt_fill,
-                      label: 'Activity',
+                      icon: CupertinoIcons.checkmark_square,
+                      activeIcon: CupertinoIcons.checkmark_square_fill,
+                      label: 'Habits',
                       selected: selectedIndex == 1,
                       onTap: () => onTap(1),
                     ),
                     _NavItem(
-                      icon: CupertinoIcons.play_fill,
-                      activeIcon: CupertinoIcons.play_fill,
-                      label: 'Record',
+                      icon: CupertinoIcons.chart_bar,
+                      activeIcon: CupertinoIcons.chart_bar_fill,
+                      label: 'Stats',
                       selected: selectedIndex == 2,
                       onTap: () => onTap(2),
                     ),
@@ -311,42 +311,32 @@ class _NavItem extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        height: 54,
-        padding: EdgeInsets.only(
-          left: selected ? 18 : 0,
-          right: 0,
-        ),
+        height: 60,
+        padding: EdgeInsets.symmetric(horizontal: selected ? 20 : 12),
         decoration: BoxDecoration(
-          color: selected ? Colors.black.withOpacity(0.8) : Colors.transparent,
-          borderRadius: BorderRadius.circular(27),
+          color: selected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+          border: selected ? null : Border.all(color: Colors.white.withOpacity(0.2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(
+              selected ? activeIcon : icon,
+              size: 24,
+              color: selected ? const Color(0xFF0A1F1F) : Colors.white,
+            ),
             if (selected) ...[
+              const SizedBox(width: 12),
               Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  color: Color(0xFF0A1F1F),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
               ),
-              const SizedBox(width: 10),
             ],
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: selected ? Colors.white : Colors.white.withAlpha(15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                selected ? activeIcon : icon,
-                size: 20,
-                color: selected ? Colors.black : Colors.white.withAlpha(200),
-              ),
-            ),
           ],
         ),
       ),
@@ -2015,7 +2005,7 @@ class _StatsTabState extends State<_StatsTab> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
@@ -2245,15 +2235,6 @@ class _ProfileTab extends StatelessWidget {
     required this.onBackTap,
   });
 
-  String _getJoinedDate() {
-    final now = DateTime.now();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${months[now.month - 1]} ${now.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final completedCount = habits.where((h) => h.isDone).length;
@@ -2271,346 +2252,365 @@ class _ProfileTab extends StatelessWidget {
             ? user?.email?.split('@')[0] ?? 'User'
             : displayName;
 
-        return CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── Custom Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _RoundIconButton(
-                      icon: CupertinoIcons.arrow_left,
-                      onTap: onBackTap,
-                    ),
-                    Text(
-                      'Profile',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    PopupMenuButton<String>(
-                      offset: const Offset(0, 50),
-                      color: Theme.of(context).cardColor,
-                      elevation: 8,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.onSurface.withAlpha(20),
-                        ),
-                      ),
-                      padding: EdgeInsets.zero,
-                      tooltip: 'Show settings',
-                      child: const _RoundIconButton(
-                        icon: CupertinoIcons.settings,
-                        onTap: null, // Transparent to PopupMenuButton
-                      ),
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Edit Profile — Coming soon')),
-                          );
-                        } else if (value == 'logout') {
-                          authService.signOut();
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          height: 40,
-                          child: Text(
-                            'Edit Profile',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        PopupMenuItem(
-                          value: 'logout',
-                          height: 40,
-                          child: Text(
-                            'Log out',
-                            style: TextStyle(
-                              color: AppColors.error,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF2C3E3E),
+                Color(0xFF4A6666),
+              ],
             ),
-
-            // ── Profile Card (avatar + name + location + stats) — single container
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                child: Builder(builder: (context) {
-                  // Calculate age from birthDate if available
-                  String ageStr = '--';
-                  if (userData?.birthDate != null &&
-                      userData!.birthDate.isNotEmpty) {
-                    try {
-                      final parts = userData!.birthDate.split('-');
-                      if (parts.length == 3) {
-                        final dob = DateTime(
-                          int.parse(parts[0]),
-                          int.parse(parts[1]),
-                          int.parse(parts[2]),
-                        );
-                        final now = DateTime.now();
-                        int age = now.year - dob.year;
-                        if (now.month < dob.month ||
-                            (now.month == dob.month && now.day < dob.day)) {
-                          age--;
-                        }
-                        ageStr = '$age';
-                      }
-                    } catch (_) {}
-                  }
-
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        // ── Top: avatar + name + location
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 28,
-                              backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
-                              backgroundImage: (userData?.photoUrl != null &&
-                                      userData!.photoUrl.isNotEmpty)
-                                  ? NetworkImage(userData!.photoUrl)
-                                  : null,
-                              child: (userData?.photoUrl == null ||
-                                      userData!.photoUrl.isEmpty)
-                                  ? Text(
-                                      (user?.email
-                                              ?.substring(0, 1)
-                                              .toUpperCase()) ??
-                                          'U',
-                                      style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onSurface,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 28,
-                                      ),
-                                    )
-                                  : null,
+          ),
+          child: Stack(
+            children: [
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // ── Custom Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _RoundIconButton(
+                            icon: CupertinoIcons.arrow_left,
+                            onTap: onBackTap,
+                            outlined: true,
+                          ),
+                          const Text(
+                            'Profile',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.5,
                             ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          ),
+                          _RoundIconButton(
+                            icon: CupertinoIcons.pencil_ellipsis_rectangle,
+                            onTap: () {},
+                            outlined: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Profile Glass Card
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            ),
+                            child: Column(
                               children: [
-                                Text(
-                                  name,
-                                  style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSurface,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
                                 Row(
                                   children: [
-                                    Icon(
-                                      CupertinoIcons.location_solid,
-                                      size: 13,
-                                      color: Colors.grey[500],
+                                    CircleAvatar(
+                                      radius: 40,
+                                      backgroundColor: Colors.white.withOpacity(0.1),
+                                      backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
+                                          ? NetworkImage(userData!.photoUrl)
+                                          : null,
+                                      child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
+                                          ? Text(
+                                              (user?.email?.substring(0, 1).toUpperCase()) ?? 'U',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 32,
+                                              ),
+                                            )
+                                          : null,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      userData?.email.isNotEmpty == true
-                                          ? userData!.email.split('@')[0]
-                                          : 'Location not set',
-                                      style: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontSize: 13,
-                                      ),
+                                    const SizedBox(width: 20),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          userData?.email.isNotEmpty == true ? userData!.email.split('@')[0] : 'London, United Kingdom',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.6),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    _StatPill(
+                                      label: 'Age',
+                                      value: userData?.age != null ? '${userData!.age}' : '27',
+                                      unit: 'y.o',
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _StatPill(
+                                      label: 'Height',
+                                      value: userData?.height != null ? '${userData!.height!.toInt()}' : '170',
+                                      unit: 'cm',
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _StatPill(
+                                      label: 'Weight',
+                                      value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '52',
+                                      unit: 'kg',
                                     ),
                                   ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-
-                    const SizedBox(height: 8),
-
-                    // ── Bottom: Age / Height / Weight
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _ProfileStatBox(
-                            label: 'Age',
-                            value: userData?.age != null ? '${userData!.age}' : ageStr,
-                            unit: 'y.o',
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _ProfileStatBox(
-                            label: 'Height',
-                            value: userData?.height != null ? '${userData!.height!.toInt()}' : '--',
-                            unit: 'cm',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _ProfileStatBox(
-                            label: 'Weight',
-                            value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '--',
-                            unit: 'kg',
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ),
+                  ),
 
+                  // ── Account Settings
+                  _SectionHeader(title: 'Account settings'),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _GlassPillItem(
+                          icon: CupertinoIcons.person,
+                          label: 'Personal Information',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PersonalInformationPage(
+                                userId: userId,
+                                authService: authService,
+                                initialData: userData,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _GlassPillItem(
+                          icon: CupertinoIcons.list_bullet_indent,
+                          label: 'Remainder',
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 12),
+                        _GlassPillItem(
+                          icon: CupertinoIcons.speaker_2,
+                          label: 'Sound',
+                          hasToggle: true,
+                          onTap: () {},
+                        ),
+                      ]),
+                    ),
+                  ),
 
-            // ── Tracking Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                child: const Text(
-                  'Tracking',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  // ── Preferences
+                  _SectionHeader(title: 'Preferences'),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        _GlassPillItem(
+                          icon: CupertinoIcons.person_2,
+                          label: 'Experience level',
+                          onTap: () {},
+                        ),
+                        const SizedBox(height: 12),
+                        _GlassPillItem(
+                          icon: CupertinoIcons.exclamationmark_triangle,
+                          label: 'Caution areas',
+                          onTap: () {},
+                        ),
+                      ]),
+                    ),
                   ),
-                ),
-              ),
-            ),
 
-            // ── Tracking Cards Grid
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-              sliver: SliverGrid.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 1.8,
-                children: [
-                  _TrackingCard(
-                    title: 'Total Distance',
-                    value: '${(habits.length * 2.5).toStringAsFixed(1)} km',
-                    icon: CupertinoIcons.arrow_up_right,
-                  ),
-                  _TrackingCard(
-                    title: 'Total Activities',
-                    value: '${habits.length}',
-                    icon: CupertinoIcons.calendar,
-                  ),
-                  _TrackingCard(
-                    title: 'Monthly Goal',
-                    value: '${(completionRate * 100).toStringAsFixed(0)}%',
-                    icon: CupertinoIcons.checkmark_circle,
-                  ),
-                  _TrackingCard(
-                    title: 'Achievements',
-                    value: '${completedCount}',
-                    icon: CupertinoIcons.star_fill,
-                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 140)),
                 ],
               ),
-            ),
-
-            // ── Account Settings Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                child: Text(
-                  'Account settings',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Settings Items
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      _SettingsRow(
-                        icon: CupertinoIcons.person,
-                        label: 'Personal Information',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PersonalInformationPage(
-                              userId: userId,
-                              authService: authService,
-                              initialData: userData,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Divider(height: 1, color: Theme.of(context).dividerColor.withAlpha(50), indent: 56, endIndent: 16),
-                      _SettingsRow(
-                        icon: CupertinoIcons.bell,
-                        label: 'Reminder',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReminderSettingsPage(
-                              userId: userId,
-                              habitId: 'general',
-                              habitName: 'General Reminders',
-                            ),
-                          ),
-                        ),
-                      ),
-                      Divider(height: 1, color: Colors.white.withAlpha(15), indent: 56, endIndent: 16),
-                      const _SettingsThemeRow(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 120)),
-          ],
+            ],
+          ),
         );
       },
     );
   }
 }
 
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        child: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatPill extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+
+  const _StatPill({required this.label, required this.value, required this.unit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 4),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' $unit',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassPillItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool hasToggle;
+  final VoidCallback onTap;
+
+  const _GlassPillItem({
+    required this.icon,
+    required this.label,
+    this.hasToggle = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(35),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(35),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              if (hasToggle)
+                Switch(
+                  value: true,
+                  onChanged: (v) {},
+                  activeColor: Colors.white,
+                  activeTrackColor: const Color(0xFF1D3D3D),
+                )
+              else
+                Icon(
+                  CupertinoIcons.chevron_right,
+                  color: Colors.white.withOpacity(0.4),
+                  size: 16,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
 class _RoundIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
+  final bool outlined;
 
-  const _RoundIconButton({required this.icon, this.onTap});
+  const _RoundIconButton({required this.icon, this.onTap, this.outlined = false});
 
   @override
   Widget build(BuildContext context) {
@@ -2618,19 +2618,14 @@ class _RoundIconButton extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onSurface.withAlpha(15),
+        color: outlined ? Colors.transparent : Colors.white.withOpacity(0.1),
         shape: BoxShape.circle,
+        border: outlined ? Border.all(color: Colors.white.withOpacity(0.2)) : null,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Icon(
-            icon,
-            color: Theme.of(context).colorScheme.onSurface,
-            size: 20,
-          ),
-        ),
+      child: Icon(
+        icon,
+        color: Colors.white,
+        size: 20,
       ),
     );
 
@@ -2656,56 +2651,59 @@ class _TrackingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: const Color(0xFF3A3A3C),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: AppColors.primary,
-              size: 14,
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9).withOpacity(0.4),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFF1F5F9).withOpacity(0.4)),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.white.withAlpha(150),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 1),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Icon(
+                  icon,
+                  color: AppColors.primary,
+                  size: 16,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: const Color(0xFF1D1D1F).withOpacity(0.6),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF1D1D1F),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -2726,46 +2724,54 @@ class _ProfileStatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9).withOpacity(0.6),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFF1F5F9).withOpacity(0.4)),
           ),
-          const SizedBox(height: 2),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: const Color(0xFF1D1D1F).withOpacity(0.5),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
                 ),
-                TextSpan(
-                  text: '  $unit',
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              const SizedBox(height: 4),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: value,
+                      style: const TextStyle(
+                        color: Color(0xFF1D1D1F),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextSpan(
+                      text: '  $unit',
+                      style: TextStyle(
+                        color: const Color(0xFF1D1D1F).withOpacity(0.5),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -2797,23 +2803,23 @@ class _SettingsRow extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant,
+                color: const Color(0xFF1D1D1F).withOpacity(0.05),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: Colors.grey[400], size: 16),
+              child: Icon(icon, color: const Color(0xFF1D1D1F).withOpacity(0.6), size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
+                style: const TextStyle(
+                  color: Color(0xFF1D1D1F),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            Icon(CupertinoIcons.chevron_right, color: Colors.grey[600], size: 14),
+            Icon(CupertinoIcons.chevron_right, color: const Color(0xFF1D1D1F).withOpacity(0.3), size: 14),
           ],
         ),
       ),
@@ -2821,76 +2827,6 @@ class _SettingsRow extends StatelessWidget {
   }
 }
 
-// ── Settings Theme Row (with toggle) ─────────────────────────────────────────
-
-class _SettingsThemeRow extends StatefulWidget {
-  const _SettingsThemeRow();
-
-  @override
-  State<_SettingsThemeRow> createState() => _SettingsThemeRowState();
-}
-
-class _SettingsThemeRowState extends State<_SettingsThemeRow> {
-  late ThemeService _themeService;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeService = ThemeService();
-    _themeService.addListener(_onThemeChanged);
-  }
-
-  @override
-  void dispose() {
-    _themeService.removeListener(_onThemeChanged);
-    super.dispose();
-  }
-
-  void _onThemeChanged() {
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = _themeService.themeMode == ThemeMode.dark;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(CupertinoIcons.moon_fill, color: Colors.grey[400], size: 18),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              'Dark Mode',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          CupertinoSwitch(
-            value: isDarkMode,
-            activeColor: Colors.grey[600]!,
-            onChanged: (val) {
-              final newMode = val ? ThemeMode.dark : ThemeMode.light;
-              _themeService.setThemeMode(newMode);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _ProfileMenuItem extends StatelessWidget {
   final IconData icon;
