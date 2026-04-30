@@ -2380,10 +2380,10 @@ class _ProfileTab extends StatelessWidget {
                   }
 
                   return Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
                       children: [
@@ -2391,7 +2391,7 @@ class _ProfileTab extends StatelessWidget {
                         Row(
                           children: [
                             CircleAvatar(
-                              radius: 36,
+                              radius: 28,
                               backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
                               backgroundImage: (userData?.photoUrl != null &&
                                       userData!.photoUrl.isNotEmpty)
@@ -2412,7 +2412,7 @@ class _ProfileTab extends StatelessWidget {
                                     )
                                   : null,
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -2420,11 +2420,11 @@ class _ProfileTab extends StatelessWidget {
                                   name,
                                   style: TextStyle(
                                     color: Theme.of(context).colorScheme.onSurface,
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Row(
                                   children: [
                                     Icon(
@@ -2449,7 +2449,7 @@ class _ProfileTab extends StatelessWidget {
                           ],
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
 
                         // ── Bottom: Age / Height / Weight
                         Row(
@@ -2521,8 +2521,8 @@ class _ProfileTab extends StatelessWidget {
                       crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
                       childAspectRatio: 1.0,
                       children: [
                         _TrackingCard(
@@ -2574,7 +2574,7 @@ class _ProfileTab extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     children: [
@@ -2674,18 +2674,18 @@ class _TrackingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: const Color(0xFF3A3A3C),
               shape: BoxShape.circle,
@@ -2693,7 +2693,7 @@ class _TrackingCard extends StatelessWidget {
             child: Icon(
               icon,
               color: AppColors.primary,
-              size: 20,
+              size: 16,
             ),
           ),
           Column(
@@ -2703,16 +2703,16 @@ class _TrackingCard extends StatelessWidget {
                 title,
                 style: TextStyle(
                   color: Colors.white.withAlpha(150),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 value,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -2740,10 +2740,10 @@ class _ProfileStatBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -2751,11 +2751,11 @@ class _ProfileStatBox extends StatelessWidget {
             label,
             style: TextStyle(
               color: Colors.grey[500],
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           RichText(
             text: TextSpan(
               children: [
@@ -2763,7 +2763,7 @@ class _ProfileStatBox extends StatelessWidget {
                   text: value,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 22,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -2771,7 +2771,7 @@ class _ProfileStatBox extends StatelessWidget {
                   text: '  $unit',
                   style: TextStyle(
                     color: Colors.grey[500],
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
