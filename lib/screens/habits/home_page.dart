@@ -2504,7 +2504,7 @@ class _ProfileTab extends StatelessWidget {
             // ── Tracking Stats Section
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2516,14 +2516,14 @@ class _ProfileTab extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     GridView.count(
                       crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.0,
+                      childAspectRatio: 0.85,
                       children: [
                         _TrackingCard(
                           title: 'Total Distance',
@@ -2555,7 +2555,7 @@ class _ProfileTab extends StatelessWidget {
             // ── Account Settings Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 child: Text(
                   'Account settings',
                   style: TextStyle(
