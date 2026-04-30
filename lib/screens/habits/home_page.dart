@@ -1775,265 +1775,454 @@ class _StatsTab extends StatefulWidget {
 }
 
 class _StatsTabState extends State<_StatsTab> {
-  bool _isTracking = false;
-  double _distance = 0.0;
-  int _duration = 0; // in seconds
-  double _pace = 0.0;
-  int _calories = 0;
-  late Stopwatch _stopwatch;
-
-  @override
-  void initState() {
-    super.initState();
-    _stopwatch = Stopwatch();
-  }
-
-  void _toggleTracking() {
-    setState(() {
-      if (_isTracking) {
-        _stopwatch.stop();
-      } else {
-        _stopwatch.start();
-      }
-      _isTracking = !_isTracking;
-    });
-
-    if (_isTracking) {
-      _startTimer();
-    }
-  }
-
-  void _startTimer() {
-    Future.delayed(const Duration(seconds: 1), () {
-      if (_isTracking && mounted) {
-        setState(() {
-          _duration = _stopwatch.elapsed.inSeconds;
-          // Simulate distance increase (0.1 km per 10 seconds)
-          _distance = (_duration / 10) * 0.1;
-          // Calculate pace (km/h)
-          if (_duration > 0) {
-            _pace = (_distance / (_duration / 3600)).isFinite
-                ? _distance / (_duration / 3600)
-                : 0.0;
-            // Calculate calories (rough estimate: 60 calories per km)
-            _calories = (_distance * 60).toInt();
-          }
-        });
-        _startTimer();
-      }
-    });
-  }
-
-  void _resetTracking() {
-    setState(() {
-      _stopwatch.reset();
-      _isTracking = false;
-      _distance = 0.0;
-      _duration = 0;
-      _pace = 0.0;
-      _calories = 0;
-    });
-  }
-
-  String _formatDuration(int seconds) {
-    final minutes = seconds ~/ 60;
-    final secs = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-  }
+  int _selectedCategoryIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        // Header
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: const Center(
-              child: Text('Record', style: AppTextStyles.heading3),
-            ),
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2C3E3E),
+            Color(0xFF4A6666),
+          ],
         ),
-
-        // Running Workout Card
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Container(
-              height: 150,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Stack(
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // ── Custom Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Background image - running man
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/Running.jpg'),
-                          fit: BoxFit.cover,
-                          alignment: Alignment.center,
-                        ),
-                      ),
+                  _RoundIconButton(
+                    icon: CupertinoIcons.arrow_left,
+                    onTap: () {},
+                    outlined: true,
+                  ),
+                  const Text(
+                    'Statistic',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  // Dark overlay gradient
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Colors.black.withAlpha(120),
-                            Colors.black.withAlpha(60),
-                            Colors.transparent,
+                  _RoundIconButton(
+                    icon: CupertinoIcons.ellipsis,
+                    onTap: () {},
+                    outlined: true,
+                  ),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // ── Category Selector
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _CategoryPill(
+                              label: 'Steps',
+                              icon: CupertinoIcons.paw,
+                              selected: _selectedCategoryIndex == 0,
+                              onTap: () => setState(() => _selectedCategoryIndex = 0),
+                            ),
+                            const SizedBox(width: 12),
+                            _CategoryPill(
+                              label: 'Steps',
+                              icon: CupertinoIcons.heart_fill,
+                              selected: _selectedCategoryIndex == 1,
+                              onTap: () => setState(() => _selectedCategoryIndex = 1),
+                            ),
+                            const SizedBox(width: 12),
+                            _CategoryPill(
+                              label: 'Regularity',
+                              icon: CupertinoIcons.chart_bar_alt_fill,
+                              selected: _selectedCategoryIndex == 2,
+                              onTap: () => setState(() => _selectedCategoryIndex = 2),
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Running',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Go',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
 
-        // Jogging Workout Card
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Container(
-              height: 150,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Stack(
-                children: [
-                  // Background image - jogging
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/Jogging.jpg'),
-                          fit: BoxFit.cover,
-                          alignment: Alignment.center,
+                  // ── Average Steps Card
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(
+                                        children: [
+                                          const TextSpan(
+                                            text: '5,400 ',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: 'average steps',
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(0.6),
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Text(
+                                            'This Week',
+                                            style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(CupertinoIcons.chevron_down, color: Colors.black, size: 12),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 30),
+                                const _StatsBarChart(),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  // Dark overlay gradient
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Colors.black.withAlpha(120),
-                            Colors.black.withAlpha(60),
-                            Colors.transparent,
+
+                  // ── Recent Workout Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Recent workout',
+                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'See all',
+                            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Workout Grid
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    sliver: SliverToBoxAdapter(
+                      child: IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Heart Rate Card
+                            Expanded(
+                              flex: 5,
+                              child: _GlassCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(CupertinoIcons.heart_fill, color: Colors.white, size: 16),
+                                    ),
+                                    const Spacer(),
+                                    const SizedBox(
+                                      height: 80,
+                                      width: double.infinity,
+                                      child: _StatsWaveChart(),
+                                    ),
+                                    const Spacer(),
+                                    const Text(
+                                      'Heart rate',
+                                      style: TextStyle(color: Colors.white, fontSize: 14),
+                                    ),
+                                    const Text(
+                                      '120 Bpm',
+                                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Calories & Duration
+                            Expanded(
+                              flex: 5,
+                              child: Column(
+                                children: [
+                                  _GlassCard(
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 16),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Text('Calories', style: TextStyle(color: Colors.white, fontSize: 14)),
+                                            const Text('143 kcal', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _GlassCard(
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 32,
+                                          height: 32,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(CupertinoIcons.alarm, color: Colors.white, size: 16),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Text('Durations', style: TextStyle(color: Colors.white, fontSize: 14)),
+                                            const Text('130 minutes', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Jogging',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Go',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 140)),
                 ],
               ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
+  }
+}
+
+class _CategoryPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryPill({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: selected ? Colors.black : Colors.white, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.black : Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  const _GlassCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _StatsBarChart extends StatelessWidget {
+  const _StatsBarChart();
+
+  @override
+  Widget build(BuildContext context) {
+    final days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    final values = [0.4, 0.7, 0.5, 0.6, 0.9, 0.6, 0.4];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: List.generate(days.length, (index) {
+        final bool isSelected = index == 4; // Wed highlighted as per image
+        return Column(
+          children: [
+            Container(
+              width: 40,
+              height: 100 * values[index],
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF0D2D2D) : Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              days[index],
+              style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 10),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+class _StatsWaveChart extends StatelessWidget {
+  const _StatsWaveChart();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _WavePainter(),
+    );
+  }
+}
+
+class _WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final fillPaint = Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(0, 0),
+        Offset(0, size.height),
+        [Colors.white.withOpacity(0.2), Colors.transparent],
+      )
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.7);
+    path.quadraticBezierTo(size.width * 0.2, size.height * 0.5, size.width * 0.4, size.height * 0.8);
+    path.quadraticBezierTo(size.width * 0.6, size.height * 0.2, size.width * 0.8, size.height * 0.6);
+    path.lineTo(size.width, size.height * 0.4);
+
+    canvas.drawPath(path, paint);
+
+    final fillPath = Path.from(path);
+    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(0, size.height);
+    fillPath.close();
+
+    canvas.drawPath(fillPath, fillPaint);
+
+    // Draw dot
+    canvas.drawCircle(Offset(size.width * 0.6, size.height * 0.2), 4, Paint()..color = Colors.white);
+    canvas.drawCircle(Offset(size.width * 0.6, size.height * 0.2), 2, Paint()..color = Colors.black);
   }
 
   @override
-  void dispose() {
-    _stopwatch.stop();
-    super.dispose();
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ── Stat Card Widget ──────────────────────────────────────────────────────────
@@ -2336,26 +2525,30 @@ class _ProfileTab extends StatelessWidget {
                                           : null,
                                     ),
                                     const SizedBox(width: 20),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          name,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.bold,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            name,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          userData?.email.isNotEmpty == true ? userData!.email.split('@')[0] : 'London, United Kingdom',
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(0.6),
-                                            fontSize: 14,
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            userData?.email.isNotEmpty == true ? userData!.email.split('@')[0] : 'London, United Kingdom',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(0.6),
+                                              fontSize: 14,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
