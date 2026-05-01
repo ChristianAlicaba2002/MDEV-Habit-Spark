@@ -392,91 +392,92 @@ class _DashboardSkeleton extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: Colors.white.withAlpha(15),
       highlightColor: Colors.white.withAlpha(30),
-      child: Column(
-        children: [
-          // Header Skeleton
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: _HeaderSkeleton(),
-          ),
-          const SizedBox(height: 24),
-          // Motivational Text Skeleton
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                _SkeletonBlock(width: 200, height: 32),
-                SizedBox(height: 8),
-                _SkeletonBlock(width: 150, height: 32),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Search Bar Skeleton
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child:
-                _SkeletonBlock(width: double.infinity, height: 50, borderRadius: 25),
-          ),
-          const SizedBox(height: 32),
-          // Section Header Skeleton
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                _SkeletonBlock(width: 120, height: 24),
-                _SkeletonBlock(width: 60, height: 16),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Habit Grid Skeleton
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: 4,
-              itemBuilder: (context, index) => const _SkeletonBlock(
-                width: double.infinity,
-                height: double.infinity,
-                borderRadius: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeaderSkeleton extends StatelessWidget {
-  const _HeaderSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const _SkeletonBlock(width: 54, height: 54, shape: BoxShape.circle),
-        const SizedBox(width: 12),
-        Column(
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            _SkeletonBlock(width: 120, height: 20),
-            SizedBox(height: 8),
-            _SkeletonBlock(width: 80, height: 14),
+          children: [
+            // Header Skeleton (App Bar)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: const [
+                  _SkeletonBlock(width: 44, height: 44, shape: BoxShape.circle),
+                ],
+              ),
+            ),
+            
+            // Greeting & Date Skeleton
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  _SkeletonBlock(width: 250, height: 32),
+                  SizedBox(height: 12),
+                  _SkeletonBlock(width: 150, height: 16),
+                ],
+              ),
+            ),
+            
+            // Search Bar Skeleton
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: _SkeletonBlock(width: double.infinity, height: 60, borderRadius: 35),
+            ),
+            
+            // Today's Stats Header Skeleton
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  _SkeletonBlock(width: 120, height: 24),
+                  _SkeletonBlock(width: 60, height: 16),
+                ],
+              ),
+            ),
+            
+            // Health Stat Cards (Horizontal List) Skeleton
+            SizedBox(
+              height: 160,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                scrollDirection: Axis.horizontal,
+                physics: const NeverScrollableScrollPhysics(),
+                children: const [
+                  _SkeletonBlock(width: 160, height: 160, borderRadius: 30),
+                  SizedBox(width: 16),
+                  _SkeletonBlock(width: 160, height: 160, borderRadius: 30),
+                  SizedBox(width: 16),
+                  _SkeletonBlock(width: 160, height: 160, borderRadius: 30),
+                ],
+              ),
+            ),
+            
+            // Today's Workout Header Skeleton
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  _SkeletonBlock(width: 150, height: 24),
+                  _SkeletonBlock(width: 60, height: 16),
+                ],
+              ),
+            ),
+            
+            // Large Workout Card Skeleton
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: _SkeletonBlock(width: double.infinity, height: 240, borderRadius: 35),
+            ),
+            
+            const SizedBox(height: 140),
           ],
         ),
-        const Spacer(),
-        const _SkeletonBlock(width: 40, height: 40, shape: BoxShape.circle),
-      ],
+      ),
     );
   }
 }

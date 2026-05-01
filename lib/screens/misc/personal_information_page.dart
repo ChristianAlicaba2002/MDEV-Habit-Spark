@@ -108,12 +108,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
+          backgroundColor: const Color(0xFF2C3E3E),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
             'Change Password',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -200,9 +200,20 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF2C3E3E),
+              Color(0xFF4A6666),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
           children: [
             // ── Header ───────────────────────────────────────────────────────
             Padding(
@@ -218,12 +229,13 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.onSurface.withAlpha(15),
+                          color: Colors.white.withOpacity(0.1),
                           shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.2)),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           CupertinoIcons.arrow_left,
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: Colors.white,
                           size: 18,
                         ),
                       ),
@@ -232,8 +244,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                   const Text(
                     'Personal Information',
                     style: TextStyle(
+                      color: Colors.white,
                       fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -344,8 +357,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 16),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                            color: Colors.white.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white.withOpacity(0.1)),
                           ),
                           child: Row(
                             children: [
@@ -353,21 +367,21 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceVariant,
+                                  color: Colors.white.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   CupertinoIcons.lock,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Colors.white,
                                   size: 18,
                                 ),
                               ),
                               const SizedBox(width: 14),
-                              Expanded(
+                              const Expanded(
                                 child: Text(
                                   'Change Password',
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: Colors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -375,7 +389,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                               ),
                               Icon(
                                 CupertinoIcons.chevron_right,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Colors.white.withOpacity(0.6),
                                 size: 16,
                               ),
                             ],
@@ -392,9 +406,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                         child: ElevatedButton(
                           onPressed: _isSaving ? null : _save,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
+                            backgroundColor: Colors.white,
                             disabledBackgroundColor:
-                                Colors.black.withAlpha(100),
+                                Colors.white.withAlpha(100),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -405,15 +419,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: Colors.black,
                                   ),
                                 )
                               : Text(
                                   'Save Changes',
                                   style: GoogleFonts.poppins(
-                                    color: Colors.white,
+                                    color: const Color(0xFF0A1F1F),
                                     fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                         ),
@@ -426,6 +440,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -443,7 +458,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-        color: Colors.grey[500],
+        color: Colors.white.withOpacity(0.6),
         fontSize: 13,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
@@ -485,7 +500,7 @@ class _ProfileField extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.grey[400],
+            color: Colors.white.withOpacity(0.7),
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -499,31 +514,35 @@ class _ProfileField extends StatelessWidget {
           validator: validator,
           style: TextStyle(
             color: readOnly 
-                ? Theme.of(context).disabledColor 
-                : Theme.of(context).colorScheme.onSurface,
+                ? Colors.white.withOpacity(0.5) 
+                : Colors.white,
             fontSize: 15,
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[700], fontSize: 14),
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 14),
             filled: true,
-            fillColor: Theme.of(context).cardColor,
+            fillColor: Colors.white.withOpacity(0.12),
             prefixIcon: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Icon(icon, color: Colors.grey[500], size: 18),
+              child: Icon(icon, color: Colors.white.withOpacity(0.6), size: 18),
             ),
             prefixIconConstraints:
                 const BoxConstraints(minWidth: 0, minHeight: 0),
             suffixText: suffixText,
-            suffixStyle: TextStyle(color: Colors.grey[700], fontSize: 12),
+            suffixStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide:
-                  BorderSide(color: AppColors.primary.withAlpha(150), width: 1.5),
+                  const BorderSide(color: Colors.white, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -564,20 +583,28 @@ class _DialogField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscure,
-      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.grey[500]),
+        labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceVariant,
+        fillColor: Colors.white.withOpacity(0.12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white, width: 1.5),
         ),
         suffixIcon: IconButton(
           icon: Icon(
             obscure ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
-            color: Colors.grey[500],
+            color: Colors.white.withOpacity(0.5),
             size: 18,
           ),
           onPressed: onToggleObscure,
