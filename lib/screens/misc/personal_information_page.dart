@@ -97,8 +97,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   }
 
   void _showChangePasswordDialog() {
+    final currentPassCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
+    bool obscureCurrent = true;
     bool obscureNew = true;
     bool obscureConfirm = true;
     bool loading = false;
@@ -118,6 +120,14 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              _DialogField(
+                controller: currentPassCtrl,
+                label: 'Current Password',
+                obscure: obscureCurrent,
+                onToggleObscure: () =>
+                    setDialogState(() => obscureCurrent = !obscureCurrent),
+              ),
+              const SizedBox(height: 12),
               _DialogField(
                 controller: newPassCtrl,
                 label: 'New Password',
@@ -145,6 +155,13 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
               onPressed: loading
                   ? null
                   : () async {
+                      if (currentPassCtrl.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Please enter current password')),
+                        );
+                        return;
+                      }
                       if (newPassCtrl.text.length < 6) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -162,8 +179,8 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       }
                       setDialogState(() => loading = true);
                       try {
-                        await widget.authService
-                            .updatePassword(newPassCtrl.text);
+                        await widget.authService.reauthenticateAndChangePassword(
+                            currentPassCtrl.text, newPassCtrl.text);
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -175,7 +192,7 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                           SnackBar(content: Text('Error: $e')),
                         );
                       } finally {
-                        setDialogState(() => loading = false);
+                        if (mounted) setDialogState(() => loading = false);
                       }
                     },
               child: loading

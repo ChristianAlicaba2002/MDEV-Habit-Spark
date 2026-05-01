@@ -156,6 +156,29 @@ class AuthService {
     }
   }
 
+  // Re-authenticate and change password
+  Future<void> reauthenticateAndChangePassword(String currentPassword, String newPassword) async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null && user.email != null) {
+        // Create credentials with current password
+        AuthCredential credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: currentPassword,
+        );
+        // Re-authenticate
+        await user.reauthenticateWithCredential(credential);
+        
+        // Update password
+        await user.updatePassword(newPassword);
+      } else {
+        throw 'User not found or email is missing.';
+      }
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
   // Change password (requires recent login)
   Future<void> updatePassword(String newPassword) async {
     try {
