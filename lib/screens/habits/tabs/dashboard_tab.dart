@@ -68,15 +68,7 @@ class DashboardTab extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
                 child: Row(
                   children: [
-                    // Logo
-                    const _AppLogo(),
                     const Spacer(),
-                    RoundIconButton(
-                      icon: CupertinoIcons.calendar_badge_plus,
-                      onTap: () {},
-                      outlined: true,
-                    ),
-                    const SizedBox(width: 12),
                     Stack(
                       children: [
                         RoundIconButton(
@@ -97,22 +89,6 @@ class DashboardTab extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: onProfileTap,
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
-                          image: const DecorationImage(
-                            image: NetworkImage('https://i.pravatar.cc/150?u=alex'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
                     ),
                   ],
                 ),

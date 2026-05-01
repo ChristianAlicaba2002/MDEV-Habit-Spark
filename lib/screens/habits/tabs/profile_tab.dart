@@ -72,7 +72,7 @@ class ProfileTab extends StatelessWidget {
                             ),
                           ),
                           RoundIconButton(
-                            icon: CupertinoIcons.pencil_ellipsis_rectangle,
+                            icon: CupertinoIcons.bell,
                             onTap: () {},
                             outlined: true,
                           ),
