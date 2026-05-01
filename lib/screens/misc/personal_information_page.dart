@@ -27,6 +27,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
 
+  bool _isAccountExpanded = true;
+  bool _isBodyStatsExpanded = false;
+  bool _isSecurityExpanded = true;
+
   late final TextEditingController _usernameCtrl;
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
@@ -34,6 +38,15 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   late final TextEditingController _heightCtrl;
   late final TextEditingController _weightCtrl;
   late final TextEditingController _ageCtrl;
+
+  late final TextEditingController _currentPassCtrl;
+  late final TextEditingController _newPassCtrl;
+  late final TextEditingController _confirmPassCtrl;
+
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+  bool _isUpdatingPassword = false;
 
   @override
   void initState() {
@@ -49,6 +62,10 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         TextEditingController(text: d?.weight != null ? '${d!.weight}' : '');
     _ageCtrl =
         TextEditingController(text: d?.age != null ? '${d!.age}' : '');
+
+    _currentPassCtrl = TextEditingController();
+    _newPassCtrl = TextEditingController();
+    _confirmPassCtrl = TextEditingController();
   }
 
   @override
@@ -60,6 +77,9 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     _heightCtrl.dispose();
     _weightCtrl.dispose();
     _ageCtrl.dispose();
+    _currentPassCtrl.dispose();
+    _newPassCtrl.dispose();
+    _confirmPassCtrl.dispose();
     super.dispose();
   }
 
@@ -96,122 +116,43 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     }
   }
 
-  void _showChangePasswordDialog() {
-    final currentPassCtrl = TextEditingController();
-    final newPassCtrl = TextEditingController();
-    final confirmCtrl = TextEditingController();
-    bool obscureCurrent = true;
-    bool obscureNew = true;
-    bool obscureConfirm = true;
-    bool loading = false;
+  Future<void> _updatePassword() async {
+    if (_currentPassCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter current password')),
+      );
+      return;
+    }
+    if (_newPassCtrl.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+    if (_newPassCtrl.text != _confirmPassCtrl.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF2C3E3E),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            'Change Password',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _DialogField(
-                controller: currentPassCtrl,
-                label: 'Current Password',
-                obscure: obscureCurrent,
-                onToggleObscure: () =>
-                    setDialogState(() => obscureCurrent = !obscureCurrent),
-              ),
-              const SizedBox(height: 12),
-              _DialogField(
-                controller: newPassCtrl,
-                label: 'New Password',
-                obscure: obscureNew,
-                onToggleObscure: () =>
-                    setDialogState(() => obscureNew = !obscureNew),
-              ),
-              const SizedBox(height: 12),
-              _DialogField(
-                controller: confirmCtrl,
-                label: 'Confirm Password',
-                obscure: obscureConfirm,
-                onToggleObscure: () =>
-                    setDialogState(() => obscureConfirm = !obscureConfirm),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel',
-                  style: TextStyle(color: Colors.grey[500])),
-            ),
-            TextButton(
-              onPressed: loading
-                  ? null
-                  : () async {
-                      if (currentPassCtrl.text.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Please enter current password')),
-                        );
-                        return;
-                      }
-                      if (newPassCtrl.text.length < 6) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Password must be at least 6 characters')),
-                        );
-                        return;
-                      }
-                      if (newPassCtrl.text != confirmCtrl.text) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Passwords do not match')),
-                        );
-                        return;
-                      }
-                      setDialogState(() => loading = true);
-                      try {
-                        await widget.authService.reauthenticateAndChangePassword(
-                            currentPassCtrl.text, newPassCtrl.text);
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Password changed successfully!')),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
-                        );
-                      } finally {
-                        if (mounted) setDialogState(() => loading = false);
-                      }
-                    },
-              child: loading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text(
-                      'Update',
-                      style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold),
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
+    setState(() => _isUpdatingPassword = true);
+    try {
+      await widget.authService.reauthenticateAndChangePassword(
+          _currentPassCtrl.text, _newPassCtrl.text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password changed successfully!')),
+      );
+      _currentPassCtrl.clear();
+      _newPassCtrl.clear();
+      _confirmPassCtrl.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isUpdatingPassword = false);
+    }
   }
 
   @override
@@ -282,135 +223,173 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
                       const SizedBox(height: 8),
 
                       // ── Account section
-                      _SectionLabel('Account'),
-                      const SizedBox(height: 8),
-                      _ProfileField(
-                        controller: _usernameCtrl,
-                        label: 'Username',
-                        icon: CupertinoIcons.at,
-                        hint: 'Enter your username',
+                      _SectionHeader(
+                        text: 'Account',
+                        isExpanded: _isAccountExpanded,
+                        onTap: () => setState(() => _isAccountExpanded = !_isAccountExpanded),
                       ),
-                      const SizedBox(height: 8),
-                      _ProfileField(
-                        controller: _firstNameCtrl,
-                        label: 'First Name',
-                        icon: CupertinoIcons.person,
-                        hint: 'Enter your first name',
-                        validator: (v) => v == null || v.trim().isEmpty
-                            ? 'Required'
-                            : null,
-                      ),
-                      const SizedBox(height: 8),
-                      _ProfileField(
-                        controller: _lastNameCtrl,
-                        label: 'Last Name',
-                        icon: CupertinoIcons.person,
-                        hint: 'Enter your last name',
-                        validator: (v) => v == null || v.trim().isEmpty
-                            ? 'Required'
-                            : null,
-                      ),
-                      const SizedBox(height: 8),
-                      _ProfileField(
-                        controller: _emailCtrl,
-                        label: 'Email',
-                        icon: CupertinoIcons.mail,
-                        hint: 'your@email.com',
-                        readOnly: true, // Email change requires re-auth
-                        suffixText: 'Read-only',
+                      _CollapsibleSection(
+                        isExpanded: _isAccountExpanded,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            _ProfileField(
+                              controller: _usernameCtrl,
+                              label: 'Username',
+                              icon: CupertinoIcons.at,
+                              hint: 'Enter your username',
+                            ),
+                            const SizedBox(height: 8),
+                            _ProfileField(
+                              controller: _firstNameCtrl,
+                              label: 'First Name',
+                              icon: CupertinoIcons.person,
+                              hint: 'Enter your first name',
+                              validator: (v) => v == null || v.trim().isEmpty
+                                  ? 'Required'
+                                  : null,
+                            ),
+                            const SizedBox(height: 8),
+                            _ProfileField(
+                              controller: _lastNameCtrl,
+                              label: 'Last Name',
+                              icon: CupertinoIcons.person,
+                              hint: 'Enter your last name',
+                              validator: (v) => v == null || v.trim().isEmpty
+                                  ? 'Required'
+                                  : null,
+                            ),
+                            const SizedBox(height: 8),
+                            _ProfileField(
+                              controller: _emailCtrl,
+                              label: 'Email',
+                              icon: CupertinoIcons.mail,
+                              hint: 'your@email.com',
+                              readOnly: true, // Email change requires re-auth
+                              suffixText: 'Read-only',
+                            ),
+                          ],
+                        ),
                       ),
 
                       const SizedBox(height: 24),
 
                       // ── Body stats section
-                      _SectionLabel('Body Stats'),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _ProfileField(
-                              controller: _ageCtrl,
-                              label: 'Age',
-                              icon: CupertinoIcons.calendar,
-                              hint: 'e.g. 25',
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly
+                      _SectionHeader(
+                        text: 'Body Stats',
+                        isExpanded: _isBodyStatsExpanded,
+                        onTap: () => setState(() => _isBodyStatsExpanded = !_isBodyStatsExpanded),
+                      ),
+                      _CollapsibleSection(
+                        isExpanded: _isBodyStatsExpanded,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _ProfileField(
+                                    controller: _ageCtrl,
+                                    label: 'Age',
+                                    icon: CupertinoIcons.calendar,
+                                    hint: 'e.g. 25',
+                                    keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _ProfileField(
+                                    controller: _heightCtrl,
+                                    label: 'Height (cm)',
+                                    icon: CupertinoIcons.arrow_up_arrow_down,
+                                    hint: 'e.g. 170',
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                            decimal: true),
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _ProfileField(
-                              controller: _heightCtrl,
-                              label: 'Height (cm)',
-                              icon: CupertinoIcons.arrow_up_arrow_down,
-                              hint: 'e.g. 170',
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
+                            const SizedBox(height: 10),
+                            _ProfileField(
+                              controller: _weightCtrl,
+                              label: 'Weight (kg)',
+                              icon: CupertinoIcons.circle,
+                              hint: 'e.g. 65',
+                              keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      _ProfileField(
-                        controller: _weightCtrl,
-                        label: 'Weight (kg)',
-                        icon: CupertinoIcons.circle,
-                        hint: 'e.g. 65',
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          ],
+                        ),
                       ),
 
                       const SizedBox(height: 24),
 
                       // ── Security section
-                      _SectionLabel('Security'),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: _showChangePasswordDialog,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white.withOpacity(0.1)),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  CupertinoIcons.lock,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              const Expanded(
-                                child: Text(
-                                  'Change Password',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
+                      _SectionHeader(
+                        text: 'Security',
+                        isExpanded: _isSecurityExpanded,
+                        onTap: () => setState(() => _isSecurityExpanded = !_isSecurityExpanded),
+                      ),
+                      _CollapsibleSection(
+                        isExpanded: _isSecurityExpanded,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            _DialogField(
+                              controller: _currentPassCtrl,
+                              label: 'Current Password',
+                              obscure: _obscureCurrent,
+                              onToggleObscure: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                            ),
+                            const SizedBox(height: 12),
+                            _DialogField(
+                              controller: _newPassCtrl,
+                              label: 'New Password',
+                              obscure: _obscureNew,
+                              onToggleObscure: () => setState(() => _obscureNew = !_obscureNew),
+                            ),
+                            const SizedBox(height: 12),
+                            _DialogField(
+                              controller: _confirmPassCtrl,
+                              label: 'Confirm Password',
+                              obscure: _obscureConfirm,
+                              onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton(
+                                onPressed: _isUpdatingPassword ? null : _updatePassword,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white.withOpacity(0.15),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(color: Colors.white.withOpacity(0.1)),
                                   ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 ),
+                                child: _isUpdatingPassword
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Text(
+                                        'Update Password',
+                                        style: TextStyle(fontWeight: FontWeight.w600),
+                                      ),
                               ),
-                              Icon(
-                                CupertinoIcons.chevron_right,
-                                color: Colors.white.withOpacity(0.6),
-                                size: 16,
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
 
@@ -464,21 +443,64 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   }
 }
 
-// ── Section Label ─────────────────────────────────────────────────────────────
+// ── Section Header ─────────────────────────────────────────────────────────────
 
-class _SectionLabel extends StatelessWidget {
+class _SectionHeader extends StatelessWidget {
   final String text;
-  const _SectionLabel(this.text);
+  final bool isExpanded;
+  final VoidCallback onTap;
+
+  const _SectionHeader({
+    required this.text,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: Colors.white.withOpacity(0.6),
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              text,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+            Icon(
+              isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+              color: Colors.white.withOpacity(0.5),
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CollapsibleSection extends StatelessWidget {
+  final bool isExpanded;
+  final Widget child;
+
+  const _CollapsibleSection({required this.isExpanded, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: SizedBox(
+        width: double.infinity,
+        child: isExpanded ? child : const SizedBox.shrink(),
       ),
     );
   }
