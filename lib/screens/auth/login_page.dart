@@ -102,6 +102,30 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+      _authError = null;
+    });
+
+    try {
+      final userCredential = await _authService.signInWithGoogle();
+      if (mounted && userCredential != null) {
+        // main.dart StreamBuilder handles navigation automatically
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _authError = e.toString().contains('cancelled') 
+              ? 'Google sign-in cancelled' 
+              : 'Google sign-in failed. Please try again.';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _showForgotPasswordDialog() async {
     final emailController = TextEditingController();
 
@@ -498,9 +522,7 @@ class _LoginPageState extends State<LoginPage>
   // ── Google button ────────────────────────────────────────────────────
   Widget _buildGoogleButton() {
     return OutlinedButton(
-      onPressed: () {
-        // Implementation
-      },
+      onPressed: _isLoading ? null : _signInWithGoogle,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 24),
         side: BorderSide(color: Colors.white.withAlpha(40), width: 1),

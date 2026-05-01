@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -128,17 +128,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
     final userId = user?.uid ?? '';
-    final userName = user?.email?.split('@')[0] ?? 'User';
-    final userInitial = user?.email?.substring(0, 1).toUpperCase() ?? 'U';
 
     return Scaffold(
       extendBody: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
-        child: StreamBuilder<List<Habit>>(
-          stream: _habitStream,
-          builder: (context, snapshot) {
+        child: StreamBuilder<UserModel?>(
+          stream: _authService.getUserDataStream(userId),
+          builder: (context, userSnapshot) {
+            final firstName = userSnapshot.data?.firstName ?? user?.email?.split('@')[0] ?? 'User';
+            final userInitial = firstName.substring(0, 1).toUpperCase();
+
+            return StreamBuilder<List<Habit>>(
+              stream: _habitStream,
+              builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const _DashboardSkeleton();
             }
@@ -167,7 +171,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 DashboardTab(
                   userId: userId,
-                  userName: userName,
+                  userName: firstName,
                   userInitial: userInitial,
                   habits: filteredHabits,
                   completedCount: completedCount,
@@ -203,14 +207,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ],
             );
           },
-        ),
-      ),
-      floatingActionButton: null,
-      bottomNavigationBar: _BottomNav(
-        selectedIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
-      ),
-    );
+        );
+      },
+    ),
+  ),
+  floatingActionButton: null,
+  bottomNavigationBar: _BottomNav(
+    selectedIndex: _selectedIndex,
+    onTap: (i) => setState(() => _selectedIndex = i),
+  ),
+);
   }
 }
 
