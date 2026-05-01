@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
@@ -139,13 +140,13 @@ class DashboardTab extends StatelessWidget {
                             text: userName,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          const TextSpan(text: '! here\'s your\nhealth snapshot for today!'),
+                          const TextSpan(text: '!'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Today is 01 November 2025',
+                      'Today is ${DateFormat('dd MMMM yyyy').format(DateTime.now())}',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 16,
