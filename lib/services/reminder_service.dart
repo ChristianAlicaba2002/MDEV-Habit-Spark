@@ -44,6 +44,13 @@ class ReminderService {
     required String habitName,
     required String userId,
     required TimeOfDay time,
+    List<int> selectedDays = const [1, 2, 3, 4, 5, 6, 7],
+    bool skipIfCompleted = false,
+    bool enableSnooze = true,
+    bool motivationalMessages = true,
+    bool progressAwareNudges = true,
+    bool respectQuietHours = false,
+    String customSound = 'default',
   }) async {
     try {
       final now = tz.TZDateTime.now(tz.local);
@@ -98,6 +105,13 @@ class ReminderService {
         'habitName': habitName,
         'time': '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
         'enabled': true,
+        'selectedDays': selectedDays,
+        'skipIfCompleted': skipIfCompleted,
+        'enableSnooze': enableSnooze,
+        'motivationalMessages': motivationalMessages,
+        'progressAwareNudges': progressAwareNudges,
+        'respectQuietHours': respectQuietHours,
+        'customSound': customSound,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -202,6 +216,13 @@ class ReminderService {
             habitName: reminder['habitName'],
             userId: userId,
             time: time,
+            selectedDays: List<int>.from(reminder['selectedDays'] ?? [1, 2, 3, 4, 5, 6, 7]),
+            skipIfCompleted: reminder['skipIfCompleted'] ?? false,
+            enableSnooze: reminder['enableSnooze'] ?? true,
+            motivationalMessages: reminder['motivationalMessages'] ?? true,
+            progressAwareNudges: reminder['progressAwareNudges'] ?? true,
+            respectQuietHours: reminder['respectQuietHours'] ?? false,
+            customSound: reminder['customSound'] ?? 'default',
           );
         }
       } else {

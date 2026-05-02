@@ -34,6 +34,17 @@ class _UserRemindersPageState extends State<UserRemindersPage> {
     }
   }
 
+  String _formatDays(List<int> days) {
+    if (days.isEmpty) return 'No days selected';
+    if (days.length == 7) return 'Everyday';
+    if (days.length == 2 && days.contains(6) && days.contains(7)) return 'Weekends';
+    if (days.length == 5 && !days.contains(6) && !days.contains(7)) return 'Weekdays';
+    
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final sortedDays = List<int>.from(days)..sort();
+    return sortedDays.map((d) => dayNames[d - 1]).join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,6 +149,9 @@ class _UserRemindersPageState extends State<UserRemindersPage> {
                         final reminder = reminders[index];
                         final bool isEnabled = reminder['enabled'] ?? true;
                         
+                        final selectedDays = List<int>.from(reminder['selectedDays'] ?? [1, 2, 3, 4, 5, 6, 7]);
+                        final daysText = _formatDays(selectedDays);
+                        
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: GestureDetector(
@@ -193,7 +207,7 @@ class _UserRemindersPageState extends State<UserRemindersPage> {
                                         const SizedBox(height: 6),
                                         Text(
                                           isEnabled 
-                                              ? 'Daily at ${_formatTime(reminder['time'] ?? '09:00')}'
+                                              ? '${_formatTime(reminder['time'] ?? '09:00')} • $daysText'
                                               : 'Reminder disabled',
                                           style: TextStyle(
                                             color: isEnabled ? Colors.white.withOpacity(0.7) : Colors.white.withOpacity(0.4),
