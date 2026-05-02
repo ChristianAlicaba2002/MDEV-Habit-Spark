@@ -139,23 +139,22 @@ class _LoginPageState extends State<LoginPage>
           
           // Main Content
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 40),
-                        _buildGlassCard(),
-                        const SizedBox(height: 32),
-                        _buildSignUpLink(),
-                      ],
-                    ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+                      _buildHeader(),
+                      const SizedBox(height: 60),
+                      _buildSimpleForm(),
+                      const SizedBox(height: 32),
+                      _buildSignUpLink(),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ),
@@ -267,16 +266,72 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
+  Widget _buildSimpleForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildTextField(
+            controller: _emailController,
+            label: 'Email',
+            icon: Icons.mail_outline_rounded,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _passwordController,
+            label: 'Password',
+            icon: Icons.lock_outline_rounded,
+            obscureText: _obscurePassword,
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.white60,
+                size: 20,
+              ),
+              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+            ),
+            validator: (v) => (v == null || v.length < 6) ? 'Password too short' : null,
+          ),
+          if (_authError != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _authError!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFF87171), fontSize: 13),
+            ),
+          ],
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {},
+              child: Text(
+                'Forgot Password?',
+                style: TextStyle(color: Colors.white.withAlpha(150), fontSize: 13),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildPrimaryButton(),
+          const SizedBox(height: 20),
+          _buildGoogleButton(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGlassCard() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white.withAlpha(20),
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: Colors.white.withAlpha(30),
               width: 1.5,
@@ -302,7 +357,7 @@ class _LoginPageState extends State<LoginPage>
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 _buildTextField(
                   controller: _passwordController,
                   label: 'Password',
@@ -319,7 +374,7 @@ class _LoginPageState extends State<LoginPage>
                   validator: (v) => (v == null || v.length < 6) ? 'Password too short' : null,
                 ),
                 if (_authError != null) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
                     _authError!,
                     textAlign: TextAlign.center,
@@ -336,20 +391,20 @@ class _LoginPageState extends State<LoginPage>
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _buildPrimaryButton(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(child: Divider(color: Colors.white24)),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text('OR', style: TextStyle(color: Colors.white38, fontSize: 12)),
                     ),
                     Expanded(child: Divider(color: Colors.white24)),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 _buildGoogleButton(),
               ],
             ),
@@ -373,26 +428,26 @@ class _LoginPageState extends State<LoginPage>
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white, fontSize: 15),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white60),
-        prefixIcon: Icon(icon, color: Colors.white60, size: 22),
+        labelStyle: const TextStyle(color: Colors.white60, fontSize: 14),
+        prefixIcon: Icon(icon, color: Colors.white60, size: 20),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white.withAlpha(10),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        fillColor: Colors.white.withAlpha(8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withAlpha(10)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withAlpha(20)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF2D8A5B), width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF2D8A5B), width: 2),
         ),
       ),
     );
@@ -400,31 +455,24 @@ class _LoginPageState extends State<LoginPage>
 
   Widget _buildPrimaryButton() {
     return Container(
-      height: 56,
+      height: 48,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         gradient: const LinearGradient(
           colors: [Color(0xFF2D8A5B), Color(0xFF1E40AF)],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2D8A5B).withAlpha(60),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : _signInWithEmail,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(
           'Sign In',
           style: GoogleFonts.outfit(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: Colors.white,
           ),
@@ -437,20 +485,21 @@ class _LoginPageState extends State<LoginPage>
     return OutlinedButton(
       onPressed: _isLoading ? null : _signInWithGoogle,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         side: BorderSide(color: Colors.white.withAlpha(30)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset('assets/images/google_icon.png', height: 24),
-          const SizedBox(width: 12),
+          Image.asset('assets/images/google_icon.png', height: 20),
+          const SizedBox(width: 10),
           Text(
             'Continue with Google',
             style: GoogleFonts.inter(
               color: Colors.white,
               fontWeight: FontWeight.w600,
+              fontSize: 14,
             ),
           ),
         ],
