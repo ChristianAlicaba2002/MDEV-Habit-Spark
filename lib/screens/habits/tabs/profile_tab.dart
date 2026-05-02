@@ -8,6 +8,7 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
 import 'package:habit_spark/screens/misc/user_reminders_page.dart';
+import 'package:habit_spark/screens/misc/notifications_page.dart';
 
 class ProfileTab extends StatelessWidget {
   final String userId;
@@ -77,7 +78,7 @@ class ProfileTab extends StatelessWidget {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => UserRemindersPage(userId: userId),
+                                builder: (_) => const NotificationsPage(),
                               ),
                             ),
                             outlined: true,
