@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
@@ -67,15 +68,7 @@ class DashboardTab extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
                 child: Row(
                   children: [
-                    // Logo
-                    const _AppLogo(),
                     const Spacer(),
-                    RoundIconButton(
-                      icon: CupertinoIcons.calendar_badge_plus,
-                      onTap: () {},
-                      outlined: true,
-                    ),
-                    const SizedBox(width: 12),
                     Stack(
                       children: [
                         RoundIconButton(
@@ -96,22 +89,6 @@ class DashboardTab extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: onProfileTap,
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
-                          image: const DecorationImage(
-                            image: NetworkImage('https://i.pravatar.cc/150?u=alex'),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -139,13 +116,13 @@ class DashboardTab extends StatelessWidget {
                             text: userName,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          const TextSpan(text: '! here\'s your\nhealth snapshot for today!'),
+                          const TextSpan(text: '!'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Today is 01 November 2025',
+                      'Today is ${DateFormat('dd MMMM yyyy').format(DateTime.now())}',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 16,

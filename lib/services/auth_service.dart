@@ -1,11 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/services/fcm_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: '82887882958-lkomt7qtpbgg34bp05tfndqnu9fd49n5.apps.googleusercontent.com',
+  );
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -84,9 +88,54 @@ class AuthService {
     });
   }
 
-  // Sign in with Google (placeholder - not functional)
+  // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
-    throw 'Google sign-in is not configured yet';
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) return null; // User cancelled
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Once signed in, return the UserCredential
+      final UserCredential userCredential = await _auth_signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null && userCredential.additionalUserInfo?.isNewUser == true) {
+        // Create user model for new Google user
+        final userModel = UserModel(
+          uuid: user.uid,
+          firstName: user.displayName?.split(' ').first ?? 'User',
+          lastName: user.displayName?.split(' ').length == 2 ? user.displayName!.split(' ').last : '',
+          email: user.email ?? '',
+          birthDate: '', // Unknown
+          password: '', // Not used for Google
+          photoUrl: user.photoURL ?? '',
+          createdAt: DateTime.now().toIso8601String(),
+        );
+        
+        await saveUserModel(userModel);
+      }
+
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'Google sign-in failed: $e';
+    }
+  }
+
+  // Private helper to avoid direct call to _auth.signInWithCredential in the middle
+  Future<UserCredential> _auth_signInWithCredential(AuthCredential credential) {
+    return _auth.signInWithCredential(credential);
   }
 
   // Reset password via email
@@ -104,6 +153,29 @@ class AuthService {
       await _firestore.collection('users').doc(userId).update(fields);
     } catch (e) {
       throw 'Failed to update profile: $e';
+    }
+  }
+
+  // Re-authenticate and change password
+  Future<void> reauthenticateAndChangePassword(String currentPassword, String newPassword) async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null && user.email != null) {
+        // Create credentials with current password
+        AuthCredential credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: currentPassword,
+        );
+        // Re-authenticate
+        await user.reauthenticateWithCredential(credential);
+        
+        // Update password
+        await user.updatePassword(newPassword);
+      } else {
+        throw 'User not found or email is missing.';
+      }
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
     }
   }
 

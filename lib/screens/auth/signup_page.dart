@@ -165,6 +165,24 @@ class _SignUpPageState extends State<SignUpPage>
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final userCredential = await _authService.signInWithGoogle();
+      if (mounted && userCredential != null) {
+        // main.dart StreamBuilder handles navigation automatically
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Google sign-in failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _showSuccessModal() {
     showDialog(
       context: context,
@@ -646,7 +664,7 @@ class _SignUpPageState extends State<SignUpPage>
 
   Widget _buildGoogleButton() {
     return OutlinedButton(
-      onPressed: () {},
+      onPressed: _isLoading ? null : _signInWithGoogle,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 24),
         side: BorderSide(color: Colors.white.withAlpha(40), width: 1),
