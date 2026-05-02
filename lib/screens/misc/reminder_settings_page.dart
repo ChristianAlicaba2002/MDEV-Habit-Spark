@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/reminder_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/widgets/glass_widgets.dart';
 
 class ReminderSettingsPage extends StatefulWidget {
   final String userId;
@@ -28,7 +29,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> {
   @override
   void initState() {
     super.initState();
-    _selectedTime = TimeOfDay(hour: 9, minute: 0);
+    _selectedTime = const TimeOfDay(hour: 9, minute: 0);
     _loadReminder();
   }
 
@@ -64,10 +65,10 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             timePickerTheme: TimePickerThemeData(
-              backgroundColor: const Color(0xFF1E293B),
+              backgroundColor: const Color(0xFF2C3E3E), // Updated to match gradient
               hourMinuteTextColor: Colors.white,
-              dialHandColor: AppColors.primary,
-              dialBackgroundColor: const Color(0xFF2C2C2E),
+              dialHandColor: const Color(0xFF1ABC9C),
+              dialBackgroundColor: Colors.white.withOpacity(0.1),
               entryModeIconColor: Colors.white,
               helpTextStyle: const TextStyle(color: Colors.white),
             ),
@@ -108,7 +109,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error setting reminder: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -138,7 +139,7 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -148,239 +149,226 @@ class _ReminderSettingsPageState extends State<ReminderSettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF2C3E3E),
+              Color(0xFF4A6666),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    RoundIconButton(
+                      icon: CupertinoIcons.arrow_left,
                       onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          CupertinoIcons.arrow_left,
-                          color: Colors.white,
-                          size: 18,
-                        ),
+                      outlined: true,
+                    ),
+                    const Text(
+                      'Reminder Settings',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                  ),
-                  const Text(
-                    'Reminder Settings',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+                    const SizedBox(width: 44), // Spacer to balance header
+                  ],
+                ),
               ),
-            ),
 
-            // Content
-            Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Habit name
-                          Text(
-                            'Habit',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2C2C2E),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Text(
-                              widget.habitName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Enable reminder toggle
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2C2C2E),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 34,
-                                  height: 34,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF3A3A3C),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    CupertinoIcons.bell,
-                                    color: Colors.grey[400],
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                const Expanded(
-                                  child: Text(
-                                    'Enable Reminder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                CupertinoSwitch(
-                                  value: _isEnabled,
-                                  activeColor: AppColors.primary,
-                                  onChanged: _toggleReminder,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          if (_isEnabled) ...[
-                            const SizedBox(height: 24),
-
-                            // Time picker
+              // Content
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Habit name
                             Text(
-                              'Reminder Time',
+                              'Habit',
                               style: TextStyle(
-                                color: Colors.grey[500],
+                                color: Colors.white.withOpacity(0.6),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            GestureDetector(
-                              onTap: _selectTime,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF2C2C2E),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: AppColors.primary.withAlpha(100),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 34,
-                                      height: 34,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF3A3A3C),
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        CupertinoIcons.clock,
-                                        color: Colors.grey[400],
-                                        size: 18,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Text(
-                                        _selectedTime.toString(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    Icon(
-                                      CupertinoIcons.chevron_right,
-                                      color: Colors.grey[600],
-                                      size: 16,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Info box
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withAlpha(30),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.primary.withAlpha(100),
-                                  width: 1,
-                                ),
-                              ),
+                            GlassCard(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              borderRadius: 16,
+                              opacity: 0.1,
                               child: Row(
                                 children: [
-                                  Icon(
-                                    CupertinoIcons.info_circle,
-                                    color: AppColors.primary,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      'You\'ll receive a daily reminder at ${_selectedTime.toString()} to complete this habit.',
-                                      style: TextStyle(
-                                        color: Colors.white.withAlpha(200),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w400,
+                                      widget.habitName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+
+                            const SizedBox(height: 32),
+
+                            // Enable reminder toggle
+                            GlassCard(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              borderRadius: 16,
+                              opacity: 0.1,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.bell,
+                                      color: Colors.white.withOpacity(0.8),
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Expanded(
+                                    child: Text(
+                                      'Enable Reminder',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  CupertinoSwitch(
+                                    value: _isEnabled,
+                                    activeColor: const Color(0xFF1ABC9C),
+                                    trackColor: Colors.white.withOpacity(0.2),
+                                    onChanged: _toggleReminder,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            if (_isEnabled) ...[
+                              const SizedBox(height: 32),
+
+                              // Time picker
+                              Text(
+                                'Reminder Time',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: _selectTime,
+                                child: GlassCard(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                  borderRadius: 16,
+                                  opacity: 0.1,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF1ABC9C).withOpacity(0.2),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          CupertinoIcons.clock,
+                                          color: Color(0xFF1ABC9C),
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedTime.format(context),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      Icon(
+                                        CupertinoIcons.chevron_right,
+                                        color: Colors.white.withOpacity(0.5),
+                                        size: 18,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Info box
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1ABC9C).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFF1ABC9C).withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      CupertinoIcons.info_circle,
+                                      color: Color(0xFF1ABC9C),
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        'You\'ll receive a daily reminder at ${_selectedTime.format(context)} to complete this habit.',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.8),
+                                          fontSize: 14,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

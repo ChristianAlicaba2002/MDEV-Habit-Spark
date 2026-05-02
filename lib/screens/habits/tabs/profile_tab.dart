@@ -7,6 +7,7 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
+import 'package:habit_spark/screens/misc/user_reminders_page.dart';
 
 class ProfileTab extends StatelessWidget {
   final String userId;
@@ -189,8 +190,17 @@ class ProfileTab extends StatelessWidget {
                         const SizedBox(height: 12),
                         _GlassPillItem(
                           icon: CupertinoIcons.list_bullet_indent,
-                          label: 'Remainder',
-                          onTap: () {},
+                          label: 'Reminder',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => UserRemindersPage(
+                                  userId: userId,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 12),
                         _GlassPillItem(
