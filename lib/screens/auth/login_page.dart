@@ -239,15 +239,15 @@ class _LoginPageState extends State<LoginPage>
           tag: 'logo',
           child: Image.asset(
             'assets/images/habitspark_logo.png',
-            height: 120,
+            height: 150,
             fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 1),
         Text(
           'HabitSpark',
           style: GoogleFonts.outfit(
-            fontSize: 40,
+            fontSize: 35,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: -1,
@@ -256,7 +256,7 @@ class _LoginPageState extends State<LoginPage>
         Text(
           'Ignite your potential',
           style: GoogleFonts.inter(
-            fontSize: 16,
+            fontSize: 14,
             color: Colors.white70,
             fontWeight: FontWeight.w400,
             letterSpacing: 0.5,
