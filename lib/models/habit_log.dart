@@ -8,6 +8,8 @@ class HabitLog {
   final bool isCompleted;
   final double? distance; // Distance in km
   final int? durationSeconds; // Duration in seconds
+  final double? weight; // Weight in kg
+  final double? value; // Generic quantitative value
   final String? notes;
 
   HabitLog({
@@ -18,6 +20,8 @@ class HabitLog {
     required this.isCompleted,
     this.distance,
     this.durationSeconds,
+    this.weight,
+    this.value,
     this.notes,
   });
 
@@ -30,6 +34,8 @@ class HabitLog {
       isCompleted: map['isCompleted'] ?? false,
       distance: map['distance']?.toDouble(),
       durationSeconds: map['durationSeconds'],
+      weight: map['weight']?.toDouble(),
+      value: map['value']?.toDouble(),
       notes: map['notes'],
     );
   }
@@ -42,6 +48,8 @@ class HabitLog {
       'isCompleted': isCompleted,
       if (distance != null) 'distance': distance,
       if (durationSeconds != null) 'durationSeconds': durationSeconds,
+      if (weight != null) 'weight': weight,
+      if (value != null) 'value': value,
       if (notes != null) 'notes': notes,
     };
   }

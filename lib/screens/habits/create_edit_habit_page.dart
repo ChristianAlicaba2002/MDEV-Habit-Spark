@@ -22,8 +22,11 @@ class CreateEditHabitPage extends StatefulWidget {
 class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _targetValueController = TextEditingController();
+  final _unitController = TextEditingController();
   final HabitService _habitService = HabitService();
   bool _isLoading = false;
+  String _selectedHabitType = 'checkbox';
   
   // Icon selection
   IconData _selectedIcon = Icons.check_circle_outline;
@@ -52,6 +55,13 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
     if (widget.habit != null) {
       _nameController.text = widget.habit!.name;
       _selectedIcon = _getIconFromString(widget.habit!.icon) ?? _getHabitIcon(widget.habit!.name);
+      _selectedHabitType = widget.habit!.habitType;
+      if (widget.habit!.targetValue != null) {
+        _targetValueController.text = widget.habit!.targetValue.toString();
+      }
+      if (widget.habit!.unit != null) {
+        _unitController.text = widget.habit!.unit!;
+      }
     }
   }
 
@@ -101,6 +111,8 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _targetValueController.dispose();
+    _unitController.dispose();
     super.dispose();
   }
 
@@ -126,12 +138,24 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
     try {
       final iconString = _getIconString(_selectedIcon);
       
+      double? targetValue;
+      if (_selectedHabitType != 'checkbox' && _targetValueController.text.isNotEmpty) {
+        targetValue = double.tryParse(_targetValueController.text);
+      }
+      String? unit;
+      if (_selectedHabitType != 'checkbox' && _unitController.text.isNotEmpty) {
+        unit = _unitController.text.trim();
+      }
+      
       if (widget.habit == null) {
         // Create new habit
         await _habitService.addHabit(
           widget.userId, 
           _nameController.text.trim(),
           icon: iconString,
+          habitType: _selectedHabitType,
+          targetValue: targetValue,
+          unit: unit,
         );
         if (mounted) {
           Navigator.pop(context);
@@ -148,6 +172,9 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
           widget.habit!.id,
           _nameController.text.trim(),
           icon: iconString,
+          habitType: _selectedHabitType,
+          targetValue: targetValue,
+          unit: unit,
         );
         if (mounted) {
           Navigator.pop(context);
@@ -280,8 +307,89 @@ class _CreateEditHabitPageState extends State<CreateEditHabitPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
+              // Habit Type
+              const Text(
+                'Habit Type',
+                style: AppTextStyles.labelLarge,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedHabitType,
+                dropdownColor: AppColors.surfaceAlt,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: AppUIComponents.inputDecoration(
+                  hintText: 'Select Habit Type',
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'checkbox', child: Text('Checkbox (Yes/No)')),
+                  DropdownMenuItem(value: 'distance', child: Text('Distance (km, miles)')),
+                  DropdownMenuItem(value: 'time', child: Text('Time (mins, hours)')),
+                  DropdownMenuItem(value: 'weight', child: Text('Weight (kg, lbs)')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedHabitType = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // Target & Unit (if not checkbox)
+              if (_selectedHabitType != 'checkbox') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Target Value', style: AppTextStyles.labelLarge),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _targetValueController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: const TextStyle(color: AppColors.textPrimary),
+                            decoration: AppUIComponents.inputDecoration(hintText: 'e.g., 5.0'),
+                            validator: (value) {
+                              if (_selectedHabitType != 'checkbox') {
+                                if (value == null || value.isEmpty) return 'Required';
+                                if (double.tryParse(value) == null) return 'Invalid number';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Unit', style: AppTextStyles.labelLarge),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _unitController,
+                            style: const TextStyle(color: AppColors.textPrimary),
+                            decoration: AppUIComponents.inputDecoration(hintText: 'e.g., km'),
+                            validator: (value) {
+                              if (_selectedHabitType != 'checkbox') {
+                                if (value == null || value.isEmpty) return 'Required';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+              ],
+              
               // Icon Selection
               const Text(
                 'Choose Icon',

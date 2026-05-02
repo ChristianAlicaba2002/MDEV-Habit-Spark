@@ -288,11 +288,15 @@ class _GlassHabitCardState extends State<_GlassHabitCard> {
                       // Checkbox
                       GestureDetector(
                         onTap: () async {
-                          await widget.habitService.toggleHabit(
-                            widget.habit.id,
-                            widget.habit.isDone,
-                            widget.userId,
-                          );
+                          if (widget.habit.habitType == 'checkbox') {
+                            await widget.habitService.toggleHabit(
+                              widget.habit.id,
+                              widget.habit.isDone,
+                              widget.userId,
+                            );
+                          } else {
+                            _showLoggingDialog(context);
+                          }
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
@@ -394,6 +398,89 @@ class _GlassHabitCardState extends State<_GlassHabitCard> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showLoggingDialog(BuildContext context) {
+    final TextEditingController _valueController = TextEditingController();
+    final TextEditingController _notesController = TextEditingController();
+    final isDone = widget.habit.isDone;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF2C3E3E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+        title: Text(
+          isDone ? 'Update Log' : 'Log ${widget.habit.name}',
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (widget.habit.targetValue != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    'Daily Goal: ${widget.habit.targetValue} ${widget.habit.unit}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ),
+              TextField(
+                controller: _valueController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Value (${widget.habit.unit})',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                  focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryLight)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _notesController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Notes (optional)',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                  focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.primaryLight)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final value = double.tryParse(_valueController.text);
+              if (value != null) {
+                await widget.habitService.toggleHabit(
+                  widget.habit.id,
+                  widget.habit.isDone,
+                  widget.userId,
+                  distance: widget.habit.habitType == 'distance' ? value : null,
+                  weight: widget.habit.habitType == 'weight' ? value : null,
+                  value: widget.habit.habitType == 'time' ? value : null,
+                  notes: _notesController.text,
+                );
+                Navigator.pop(ctx);
+              }
+            },
+            child: Text(isDone ? 'Update' : 'Log', style: const TextStyle(color: AppColors.primaryLight)),
+          ),
+        ],
       ),
     );
   }

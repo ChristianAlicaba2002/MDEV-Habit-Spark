@@ -180,9 +180,11 @@ class _HistoryPageState extends State<HistoryPage> {
                         setState(() {
                           if (_selectedLogs.length == logs.length && logs.isNotEmpty) {
                             _selectedLogs.clear();
+                            _isSelectionMode = false;
                           } else {
                             _selectedLogs.clear();
                             _selectedLogs.addAll(logs.map((log) => log.id));
+                            _isSelectionMode = true;
                           }
                         });
                       },
@@ -329,8 +331,12 @@ class _HistoryPageState extends State<HistoryPage> {
           setState(() {
             if (_selectedLogs.contains(log.id)) {
               _selectedLogs.remove(log.id);
+              if (_selectedLogs.isEmpty) {
+                _isSelectionMode = false;
+              }
             } else {
               _selectedLogs.add(log.id);
+              _isSelectionMode = true;
             }
           });
         },
@@ -399,8 +405,8 @@ class _HistoryPageState extends State<HistoryPage> {
                   ),
                 ],
               ),
-              // Show distance and duration if available
-              if (log.distance != null || log.durationSeconds != null) ...[
+              // Show metrics if available
+              if (log.distance != null || log.durationSeconds != null || log.weight != null || log.value != null) ...[
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -408,41 +414,18 @@ class _HistoryPageState extends State<HistoryPage> {
                     color: const Color(0xFF4ECDC4).withAlpha(26),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
                     children: [
-                      if (log.distance != null) ...[
-                        Icon(
-                          Icons.location_on,
-                          color: const Color(0xFF4ECDC4),
-                          size: 14,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${log.distance!.toStringAsFixed(2)} km',
-                          style: const TextStyle(
-                            color: Color(0xFF4ECDC4),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      if (log.durationSeconds != null) ...[
-                        Icon(
-                          Icons.timer,
-                          color: const Color(0xFF4ECDC4),
-                          size: 14,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatDuration(log.durationSeconds!),
-                          style: const TextStyle(
-                            color: Color(0xFF4ECDC4),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                      if (log.distance != null)
+                        _buildMetric(Icons.location_on, '${log.distance!.toStringAsFixed(2)} km'),
+                      if (log.durationSeconds != null)
+                        _buildMetric(Icons.timer, _formatDuration(log.durationSeconds!)),
+                      if (log.weight != null)
+                        _buildMetric(Icons.fitness_center, '${log.weight!.toStringAsFixed(1)} kg'),
+                      if (log.value != null)
+                        _buildMetric(Icons.assessment_outlined, '${log.value!.toStringAsFixed(1)} units'),
                     ],
                   ),
                 ),
@@ -464,6 +447,28 @@ class _HistoryPageState extends State<HistoryPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMetric(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          color: const Color(0xFF4ECDC4),
+          size: 14,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF4ECDC4),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
