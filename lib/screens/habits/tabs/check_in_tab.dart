@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/habit_service.dart';
@@ -5,8 +6,6 @@ import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
 
-// Note: these imports are kept for compatibility with parent widgets,
-// even though the tab is transitioning to a more complex activity feed.
 import 'package:habit_spark/screens/habits/habit_detail_page.dart';
 import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 
@@ -29,6 +28,37 @@ class CheckInTab extends StatefulWidget {
 }
 
 class _CheckInTabState extends State<CheckInTab> {
+  void _confirmDelete(Habit habit) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF2C3E3E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+        title: const Text('Delete Habit?', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+        content: Text(
+          'Are you sure you want to delete "${habit.name}"?',
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () {
+              widget.habitService.deleteHabit(habit.id);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Delete', style: TextStyle(color: AppColors.secondaryLight)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -80,6 +110,94 @@ class _CheckInTabState extends State<CheckInTab> {
             ),
           ),
 
+          // Section Header: Generic Habits Checklist (with CRUD)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Daily Habits',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: widget.onAddHabit,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Habit List
+          widget.habits.isEmpty
+              ? SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GlassCard(
+                      padding: const EdgeInsets.all(24),
+                      borderRadius: 16,
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(Icons.checklist, size: 48, color: Colors.white.withOpacity(0.5)),
+                            const SizedBox(height: 12),
+                            Text(
+                              "No habits yet",
+                              style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Tap the + button to add one",
+                              style: AppTextStyles.bodySmall.copyWith(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _GlassHabitCard(
+                        habit: widget.habits[index],
+                        userId: widget.userId,
+                        habitService: widget.habitService,
+                        onEditTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CreateEditHabitPage(
+                              habit: widget.habits[index],
+                              userId: widget.userId,
+                            ),
+                          ),
+                        ),
+                        onDeleteTap: () => _confirmDelete(widget.habits[index]),
+                      ),
+                      childCount: widget.habits.length,
+                    ),
+                  ),
+                ),
+
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(20, 32, 20, 0),
@@ -112,6 +230,214 @@ class _CheckInTabState extends State<CheckInTab> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
+      ),
+    );
+  }
+}
+
+class _GlassHabitCard extends StatefulWidget {
+  final Habit habit;
+  final String userId;
+  final HabitService habitService;
+  final VoidCallback onEditTap;
+  final VoidCallback onDeleteTap;
+
+  const _GlassHabitCard({
+    required this.habit,
+    required this.userId,
+    required this.habitService,
+    required this.onEditTap,
+    required this.onDeleteTap,
+  });
+
+  @override
+  State<_GlassHabitCard> createState() => _GlassHabitCardState();
+}
+
+class _GlassHabitCardState extends State<_GlassHabitCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDone = widget.habit.isDone;
+
+    return GestureDetector(
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: isDone ? AppColors.success.withOpacity(0.2) : Colors.white.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDone
+                ? AppColors.success.withOpacity(0.5)
+                : Colors.white.withOpacity(0.1),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    children: [
+                      // Checkbox
+                      GestureDetector(
+                        onTap: () async {
+                          await widget.habitService.toggleHabit(
+                            widget.habit.id,
+                            widget.habit.isDone,
+                            widget.userId,
+                          );
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isDone ? AppColors.success : Colors.transparent,
+                            border: Border.all(
+                              color: isDone
+                                  ? AppColors.success
+                                  : Colors.white70,
+                              width: 2,
+                            ),
+                          ),
+                          child: isDone
+                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.habit.name,
+                              style: AppTextStyles.heading5.copyWith(
+                                decoration: isDone
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: isDone
+                                    ? Colors.white70
+                                    : Colors.white,
+                              ),
+                            ),
+                            Text(
+                              isDone ? 'Completed ✓' : 'Tap checkbox to complete',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: isDone
+                                    ? AppColors.success
+                                    : Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+                // Expanded actions
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  child: _isExpanded
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                          child: Row(
+                            children: [
+                              _ActionBtn(
+                                label: 'Edit',
+                                icon: Icons.edit_outlined,
+                                color: AppColors.primaryLight,
+                                onTap: widget.onEditTap,
+                              ),
+                              const SizedBox(width: 8),
+                              _ActionBtn(
+                                label: 'Delete',
+                                icon: Icons.delete_outline,
+                                color: AppColors.secondaryLight,
+                                onTap: widget.onDeleteTap,
+                              ),
+                              const SizedBox(width: 8),
+                              _ActionBtn(
+                                label: 'Details',
+                                icon: Icons.info_outline,
+                                color: AppColors.accent,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        HabitDetailPage(habit: widget.habit),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionBtn({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
