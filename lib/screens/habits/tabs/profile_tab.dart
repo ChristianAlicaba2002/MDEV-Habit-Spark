@@ -74,7 +74,12 @@ class ProfileTab extends StatelessWidget {
                           ),
                           RoundIconButton(
                             icon: CupertinoIcons.bell,
-                            onTap: () {},
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => UserRemindersPage(userId: userId),
+                              ),
+                            ),
                             outlined: true,
                           ),
                         ],

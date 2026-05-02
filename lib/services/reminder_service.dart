@@ -133,7 +133,10 @@ class ReminderService {
           .doc(userId)
           .collection('reminders')
           .doc(habitId)
-          .delete();
+          .set({
+        'enabled': false,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
     } catch (e) {
       print('Error canceling reminder: $e');
     }
