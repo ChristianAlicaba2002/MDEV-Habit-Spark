@@ -146,37 +146,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                   _buildModalTextField('Activity name...', _nameController, CupertinoIcons.pencil),
                   const SizedBox(height: 32),
                   
-                  Text('Choose Unit', style: GoogleFonts.outfit(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 40,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _unitOptions.length,
-                      itemBuilder: (context, index) {
-                        final unit = _unitOptions[index];
-                        bool isSelected = _selectedUnit == unit;
-                        return GestureDetector(
-                          onTap: () => setModalState(() => _selectedUnit = unit),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? Colors.orangeAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: isSelected ? Colors.orangeAccent : Colors.white10),
-                            ),
-                            child: Center(
-                              child: Text(unit, style: GoogleFonts.outfit(color: isSelected ? Colors.white : Colors.white38, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
                   SizedBox(
                     width: double.infinity,
                     height: 60,
@@ -186,7 +155,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                         await _healthService.logActivity(
                           type: _nameController.text,
                           value: 0,
-                          unit: _selectedUnit,
+                          unit: 'hrs', // Default to hrs internally for the stopwatch format
                         );
                         _nameController.clear();
                         Navigator.pop(context);
@@ -401,15 +370,69 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     );
   }
 
-  Widget _buildTotalView(String label, String total, String unit, String status, Color color) {
+  String _formatTotalValue(double value, String unit) {
+    if (unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins') {
+      // Convert to seconds
+      int totalSeconds = unit.toLowerCase() == 'hrs' 
+          ? (value * 3600).round() 
+          : (value * 60).round();
+      
+      int h = totalSeconds ~/ 3600;
+      int m = (totalSeconds % 3600) ~/ 60;
+      int s = totalSeconds % 60;
+      return "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}";
+    }
+    
+    // Default number formatting for steps, km, etc.
+    return value == 0 ? "0" : (value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1));
+  }
+
+  Widget _buildTotalView(String label, String totalStr, String unit, String status, Color color) {
+    // We need the raw value to format correctly
+    double value = double.tryParse(totalStr) ?? 0.0;
+    String formattedValue = _formatTotalValue(value, unit);
+    bool isTime = unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins';
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14, letterSpacing: 1.0)),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [Text(total, style: GoogleFonts.outfit(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)), const SizedBox(width: 8), Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(unit.toUpperCase(), style: GoogleFonts.outfit(color: color, fontSize: 16, fontWeight: FontWeight.bold)))]),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              formattedValue,
+              style: GoogleFonts.outfit(
+                color: Colors.white, 
+                fontSize: isTime ? 54 : 48, 
+                fontWeight: FontWeight.bold,
+                letterSpacing: isTime ? -1 : 0,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 24),
-        Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.2))), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(CupertinoIcons.checkmark_seal_fill, color: color, size: 16), const SizedBox(width: 8), Text('Status: $status', style: GoogleFonts.outfit(color: color, fontSize: 14, fontWeight: FontWeight.bold))])),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.checkmark_seal_fill, color: color, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Status: $status',
+                style: GoogleFonts.outfit(color: color, fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -519,7 +542,11 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
       builder: (context, snapshot) {
         double current = snapshot.data ?? 0;
         double progress = (current / goal).clamp(0.0, 1.0);
-        String valueStr = current.toStringAsFixed(current % 1 == 0 ? 0 : 1);
+        
+        // Use the smart stopwatch formatting for the tiles too!
+        String valueStr = _formatTotalValue(current, unit);
+        bool isTime = unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins';
+            
         String badge = current >= goal ? 'Goal!' : (current > 0 ? 'Active' : 'Start');
 
         return GestureDetector(
@@ -529,7 +556,32 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
             child: Stack(
               children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13)), const SizedBox(height: 4), Row(crossAxisAlignment: CrossAxisAlignment.end, children: [Text(valueStr, style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), const SizedBox(width: 4), Padding(padding: const EdgeInsets.only(bottom: 2), child: Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)))]), const Spacer(), Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Text(badge, style: GoogleFonts.outfit(color: const Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold)))]),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  children: [
+                    Text(title, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13)), 
+                    const SizedBox(height: 4), 
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end, 
+                      children: [
+                        Text(
+                          valueStr, 
+                          style: GoogleFonts.outfit(
+                            color: Colors.white, 
+                            fontSize: isTime ? 18 : 20, 
+                            fontWeight: FontWeight.bold
+                          )
+                        ), 
+                      ]
+                    ), 
+                    const Spacer(), 
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), 
+                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), 
+                      child: Text(badge, style: GoogleFonts.outfit(color: const Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold))
+                    )
+                  ]
+                ),
                 Positioned(bottom: 0, right: 0, child: SizedBox(width: 40, height: 40, child: Stack(alignment: Alignment.center, children: [CircularProgressIndicator(value: progress, strokeWidth: 4, backgroundColor: Colors.white.withOpacity(0.05), valueColor: const AlwaysStoppedAnimation(Colors.orange)), Icon(icon, color: Colors.white, size: 16)]))),
               ],
             ),

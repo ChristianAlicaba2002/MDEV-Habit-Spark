@@ -238,7 +238,7 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                           value = _meters / 1000;
                           unit = 'km';
                         } else {
-                          // Record hours for timed activities like Sleep
+                          // Automatically record hours (will be displayed as HH:MM:SS)
                           value = _stopwatch.elapsedMilliseconds / 3600000;
                           unit = 'hrs';
                         }
