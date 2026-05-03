@@ -74,4 +74,34 @@ class HealthService {
   Future<void> deleteLog(String logId) async {
     await _db.collection('health_logs').doc(logId).delete();
   }
+
+  // DELETE: Remove all logs of a specific type (Removes the activity from dashboard)
+  Future<void> deleteActivityType(String type) async {
+    if (_userId.isEmpty) return;
+    final snapshot = await _db.collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: type.toLowerCase())
+        .get();
+    
+    final batch = _db.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  // UPDATE: Rename an activity across all logs
+  Future<void> renameActivityType(String oldType, String newType) async {
+    if (_userId.isEmpty) return;
+    final snapshot = await _db.collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: oldType.toLowerCase())
+        .get();
+    
+    final batch = _db.batch();
+    for (var doc in snapshot.docs) {
+      batch.update(doc.reference, {'type': newType.toLowerCase()});
+    }
+    await batch.commit();
+  }
 }

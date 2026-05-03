@@ -61,8 +61,14 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     {'icon': Icons.star, 'tags': 'rank gold best win'},
   ];
 
-  void _showCreateActivityModal() {
+  void _showCreateActivityModal({String? editOldName}) {
     String searchQuery = '';
+    bool isEditing = editOldName != null;
+    if (isEditing) {
+      _nameController.text = editOldName;
+    } else {
+      _nameController.clear();
+    }
     
     showModalBottomSheet(
       context: context,
@@ -70,7 +76,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
-          // Filter icons based on search
           final filteredIcons = _iconLibrary
               .where((item) => item['tags'].toString().contains(searchQuery.toLowerCase()))
               .toList();
@@ -92,7 +97,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                     child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
                   ),
                   const SizedBox(height: 24),
-                  Text('New Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(isEditing ? 'Edit Activity' : 'New Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 24),
 
                   // Search Bar for Icons
@@ -152,20 +157,26 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                     child: ElevatedButton(
                       onPressed: () async {
                         if (_nameController.text.isEmpty) return;
-                        await _healthService.logActivity(
-                          type: _nameController.text,
-                          value: 0,
-                          unit: 'hrs', // Default to hrs internally for the stopwatch format
-                        );
+                        
+                        if (isEditing) {
+                          await _healthService.renameActivityType(editOldName!, _nameController.text);
+                        } else {
+                          await _healthService.logActivity(
+                            type: _nameController.text,
+                            value: 0,
+                            unit: 'hrs',
+                          );
+                        }
+                        
                         _nameController.clear();
-                        Navigator.pop(context);
+                        if (mounted) Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      child: Text('Add Activity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                      child: Text(isEditing ? 'Update Activity' : 'Add Activity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -567,6 +578,58 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     }
   }
 
+  void _showActivityOptions(String type, Color color) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text('Manage $type', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _showCreateActivityModal(editOldName: type);
+            },
+            child: const Text('Edit Activity'),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              _showDeleteConfirmation(type);
+            },
+            child: const Text('Delete Activity'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(String type) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1D3D3D),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Colors.white10)),
+        title: Text('Delete $type?', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text('This will remove the activity and all its recorded data. This cannot be undone.', style: GoogleFonts.outfit(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel', style: TextStyle(color: Colors.white38))),
+          TextButton(
+            onPressed: () async {
+              await _healthService.deleteActivityType(type);
+              if (mounted) Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHealthStatTile(String title, String unit, double goal, IconData icon, Color color) {
     DateTime now = DateTime.now();
     DateTime start = DateTime(now.year, now.month, now.day);
@@ -586,6 +649,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
 
         return GestureDetector(
           onTap: () => _showStatProgressModal(title, unit, color, icon),
+          onLongPress: () => _showActivityOptions(title, color),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
