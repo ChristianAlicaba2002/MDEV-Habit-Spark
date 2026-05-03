@@ -262,7 +262,7 @@ class DashboardTab extends StatelessWidget {
               child: SizedBox(
                 height: 160,
                 child: StreamBuilder<List<String>>(
-                  stream: _healthService.getPinnedActivitiesStream(),
+                  stream: _healthService.getPinnedActivitiesStream(userId),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CupertinoActivityIndicator(color: Colors.orangeAccent));

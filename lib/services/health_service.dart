@@ -133,11 +133,10 @@ class HealthService {
   }
 
   // READ: Get stream of pinned activity types
-  Stream<List<String>> getPinnedActivitiesStream() {
+  Stream<List<String>> getPinnedActivitiesStream(String userId) {
     return _db
         .collection('pinned_activities')
-        .where('userId', isEqualTo: _userId)
-        .orderBy('pinnedAt', descending: true)
+        .where('userId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()['type'] as String).toList());
   }
