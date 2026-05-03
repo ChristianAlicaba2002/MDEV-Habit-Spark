@@ -3,6 +3,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
+import '../../services/health_service.dart';
 
 class ActivityRecordingPage extends StatefulWidget {
   final String activityType;
@@ -22,17 +25,73 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
   late Stopwatch _stopwatch;
   Timer? _timer;
   bool _isRunning = false;
+  
+  // Real Sensor Data
+  late Stream<StepCount> _stepCountStream;
+  int _initialSteps = -1; // Steps counted by phone BEFORE hitting Start
+  int _currentSessionSteps = 0;
+  double _meters = 0.0;
+  double _currentSpeed = 0.0;
+  
+  bool _isSensorAvailable = true;
 
   @override
   void initState() {
     super.initState();
     _stopwatch = Stopwatch();
-    // No auto-start: waiting for manual play button
+    _initPedometer();
+  }
+
+  Future<void> _initPedometer() async {
+    // 1. Request Permission
+    if (await Permission.activityRecognition.request().isGranted) {
+      // 2. Initialize Stream
+      _stepCountStream = Pedometer.stepCountStream;
+      _stepCountStream.listen(_onStepCount).onError(_onStepCountError);
+    } else {
+      setState(() => _isSensorAvailable = false);
+    }
+  }
+
+  void _onStepCount(StepCount event) {
+    if (!mounted) return;
+    
+    setState(() {
+      if (_isRunning) {
+        // If this is the very first step update AFTER hitting start, record the baseline
+        if (_initialSteps == -1) {
+          _initialSteps = event.steps;
+        }
+        
+        // Session steps = current phone total - baseline when we started
+        _currentSessionSteps = event.steps - _initialSteps;
+        _meters = _currentSessionSteps * 0.75; // Using 0.75m as average stride
+      }
+    });
+  }
+
+  void _onStepCountError(error) {
+    debugPrint('Pedometer Error: $error');
+    if (mounted) setState(() => _isSensorAvailable = false);
   }
 
   void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) setState(() {});
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      if (mounted && _isRunning) {
+        setState(() {
+          // Fallback simulation if sensor fails or not available (e.g. Emulator)
+          if (!_isSensorAvailable) {
+            _currentSessionSteps += 1;
+            _meters += 0.8;
+          }
+          
+          // Calculate Speed (KM/H)
+          if (_stopwatch.elapsedMilliseconds > 0) {
+            double hours = _stopwatch.elapsedMilliseconds / 3600000;
+            _currentSpeed = (_meters / 1000) / hours;
+          }
+        });
+      }
     });
   }
 
@@ -54,8 +113,22 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
     return "$hoursStr:$minutesStr:$secondsStr";
   }
 
+  Map<String, String> _formatAdaptiveDistance(double meters) {
+    if (meters < 10) {
+      return {'value': meters.toStringAsFixed(1), 'unit': 'm'};
+    } else if (meters < 100) {
+      return {'value': (meters / 10).toStringAsFixed(1), 'unit': 'dam'};
+    } else if (meters < 1000) {
+      return {'value': (meters / 100).toStringAsFixed(1), 'unit': 'hm'};
+    } else {
+      return {'value': (meters / 1000).toStringAsFixed(2), 'unit': 'km'};
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    var dist = _formatAdaptiveDistance(_meters);
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -82,9 +155,20 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: widget.themeColor.withOpacity(0.2)),
                       ),
-                      child: Text(
-                        widget.activityType.toUpperCase(),
-                        style: GoogleFonts.outfit(color: widget.themeColor, letterSpacing: 2, fontWeight: FontWeight.bold, fontSize: 10),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isSensorAvailable ? CupertinoIcons.bolt_fill : CupertinoIcons.bolt_slash_fill,
+                            color: widget.themeColor,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            widget.activityType.toUpperCase(),
+                            style: GoogleFonts.outfit(color: widget.themeColor, letterSpacing: 2, fontWeight: FontWeight.bold, fontSize: 10),
+                          ),
+                        ],
                       ),
                     ),
                     IconButton(
@@ -110,13 +194,15 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                   style: GoogleFonts.outfit(color: Colors.white12, letterSpacing: 6, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                // Focused Stats Row
+                // Triple Stats Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(child: _buildLiveStat('0.00', 'DISTANCE (KM)')),
-                    Container(width: 1, height: 40, color: Colors.white.withOpacity(0.05)),
-                    Expanded(child: _buildLiveStat('0.0', 'SPEED (KM/H)')),
+                    Expanded(child: _buildLiveStat(_currentSessionSteps.toString(), 'STEPS')),
+                    Container(width: 1, height: 30, color: Colors.white.withOpacity(0.05)),
+                    Expanded(child: _buildLiveStat(dist['value']!, 'DIST (${dist['unit']})')),
+                    Container(width: 1, height: 30, color: Colors.white.withOpacity(0.05)),
+                    Expanded(child: _buildLiveStat(_currentSpeed.toStringAsFixed(1), 'SPEED (KM/H)')),
                   ],
                 ),
                 const Spacer(),
@@ -127,10 +213,19 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                     // Finish Button (Left)
                     _buildControlButton(
                       CupertinoIcons.stop_fill,
-                      () {
-                        _stopwatch.stop();
-                        _timer?.cancel();
-                        Navigator.pop(context);
+                      () async {
+                        await HealthService().logActivity(
+                          type: widget.activityType,
+                          value: _meters / 1000,
+                          unit: 'km',
+                          metadata: {
+                            'duration': _stopwatch.elapsedMilliseconds,
+                            'steps': _currentSessionSteps,
+                            'speed': _currentSpeed,
+                            'sensor': _isSensorAvailable ? 'pedometer' : 'simulated',
+                          },
+                        );
+                        if (mounted) Navigator.pop(context);
                       },
                       Colors.redAccent,
                       label: 'FINISH',
@@ -159,7 +254,6 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                           setState(() {
                             _stopwatch.stop();
                             _isRunning = false;
-                            _timer?.cancel();
                           });
                         }
                       },
@@ -182,12 +276,12 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
       children: [
         Text(
           value,
-          style: GoogleFonts.outfit(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+          style: GoogleFonts.outfit(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
           label,
-          style: GoogleFonts.outfit(color: Colors.white24, fontSize: 10, letterSpacing: 1.5, fontWeight: FontWeight.bold),
+          style: GoogleFonts.outfit(color: Colors.white24, fontSize: 9, letterSpacing: 1.0, fontWeight: FontWeight.bold),
         ),
       ],
     );

@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'activity_recording_page.dart';
+import '../../services/health_service.dart';
+import '../../models/health_log_model.dart';
 
 class StatsDetailsPage extends StatefulWidget {
   const StatsDetailsPage({super.key});
@@ -14,6 +16,7 @@ class StatsDetailsPage extends StatefulWidget {
 
 class _StatsDetailsPageState extends State<StatsDetailsPage> {
   DateTime _displayMonth = DateTime.now();
+  final HealthService _healthService = HealthService();
 
   void _showStatProgressModal(String title, String unit, Color color, IconData icon) {
     showModalBottomSheet(
@@ -54,6 +57,21 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                           style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                         ),
                       ),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close modal
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ActivityRecordingPage(
+                                activityType: title,
+                                themeColor: color,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: Icon(CupertinoIcons.play_circle_fill, color: color, size: 28),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 32),
@@ -88,12 +106,12 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                         ),
                         const SizedBox(height: 32),
                         SizedBox(
-                          height: 280, // Slightly reduced to make room for buttons
+                          height: 280,
                           child: TabBarView(
                             children: [
-                              _buildTotalView('Current Total', '5,400', unit, 'Excellent', color),
-                              _buildTotalView('Weekly Total', '35,210', unit, 'On Track', color),
-                              _buildTotalView('Monthly Total', '142,800', unit, 'Great', color),
+                              _buildTotalStreamView('Today\'s Total', title, unit, 'Excellent', color, DateTime.now(), DateTime.now().add(const Duration(days: 1))),
+                              _buildTotalStreamView('Weekly Total', title, unit, 'On Track', color, DateTime.now().subtract(const Duration(days: 7)), DateTime.now()),
+                              _buildTotalStreamView('Monthly Total', title, unit, 'Great', color, DateTime.now().subtract(const Duration(days: 30)), DateTime.now()),
                               _buildHistoryCalendarView(color, unit, setModalState),
                             ],
                           ),
@@ -103,53 +121,71 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                   ),
                   const Spacer(),
                   // Action Buttons
-                  SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context); // Close modal
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ActivityRecordingPage(
-                              activityType: title,
-                              themeColor: color,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(CupertinoIcons.play_fill, size: 20),
-                      label: Text('START RECORDING', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 1)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                      ),
-                    ),
-                  ),
+                  _buildLogActionButton(title, color),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.05),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          side: const BorderSide(color: Colors.white10),
-                        ),
-                      ),
-                      child: const Text('Close'),
-                    ),
-                  ),
+                  _buildCloseButton(),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTotalStreamView(String label, String type, String unit, String status, Color color, DateTime start, DateTime end) {
+    return StreamBuilder<double>(
+      stream: _healthService.getTypeTotalForPeriod(type, start, end),
+      builder: (context, snapshot) {
+        String total = snapshot.hasData ? snapshot.data!.toStringAsFixed(snapshot.data! % 1 == 0 ? 0 : 1) : '0';
+        return _buildTotalView(label, total, unit, status, color);
+      },
+    );
+  }
+
+  Widget _buildLogActionButton(String title, Color color) {
+    return SizedBox(
+      width: double.infinity,
+      height: 60,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ActivityRecordingPage(
+                activityType: title,
+                themeColor: color,
+              ),
+            ),
+          );
+        },
+        icon: const Icon(CupertinoIcons.play_fill, size: 20),
+        label: Text('START RECORDING', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 1)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.black,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCloseButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 55,
+      child: ElevatedButton(
+        onPressed: () => Navigator.pop(context),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white.withOpacity(0.05),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            side: const BorderSide(color: Colors.white10),
+          ),
+        ),
+        child: const Text('Close'),
       ),
     );
   }
@@ -195,34 +231,39 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 0.8,
-            ),
-            itemCount: daysInMonth,
-            itemBuilder: (context, index) {
-              int day = index + 1;
-              String value = (day * 150 + (_displayMonth.month * 10)).toString(); // Mock dynamic data
-              bool isToday = day == DateTime.now().day && _displayMonth.month == DateTime.now().month && _displayMonth.year == DateTime.now().year;
-              
-              return Container(
-                decoration: BoxDecoration(
-                  color: isToday ? color.withOpacity(0.2) : Colors.white.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: isToday ? color.withOpacity(0.4) : Colors.white.withOpacity(0.05)),
+          child: StreamBuilder<List<HealthLog>>(
+            stream: _healthService.getDailyLogs(_displayMonth), // This would need to be updated to a monthly stream for a better calendar
+            builder: (context, snapshot) {
+              return GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 0.8,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(day.toString(), style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10)),
-                    const SizedBox(height: 4),
-                    Text(value, style: GoogleFonts.outfit(color: isToday ? color : Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                    Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 7)),
-                  ],
-                ),
+                itemCount: daysInMonth,
+                itemBuilder: (context, index) {
+                  int day = index + 1;
+                  String value = '0'; // Logic to match log to day would go here
+                  bool isToday = day == DateTime.now().day && _displayMonth.month == DateTime.now().month && _displayMonth.year == DateTime.now().year;
+                  
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: isToday ? color.withOpacity(0.2) : Colors.white.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: isToday ? color.withOpacity(0.4) : Colors.white.withOpacity(0.05)),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(day.toString(), style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10)),
+                        const SizedBox(height: 4),
+                        Text(value, style: GoogleFonts.outfit(color: isToday ? color : Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                        Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 7)),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -322,10 +363,10 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                 childAspectRatio: 1.0,
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildHealthStatCard('Steps', '5,400', 'steps', 0.75, 'Good', Icons.directions_walk, Colors.tealAccent),
-                  _buildHealthStatCard('Calories', '312', 'KCAL', 0.45, 'Average', CupertinoIcons.flame, Colors.orangeAccent),
-                  _buildHealthStatCard('Distance', '4.2', 'KM', 0.85, 'Great', CupertinoIcons.map, Colors.blueAccent),
-                  _buildHealthStatCard('Sleep', '7.5', 'HRS', 0.90, 'Good', CupertinoIcons.moon, Colors.purpleAccent),
+                  _buildHealthStatTile('Steps', 'steps', 10000, Icons.directions_walk, Colors.tealAccent),
+                  _buildHealthStatTile('Calories', 'kcal', 2500, CupertinoIcons.flame, Colors.orangeAccent),
+                  _buildHealthStatTile('Distance', 'km', 10, CupertinoIcons.map, Colors.blueAccent),
+                  _buildHealthStatTile('Sleep', 'hrs', 8, CupertinoIcons.moon, Colors.purpleAccent),
                 ],
               ),
               const SizedBox(height: 40),
@@ -335,6 +376,85 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHealthStatTile(String title, String unit, double goal, IconData icon, Color color) {
+    DateTime now = DateTime.now();
+    DateTime start = DateTime(now.year, now.month, now.day);
+    DateTime end = start.add(const Duration(days: 1));
+
+    return StreamBuilder<double>(
+      stream: _healthService.getTypeTotalForPeriod(title, start, end),
+      builder: (context, snapshot) {
+        double current = snapshot.data ?? 0;
+        double progress = (current / goal).clamp(0.0, 1.0);
+        String valueStr = current.toStringAsFixed(current % 1 == 0 ? 0 : 1);
+        String badge = current >= goal ? 'Goal!' : (current > 0 ? 'Active' : 'Start');
+
+        return GestureDetector(
+          onTap: () => _showStatProgressModal(title, unit, color, icon),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13)),
+                    const SizedBox(height: 4),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(valueStr, style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text(unit, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 11)),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                      child: Text(
+                        badge,
+                        style: GoogleFonts.outfit(color: const Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: progress,
+                          strokeWidth: 4,
+                          backgroundColor: Colors.white.withOpacity(0.05),
+                          valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                        ),
+                        Icon(icon, color: Colors.white, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -411,95 +531,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         const SizedBox(height: 8),
         Text(day, style: const TextStyle(color: Colors.white38, fontSize: 10)),
       ],
-    );
-  }
-
-  Widget _buildHealthStatCard(String title, String value, String unit, double progress, String badge, IconData icon, Color color) {
-    return GestureDetector(
-      onTap: () => _showStatProgressModal(title, unit, color, icon),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      value,
-                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 4),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: Text(
-                        unit,
-                        style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    badge,
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF4CAF50),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Positioned(
-              top: -4,
-              right: -4,
-              child: IconButton(
-                icon: Icon(CupertinoIcons.plus_circle, color: Colors.white.withOpacity(0.3), size: 20),
-                onPressed: () {},
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              right: 0,
-              child: SizedBox(
-                width: 40,
-                height: 40,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 4,
-                      backgroundColor: Colors.white.withOpacity(0.05),
-                      valueColor: const AlwaysStoppedAnimation(Colors.orange),
-                    ),
-                    Icon(icon, color: Colors.white, size: 16),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
