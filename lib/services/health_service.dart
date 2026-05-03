@@ -38,11 +38,15 @@ class HealthService {
     return _db
         .collection('health_logs')
         .where('userId', isEqualTo: _userId)
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-        .where('timestamp', isLessThan: Timestamp.fromDate(end))
-        .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => HealthLog.fromFirestore(doc)).toList());
+        .map((snapshot) {
+      final allLogs = snapshot.docs.map((doc) => HealthLog.fromFirestore(doc)).toList();
+      // Filter for the specific day locally
+      return allLogs.where((log) {
+        return log.timestamp.isAfter(start.subtract(const Duration(seconds: 1))) && 
+               log.timestamp.isBefore(end);
+      }).toList();
+    });
   }
 
   // READ: Get aggregated totals for a period (e.g., today's steps)
@@ -51,13 +55,16 @@ class HealthService {
         .collection('health_logs')
         .where('userId', isEqualTo: _userId)
         .where('type', isEqualTo: type.toLowerCase())
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-        .where('timestamp', isLessThan: Timestamp.fromDate(end))
         .snapshots()
         .map((snapshot) {
       double total = 0;
       for (var doc in snapshot.docs) {
-        total += (doc.data()['value'] ?? 0).toDouble();
+        final data = doc.data();
+        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) && 
+            timestamp.isBefore(end)) {
+          total += (data['value'] ?? 0).toDouble();
+        }
       }
       return total;
     });

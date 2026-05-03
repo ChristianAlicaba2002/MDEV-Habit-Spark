@@ -64,7 +64,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                 Text('New Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 24),
                 
-                // Icon Selector Grid (30+ icons, no labels)
                 SizedBox(
                   height: 60,
                   child: ListView.builder(
@@ -92,13 +91,8 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                 ),
                 const SizedBox(height: 24),
                 
-                // Activity Name Input
                 _buildModalTextField('Activity name...', _nameController, CupertinoIcons.pencil),
-                const SizedBox(height: 16),
-                
-                // Value Input
-                _buildModalTextField('0.0', _valueController, CupertinoIcons.number, isNumeric: true),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 
                 // Unit Selection Chips
                 Text('Choose Unit', style: GoogleFonts.outfit(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.bold)),
@@ -138,14 +132,13 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                   height: 60,
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (_nameController.text.isEmpty || _valueController.text.isEmpty) return;
+                      if (_nameController.text.isEmpty) return;
                       await _healthService.logActivity(
                         type: _nameController.text,
-                        value: double.parse(_valueController.text),
+                        value: 0, // Default to 0 as it's just being created/initialized
                         unit: _selectedUnit,
                       );
                       _nameController.clear();
-                      _valueController.clear();
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
@@ -167,10 +160,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
 
   Widget _buildModalTextField(String hint, TextEditingController controller, IconData icon, {bool isNumeric = false}) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(15),
-      ),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(15)),
       child: TextField(
         controller: controller,
         keyboardType: isNumeric ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
@@ -205,11 +195,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
-                  ),
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -220,23 +206,12 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: Text(
-                          '$title Progress',
-                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                        ),
+                        child: Text('$title Progress', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                       ),
                       IconButton(
                         onPressed: () {
-                          Navigator.pop(context); // Close modal
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ActivityRecordingPage(
-                                activityType: title,
-                                themeColor: color,
-                              ),
-                            ),
-                          );
+                          Navigator.pop(context);
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => ActivityRecordingPage(activityType: title, themeColor: color)));
                         },
                         icon: Icon(CupertinoIcons.play_circle_fill, color: color, size: 28),
                       ),
@@ -250,26 +225,14 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                         Container(
                           height: 50,
                           padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
                           child: TabBar(
-                            indicator: BoxDecoration(
-                              color: color.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: color.withOpacity(0.3)),
-                            ),
+                            indicator: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.3))),
                             labelColor: color,
                             unselectedLabelColor: Colors.white54,
                             indicatorSize: TabBarIndicatorSize.tab,
                             labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 11),
-                            tabs: const [
-                              Tab(text: 'Today'),
-                              Tab(text: 'Weekly'),
-                              Tab(text: 'Monthly'),
-                              Tab(icon: Icon(CupertinoIcons.calendar, size: 18)),
-                            ],
+                            tabs: const [Tab(text: 'Today'), Tab(text: 'Weekly'), Tab(text: 'Monthly'), Tab(icon: Icon(CupertinoIcons.calendar, size: 18))],
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -288,7 +251,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                     ),
                   ),
                   const Spacer(),
-                  // Action Buttons
                   _buildLogActionButton(title, color),
                   const SizedBox(height: 12),
                   _buildCloseButton(),
@@ -318,23 +280,11 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
       child: ElevatedButton.icon(
         onPressed: () {
           Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ActivityRecordingPage(
-                activityType: title,
-                themeColor: color,
-              ),
-            ),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ActivityRecordingPage(activityType: title, themeColor: color)));
         },
         icon: const Icon(CupertinoIcons.play_fill, size: 20),
         label: Text('START RECORDING', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 1)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        ),
+        style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
       ),
     );
   }
@@ -348,10 +298,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white.withOpacity(0.05),
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-            side: const BorderSide(color: Colors.white10),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: const BorderSide(color: Colors.white10)),
         ),
         child: const Text('Close'),
       ),
@@ -370,29 +317,11 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
             Text('Daily History', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
             Row(
               children: [
-                IconButton(
-                  onPressed: () {
-                    setModalState(() {
-                      _displayMonth = DateTime(_displayMonth.year, _displayMonth.month - 1);
-                    });
-                  },
-                  icon: const Icon(CupertinoIcons.chevron_left, color: Colors.white54, size: 16),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
+                IconButton(onPressed: () => setModalState(() => _displayMonth = DateTime(_displayMonth.year, _displayMonth.month - 1)), icon: const Icon(CupertinoIcons.chevron_left, color: Colors.white54, size: 16)),
                 const SizedBox(width: 12),
                 Text(monthYear, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
                 const SizedBox(width: 12),
-                IconButton(
-                  onPressed: () {
-                    setModalState(() {
-                      _displayMonth = DateTime(_displayMonth.year, _displayMonth.month + 1);
-                    });
-                  },
-                  icon: const Icon(CupertinoIcons.chevron_right, color: Colors.white54, size: 16),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
+                IconButton(onPressed: () => setModalState(() => _displayMonth = DateTime(_displayMonth.year, _displayMonth.month + 1)), icon: const Icon(CupertinoIcons.chevron_right, color: Colors.white54, size: 16)),
               ],
             ),
           ],
@@ -403,33 +332,14 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
             stream: _healthService.getDailyLogs(_displayMonth),
             builder: (context, snapshot) {
               return GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.8,
-                ),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.8),
                 itemCount: daysInMonth,
                 itemBuilder: (context, index) {
                   int day = index + 1;
-                  String value = '0';
                   bool isToday = day == DateTime.now().day && _displayMonth.month == DateTime.now().month && _displayMonth.year == DateTime.now().year;
-                  
                   return Container(
-                    decoration: BoxDecoration(
-                      color: isToday ? color.withOpacity(0.2) : Colors.white.withOpacity(0.03),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: isToday ? color.withOpacity(0.4) : Colors.white.withOpacity(0.05)),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(day.toString(), style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10)),
-                        const SizedBox(height: 4),
-                        Text(value, style: GoogleFonts.outfit(color: isToday ? color : Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                        Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 7)),
-                      ],
-                    ),
+                    decoration: BoxDecoration(color: isToday ? color.withOpacity(0.2) : Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(10), border: Border.all(color: isToday ? color.withOpacity(0.4) : Colors.white.withOpacity(0.05))),
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(day.toString(), style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10)), const SizedBox(height: 4), Text('0', style: GoogleFonts.outfit(color: isToday ? color : Colors.white, fontSize: 11, fontWeight: FontWeight.bold)), Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 7))]),
                   );
                 },
               );
@@ -446,74 +356,26 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
       children: [
         Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14, letterSpacing: 1.0)),
         const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              total,
-              style: GoogleFonts.outfit(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(
-                unit.toUpperCase(),
-                style: GoogleFonts.outfit(color: color, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
+        Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [Text(total, style: GoogleFonts.outfit(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)), const SizedBox(width: 8), Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(unit.toUpperCase(), style: GoogleFonts.outfit(color: color, fontSize: 16, fontWeight: FontWeight.bold)))]),
         const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.2)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(CupertinoIcons.checkmark_seal_fill, color: color, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                'Status: $status',
-                style: GoogleFonts.outfit(color: color, fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
+        Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.2))), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(CupertinoIcons.checkmark_seal_fill, color: color, size: 16), const SizedBox(width: 8), Text('Status: $status', style: GoogleFonts.outfit(color: color, fontSize: 14, fontWeight: FontWeight.bold))])),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    DateTime now = DateTime.now();
+    DateTime todayStart = DateTime(now.year, now.month, now.day);
+    DateTime todayEnd = todayStart.add(const Duration(days: 1));
+
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(CupertinoIcons.back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Health Insights',
-          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: IconButton(icon: const Icon(CupertinoIcons.back, color: Colors.white), onPressed: () => Navigator.pop(context)), title: Text('Health Insights', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold))),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2C3E3E), Color(0xFF4A6666)],
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF2C3E3E), Color(0xFF4A6666)])),
         child: SafeArea(
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -523,20 +385,44 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
               const SizedBox(height: 30),
               _buildSectionHeader('Detailed Activity'),
               const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.0,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildHealthStatTile('Steps', 'steps', 10000, Icons.directions_walk, Colors.tealAccent),
-                  _buildHealthStatTile('Calories', 'kcal', 2500, CupertinoIcons.flame, Colors.orangeAccent),
-                  _buildHealthStatTile('Distance', 'km', 10, CupertinoIcons.map, Colors.blueAccent),
-                  _buildHealthStatTile('Sleep', 'hrs', 8, CupertinoIcons.moon, Colors.purpleAccent),
-                ],
+              
+              // DYNAMIC ACTIVITY GRID
+              StreamBuilder<List<HealthLog>>(
+                stream: _healthService.getDailyLogs(DateTime.now()),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent, fontSize: 10)));
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CupertinoActivityIndicator(color: Colors.orangeAccent));
+                  }
+                  
+                  final activities = snapshot.data ?? [];
+                  final uniqueTypes = activities.map((e) => e.type.toLowerCase()).toSet().toList();
+                  
+                  // Default placeholders if nothing logged yet
+                  final displayTypes = uniqueTypes.isEmpty 
+                    ? ['steps', 'calories', 'distance', 'sleep'] 
+                    : uniqueTypes;
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 1.0),
+                    itemCount: uniqueTypes.length,
+                    itemBuilder: (context, index) {
+                      String type = uniqueTypes[index];
+                      // Match color/icon or default
+                      Color color = _getThemeColor(type);
+                      IconData icon = _getThemeIcon(type);
+                      String unit = activities.firstWhere((e) => e.type == type, orElse: () => HealthLog(userId: '', type: type, value: 0, unit: _getDefaultUnit(type), timestamp: DateTime.now())).unit;
+
+                      return _buildHealthStatTile(type.toUpperCase(), unit, 10000, icon, color);
+                    },
+                  );
+                },
               ),
+              
               const SizedBox(height: 40),
               _buildLogButton(),
               const SizedBox(height: 40),
@@ -545,6 +431,43 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         ),
       ),
     );
+  }
+
+  // Helper Methods for Dynamic Theming
+  Color _getThemeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return Colors.tealAccent;
+      case 'calories': return Colors.orangeAccent;
+      case 'distance': return Colors.blueAccent;
+      case 'sleep': return Colors.purpleAccent;
+      case 'gym': return Colors.redAccent;
+      case 'yoga': return Colors.pinkAccent;
+      case 'water': return Colors.cyanAccent;
+      default: return Colors.orangeAccent;
+    }
+  }
+
+  IconData _getThemeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return Icons.directions_walk;
+      case 'calories': return CupertinoIcons.flame;
+      case 'distance': return CupertinoIcons.map;
+      case 'sleep': return CupertinoIcons.moon;
+      case 'gym': return Icons.fitness_center;
+      case 'yoga': return Icons.self_improvement;
+      case 'water': return Icons.local_drink;
+      default: return Icons.bolt;
+    }
+  }
+
+  String _getDefaultUnit(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return 'steps';
+      case 'calories': return 'kcal';
+      case 'distance': return 'km';
+      case 'sleep': return 'hrs';
+      default: return 'unit';
+    }
   }
 
   Widget _buildHealthStatTile(String title, String unit, double goal, IconData icon, Color color) {
@@ -564,60 +487,11 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
           onTap: () => _showStatProgressModal(title, unit, color, icon),
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
-            ),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
             child: Stack(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13)),
-                    const SizedBox(height: 4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(valueStr, style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(width: 4),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 2),
-                          child: Text(unit, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 11)),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-                      child: Text(
-                        badge,
-                        style: GoogleFonts.outfit(color: const Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 4,
-                          backgroundColor: Colors.white.withOpacity(0.05),
-                          valueColor: const AlwaysStoppedAnimation(Colors.orange),
-                        ),
-                        Icon(icon, color: Colors.white, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13)), const SizedBox(height: 4), Row(crossAxisAlignment: CrossAxisAlignment.end, children: [Text(valueStr, style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), const SizedBox(width: 4), Padding(padding: const EdgeInsets.only(bottom: 2), child: Text(unit, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 11)))]), const Spacer(), Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Text(badge, style: GoogleFonts.outfit(color: const Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold)))]),
+                Positioned(bottom: 0, right: 0, child: SizedBox(width: 40, height: 40, child: Stack(alignment: Alignment.center, children: [CircularProgressIndicator(value: progress, strokeWidth: 4, backgroundColor: Colors.white.withOpacity(0.05), valueColor: const AlwaysStoppedAnimation(Colors.orange)), Icon(icon, color: Colors.white, size: 16)]))),
               ],
             ),
           ),
@@ -626,111 +500,31 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.outfit(
-        color: Colors.white,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
+  Widget _buildSectionHeader(String title) => Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold));
 
   Widget _buildMainChart() {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.1))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Weekly Progress',
-                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16),
-              ),
-              const Icon(CupertinoIcons.graph_square, color: Colors.orange, size: 20),
-            ],
-          ),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Weekly Progress', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16)), const Icon(CupertinoIcons.graph_square, color: Colors.orange, size: 20)]),
           const SizedBox(height: 24),
-          SizedBox(
-            height: 150,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _buildChartBar('Mon', 0.4),
-                _buildChartBar('Tue', 0.7),
-                _buildChartBar('Wed', 0.9),
-                _buildChartBar('Thu', 0.5),
-                _buildChartBar('Fri', 0.8),
-                _buildChartBar('Sat', 0.6),
-                _buildChartBar('Sun', 0.3),
-              ],
-            ),
-          ),
+          SizedBox(height: 150, child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [_buildChartBar('Mon', 0.4), _buildChartBar('Tue', 0.7), _buildChartBar('Wed', 0.9), _buildChartBar('Thu', 0.5), _buildChartBar('Fri', 0.8), _buildChartBar('Sat', 0.6), _buildChartBar('Sun', 0.3)])),
         ],
       ),
     );
   }
 
-  Widget _buildChartBar(String day, double height) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Container(
-          width: 30,
-          height: 100 * height,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.orange.withOpacity(0.8), Colors.orange.withOpacity(0.2)],
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(day, style: const TextStyle(color: Colors.white38, fontSize: 10)),
-      ],
-    );
-  }
+  Widget _buildChartBar(String day, double height) => Column(mainAxisAlignment: MainAxisAlignment.end, children: [Container(width: 30, height: 100 * height, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.orange.withOpacity(0.8), Colors.orange.withOpacity(0.2)]), borderRadius: BorderRadius.circular(8))), const SizedBox(height: 8), Text(day, style: const TextStyle(color: Colors.white38, fontSize: 10))]);
 
   Widget _buildLogButton() {
     return Container(
       width: double.infinity,
       height: 60,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: const LinearGradient(
-          colors: [Colors.orange, Color(0xFFFF8C00)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _showCreateActivityModal,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        ),
-        child: Text(
-          'New Activity',
-          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), gradient: const LinearGradient(colors: [Colors.orange, Color(0xFFFF8C00)]), boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))]),
+      child: ElevatedButton(onPressed: _showCreateActivityModal, style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))), child: Text('New Activity', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))),
     );
   }
 }
