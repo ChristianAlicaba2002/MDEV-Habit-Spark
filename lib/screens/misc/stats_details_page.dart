@@ -41,44 +41,47 @@ class StatsDetailsPage extends StatelessWidget {
               const SizedBox(height: 30),
               _buildSectionHeader('Detailed Activity'),
               const SizedBox(height: 16),
-              _buildStatDetailCard(
-                'Steps',
-                '5,400',
-                'steps',
-                'Good',
-                Icons.directions_walk,
-                0.75,
-                const Color(0xFF00BFA5), // Vibrant Teal
-              ),
-              const SizedBox(height: 12),
-              _buildStatDetailCard(
-                'Calories Burnt',
-                '312',
-                'KCAL',
-                'Average',
-                CupertinoIcons.flame,
-                0.45,
-                const Color(0xFFFFAB40), // Soft Amber
-              ),
-              const SizedBox(height: 12),
-              _buildStatDetailCard(
-                'Distance',
-                '4.2',
-                'KM',
-                'Great',
-                CupertinoIcons.map,
-                0.85,
-                const Color(0xFF40C4FF), // Sky Blue
-              ),
-              const SizedBox(height: 12),
-              _buildStatDetailCard(
-                'Sleep',
-                '7.5',
-                'HRS',
-                'Target',
-                CupertinoIcons.moon,
-                0.9,
-                const Color(0xFFB388FF), // Lavender
+              GridView.count(
+                shrinkWrap: true,
+                crossAxisCount: 2,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.0,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildHealthStatCard(
+                    'Steps',
+                    '5,400',
+                    'steps',
+                    0.75,
+                    'Good',
+                    Icons.directions_walk,
+                  ),
+                  _buildHealthStatCard(
+                    'Calories',
+                    '312',
+                    'KCAL',
+                    0.45,
+                    'Average',
+                    CupertinoIcons.flame,
+                  ),
+                  _buildHealthStatCard(
+                    'Distance',
+                    '4.2',
+                    'KM',
+                    0.85,
+                    'Great',
+                    CupertinoIcons.map,
+                  ),
+                  _buildHealthStatCard(
+                    'Sleep',
+                    '7.5',
+                    'HRS',
+                    0.90,
+                    'Good',
+                    CupertinoIcons.moon,
+                  ),
+                ],
               ),
               const SizedBox(height: 40),
               _buildLogButton(),
@@ -119,7 +122,7 @@ class StatsDetailsPage extends StatelessWidget {
                 'Weekly Progress',
                 style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16),
               ),
-              const Icon(CupertinoIcons.graph_square, color: Color(0xFF00BFA5), size: 20),
+              const Icon(CupertinoIcons.graph_square, color: Colors.orange, size: 20),
             ],
           ),
           const SizedBox(height: 24),
@@ -155,7 +158,7 @@ class StatsDetailsPage extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [const Color(0xFF00BFA5).withOpacity(0.8), const Color(0xFF00BFA5).withOpacity(0.2)],
+              colors: [Colors.orange.withOpacity(0.8), Colors.orange.withOpacity(0.2)],
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -166,69 +169,85 @@ class StatsDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatDetailCard(String title, String value, String unit, String badge, IconData icon, double progress, Color accentColor) {
+  Widget _buildHealthStatCard(String title, String value, String unit, double progress, String badge, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withOpacity(0.12),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: accentColor, size: 24),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: GoogleFonts.outfit(color: Colors.white60, fontSize: 14)),
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      value,
-                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    value,
+                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      unit,
+                      style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 11),
                     ),
-                    const SizedBox(width: 4),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(unit, style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                    ),
-                  ],
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.white.withOpacity(0.05),
-                    valueColor: AlwaysStoppedAnimation(accentColor),
-                    minHeight: 6,
+                child: Text(
+                  badge,
+                  style: GoogleFonts.outfit(
+                    color: const Color(0xFF4CAF50), // Dashboard Green
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          Positioned(
+            top: -4,
+            right: -4,
+            child: IconButton(
+              icon: Icon(CupertinoIcons.plus_circle, color: Colors.white.withOpacity(0.3), size: 20),
+              onPressed: () {},
             ),
           ),
-          const SizedBox(width: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: accentColor.withOpacity(0.2)),
-            ),
-            child: Text(
-              badge,
-              style: TextStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.bold),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 4,
+                    backgroundColor: Colors.white.withOpacity(0.05),
+                    valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                  ),
+                  Icon(icon, color: Colors.white, size: 16),
+                ],
+              ),
             ),
           ),
         ],
@@ -243,11 +262,11 @@ class StatsDetailsPage extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         gradient: const LinearGradient(
-          colors: [Color(0xFF00BFA5), Color(0xFF00897B)],
+          colors: [Colors.orange, Color(0xFFFF8C00)],
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00BFA5).withOpacity(0.3),
+            color: Colors.orange.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
