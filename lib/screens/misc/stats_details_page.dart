@@ -12,6 +12,8 @@ class StatsDetailsPage extends StatefulWidget {
 }
 
 class _StatsDetailsPageState extends State<StatsDetailsPage> {
+  DateTime _displayMonth = DateTime.now();
+
   void _showStatProgressModal(String title, String unit, Color color, IconData icon) {
     showModalBottomSheet(
       context: context,
@@ -91,7 +93,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                               _buildTotalView('Current Total', '5,400', unit, 'Excellent', color),
                               _buildTotalView('Weekly Total', '35,210', unit, 'On Track', color),
                               _buildTotalView('Monthly Total', '142,800', unit, 'Great', color),
-                              _buildHistoryCalendarView(color, unit),
+                              _buildHistoryCalendarView(color, unit, setModalState),
                             ],
                           ),
                         ),
@@ -124,14 +126,43 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     );
   }
 
-  Widget _buildHistoryCalendarView(Color color, String unit) {
+  Widget _buildHistoryCalendarView(Color color, String unit, StateSetter setModalState) {
+    int daysInMonth = DateUtils.getDaysInMonth(_displayMonth.year, _displayMonth.month);
+    String monthYear = DateFormat('MMMM yyyy').format(_displayMonth);
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Daily History', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            Text('May 2026', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    setModalState(() {
+                      _displayMonth = DateTime(_displayMonth.year, _displayMonth.month - 1);
+                    });
+                  },
+                  icon: const Icon(CupertinoIcons.chevron_left, color: Colors.white54, size: 16),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 12),
+                Text(monthYear, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: () {
+                    setModalState(() {
+                      _displayMonth = DateTime(_displayMonth.year, _displayMonth.month + 1);
+                    });
+                  },
+                  icon: const Icon(CupertinoIcons.chevron_right, color: Colors.white54, size: 16),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -143,11 +174,12 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
               crossAxisSpacing: 8,
               childAspectRatio: 0.8,
             ),
-            itemCount: 31,
+            itemCount: daysInMonth,
             itemBuilder: (context, index) {
               int day = index + 1;
-              String value = (day * 150).toString(); // Mock value for demonstration
-              bool isToday = day == DateTime.now().day;
+              String value = (day * 150 + (_displayMonth.month * 10)).toString(); // Mock dynamic data
+              bool isToday = day == DateTime.now().day && _displayMonth.month == DateTime.now().month && _displayMonth.year == DateTime.now().year;
+              
               return Container(
                 decoration: BoxDecoration(
                   color: isToday ? color.withOpacity(0.2) : Colors.white.withOpacity(0.03),
