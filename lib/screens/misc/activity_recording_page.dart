@@ -28,24 +28,35 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
   
   // Real Sensor Data
   late Stream<StepCount> _stepCountStream;
-  int _initialSteps = -1; // Steps counted by phone BEFORE hitting Start
+  int _initialSteps = -1; 
   int _currentSessionSteps = 0;
   double _meters = 0.0;
   double _currentSpeed = 0.0;
   
   bool _isSensorAvailable = true;
 
+  // Smart Mode Detection
+  bool get _isMovementActivity {
+    final type = widget.activityType.toLowerCase();
+    return type.contains('step') || 
+           type.contains('run') || 
+           type.contains('walk') || 
+           type.contains('bike') || 
+           type.contains('hike') ||
+           type.contains('cycle');
+  }
+
   @override
   void initState() {
     super.initState();
     _stopwatch = Stopwatch();
-    _initPedometer();
+    if (_isMovementActivity) {
+      _initPedometer();
+    }
   }
 
   Future<void> _initPedometer() async {
-    // 1. Request Permission
     if (await Permission.activityRecognition.request().isGranted) {
-      // 2. Initialize Stream
       _stepCountStream = Pedometer.stepCountStream;
       _stepCountStream.listen(_onStepCount).onError(_onStepCountError);
     } else {
@@ -54,18 +65,15 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
   }
 
   void _onStepCount(StepCount event) {
-    if (!mounted) return;
+    if (!mounted || !_isMovementActivity) return;
     
     setState(() {
       if (_isRunning) {
-        // If this is the very first step update AFTER hitting start, record the baseline
         if (_initialSteps == -1) {
           _initialSteps = event.steps;
         }
-        
-        // Session steps = current phone total - baseline when we started
         _currentSessionSteps = event.steps - _initialSteps;
-        _meters = _currentSessionSteps * 0.75; // Using 0.75m as average stride
+        _meters = _currentSessionSteps * 0.75; 
       }
     });
   }
@@ -79,14 +87,12 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
     _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       if (mounted && _isRunning) {
         setState(() {
-          // Fallback simulation if sensor fails or not available (e.g. Emulator)
-          if (!_isSensorAvailable) {
+          if (_isMovementActivity && !_isSensorAvailable) {
             _currentSessionSteps += 1;
             _meters += 0.8;
           }
           
-          // Calculate Speed (KM/H)
-          if (_stopwatch.elapsedMilliseconds > 0) {
+          if (_isMovementActivity && _stopwatch.elapsedMilliseconds > 0) {
             double hours = _stopwatch.elapsedMilliseconds / 3600000;
             _currentSpeed = (_meters / 1000) / hours;
           }
@@ -114,15 +120,10 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
   }
 
   Map<String, String> _formatAdaptiveDistance(double meters) {
-    if (meters < 10) {
-      return {'value': meters.toStringAsFixed(1), 'unit': 'm'};
-    } else if (meters < 100) {
-      return {'value': (meters / 10).toStringAsFixed(1), 'unit': 'dam'};
-    } else if (meters < 1000) {
-      return {'value': (meters / 100).toStringAsFixed(1), 'unit': 'hm'};
-    } else {
-      return {'value': (meters / 1000).toStringAsFixed(2), 'unit': 'km'};
-    }
+    if (meters < 10) return {'value': meters.toStringAsFixed(1), 'unit': 'm'};
+    if (meters < 100) return {'value': (meters / 10).toStringAsFixed(1), 'unit': 'dam'};
+    if (meters < 1000) return {'value': (meters / 100).toStringAsFixed(1), 'unit': 'hm'};
+    return {'value': (meters / 1000).toStringAsFixed(2), 'unit': 'km'};
   }
 
   @override
@@ -159,7 +160,9 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            _isSensorAvailable ? CupertinoIcons.bolt_fill : CupertinoIcons.bolt_slash_fill,
+                            _isMovementActivity 
+                              ? (_isSensorAvailable ? CupertinoIcons.bolt_fill : CupertinoIcons.bolt_slash_fill)
+                              : CupertinoIcons.timer,
                             color: widget.themeColor,
                             size: 12,
                           ),
@@ -178,6 +181,18 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                   ],
                 ),
                 const Spacer(),
+                
+                // Mode-based central visual
+                if (!_isMovementActivity) 
+                  Icon(
+                    widget.activityType.toLowerCase().contains('sleep') 
+                        ? CupertinoIcons.moon_zzz_fill 
+                        : CupertinoIcons.timer_fill,
+                    color: widget.themeColor.withOpacity(0.1),
+                    size: 180,
+                  ),
+                
+                const Spacer(),
                 // Timer
                 Text(
                   _formatTime(_stopwatch.elapsedMilliseconds),
@@ -194,35 +209,49 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                   style: GoogleFonts.outfit(color: Colors.white12, letterSpacing: 6, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                // Triple Stats Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(child: _buildLiveStat(_currentSessionSteps.toString(), 'STEPS')),
-                    Container(width: 1, height: 30, color: Colors.white.withOpacity(0.05)),
-                    Expanded(child: _buildLiveStat(dist['value']!, 'DIST (${dist['unit']})')),
-                    Container(width: 1, height: 30, color: Colors.white.withOpacity(0.05)),
-                    Expanded(child: _buildLiveStat(_currentSpeed.toStringAsFixed(1), 'SPEED (KM/H)')),
-                  ],
-                ),
+                
+                // Triple Stats Row (Only for movement)
+                if (_isMovementActivity)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(child: _buildLiveStat(_currentSessionSteps.toString(), 'STEPS')),
+                      Container(width: 1, height: 30, color: Colors.white.withOpacity(0.05)),
+                      Expanded(child: _buildLiveStat(dist['value']!, 'DIST (${dist['unit']})')),
+                      Container(width: 1, height: 30, color: Colors.white.withOpacity(0.05)),
+                      Expanded(child: _buildLiveStat(_currentSpeed.toStringAsFixed(1), 'SPEED (KM/H)')),
+                    ],
+                  ),
+                  
                 const Spacer(),
                 // 3-Button Controls
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Finish Button (Left)
                     _buildControlButton(
                       CupertinoIcons.stop_fill,
                       () async {
+                        double value;
+                        String unit;
+                        
+                        if (_isMovementActivity) {
+                          value = _meters / 1000;
+                          unit = 'km';
+                        } else {
+                          // Record hours for timed activities like Sleep
+                          value = _stopwatch.elapsedMilliseconds / 3600000;
+                          unit = 'hrs';
+                        }
+
                         await HealthService().logActivity(
                           type: widget.activityType,
-                          value: _meters / 1000,
-                          unit: 'km',
+                          value: value,
+                          unit: unit,
                           metadata: {
                             'duration': _stopwatch.elapsedMilliseconds,
                             'steps': _currentSessionSteps,
                             'speed': _currentSpeed,
-                            'sensor': _isSensorAvailable ? 'pedometer' : 'simulated',
+                            'mode': _isMovementActivity ? 'movement' : 'timed',
                           },
                         );
                         if (mounted) Navigator.pop(context);
@@ -230,7 +259,6 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                       Colors.redAccent,
                       label: 'FINISH',
                     ),
-                    // Start Button (Center)
                     _buildControlButton(
                       CupertinoIcons.play_fill,
                       () {
@@ -246,7 +274,6 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                       label: 'START',
                       isLarge: true,
                     ),
-                    // Pause Button (Right)
                     _buildControlButton(
                       CupertinoIcons.pause_fill,
                       () {
@@ -274,15 +301,9 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
   Widget _buildLiveStat(String value, String label) {
     return Column(
       children: [
-        Text(
-          value,
-          style: GoogleFonts.outfit(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
-        ),
+        Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text(
-          label,
-          style: GoogleFonts.outfit(color: Colors.white24, fontSize: 9, letterSpacing: 1.0, fontWeight: FontWeight.bold),
-        ),
+        Text(label, style: GoogleFonts.outfit(color: Colors.white24, fontSize: 9, letterSpacing: 1.0, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -304,12 +325,7 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
               shape: BoxShape.circle,
               border: Border.all(color: color.withOpacity(isDisabled ? 0.1 : 0.4), width: 2),
               boxShadow: [
-                if (!isDisabled)
-                  BoxShadow(
-                    color: color.withOpacity(0.2),
-                    blurRadius: 15,
-                    spreadRadius: 1,
-                  ),
+                if (!isDisabled) BoxShadow(color: color.withOpacity(0.2), blurRadius: 15, spreadRadius: 1),
               ],
             ),
             child: Icon(icon, color: isDisabled ? Colors.white12 : color, size: size * 0.4),
@@ -318,12 +334,7 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
         const SizedBox(height: 12),
         Text(
           label,
-          style: GoogleFonts.outfit(
-            color: isDisabled ? Colors.white10 : color.withOpacity(0.8),
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-          ),
+          style: GoogleFonts.outfit(color: isDisabled ? Colors.white10 : color.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5),
         ),
       ],
     );

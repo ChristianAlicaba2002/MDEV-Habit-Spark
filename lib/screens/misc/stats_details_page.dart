@@ -20,140 +20,191 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
 
   // Modal State
   final _nameController = TextEditingController();
-  final _valueController = TextEditingController();
   IconData _selectedIcon = Icons.directions_walk;
   String _selectedUnit = 'km';
   
   final List<String> _unitOptions = ['km', 'm', 'cm', 'hrs', 'mins', 'steps', 'kcal', 'kg', 'ml', 'count'];
 
-  final List<IconData> _iconLibrary = [
-    Icons.directions_walk, Icons.run_circle, Icons.directions_bike, Icons.fitness_center,
-    Icons.self_improvement, Icons.pool, Icons.hiking, Icons.sports_basketball,
-    Icons.sports_soccer, Icons.sports_tennis, Icons.bedtime, Icons.local_drink,
-    Icons.restaurant, Icons.timer, Icons.favorite, Icons.bolt,
-    Icons.psychology, Icons.auto_stories, Icons.edit, Icons.code,
-    Icons.music_note, Icons.brush, Icons.camera_alt, Icons.pets,
-    Icons.cleaning_services, Icons.eco, Icons.savings, Icons.shopping_cart,
-    Icons.work, Icons.home, Icons.celebration, Icons.star,
-    Icons.wb_sunny, Icons.cloud, Icons.umbrella, Icons.landscape
+  // Icon Library with Keywords for searching
+  final List<Map<String, dynamic>> _iconLibrary = [
+    {'icon': Icons.directions_walk, 'tags': 'steps walk move'},
+    {'icon': Icons.run_circle, 'tags': 'run jog sprint fast'},
+    {'icon': Icons.directions_bike, 'tags': 'cycle bike bicycle ride'},
+    {'icon': Icons.fitness_center, 'tags': 'gym lift weight workout'},
+    {'icon': Icons.self_improvement, 'tags': 'yoga meditate calm zen'},
+    {'icon': Icons.pool, 'tags': 'swim water pool'},
+    {'icon': Icons.hiking, 'tags': 'hike mountain climb forest'},
+    {'icon': Icons.sports_basketball, 'tags': 'ball basketball hoop'},
+    {'icon': Icons.sports_soccer, 'tags': 'ball soccer football goal'},
+    {'icon': Icons.sports_tennis, 'tags': 'ball tennis racket'},
+    {'icon': Icons.bedtime, 'tags': 'sleep night rest moon'},
+    {'icon': Icons.local_drink, 'tags': 'water drink thirst fluid'},
+    {'icon': Icons.restaurant, 'tags': 'eat food meal dinner lunch'},
+    {'icon': Icons.timer, 'tags': 'time stop watch clock'},
+    {'icon': Icons.favorite, 'tags': 'heart love health'},
+    {'icon': Icons.bolt, 'tags': 'power energy fast flash'},
+    {'icon': Icons.psychology, 'tags': 'brain mind focus think'},
+    {'icon': Icons.auto_stories, 'tags': 'read book study learn'},
+    {'icon': Icons.edit, 'tags': 'write draw sketch note'},
+    {'icon': Icons.code, 'tags': 'code program tech build'},
+    {'icon': Icons.music_note, 'tags': 'music song listen audio'},
+    {'icon': Icons.brush, 'tags': 'art paint craft hobby'},
+    {'icon': Icons.camera_alt, 'tags': 'photo video camera shoot'},
+    {'icon': Icons.pets, 'tags': 'dog cat pet animal'},
+    {'icon': Icons.cleaning_services, 'tags': 'clean tidy home chores'},
+    {'icon': Icons.eco, 'tags': 'green nature plant garden'},
+    {'icon': Icons.savings, 'tags': 'money save budget coin'},
+    {'icon': Icons.shopping_cart, 'tags': 'buy shop store groceries'},
+    {'icon': Icons.work, 'tags': 'work office job business'},
+    {'icon': Icons.home, 'tags': 'home house family stay'},
+    {'icon': Icons.celebration, 'tags': 'party fun birthday gift'},
+    {'icon': Icons.star, 'tags': 'rank gold best win'},
   ];
 
   void _showCreateActivityModal() {
+    String searchQuery = '';
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1D3D3D).withOpacity(0.98),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
-                ),
-                const SizedBox(height: 24),
-                Text('New Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 24),
-                
-                SizedBox(
-                  height: 60,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _iconLibrary.length,
-                    itemBuilder: (context, index) {
-                      final icon = _iconLibrary[index];
-                      bool isSelected = _selectedIcon == icon;
-                      return GestureDetector(
-                        onTap: () => setModalState(() => _selectedIcon = icon),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 50,
-                          margin: const EdgeInsets.only(right: 12),
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.tealAccent.withOpacity(0.2) : Colors.white.withOpacity(0.03),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: isSelected ? Colors.tealAccent : Colors.white10),
-                          ),
-                          child: Icon(icon, color: isSelected ? Colors.tealAccent : Colors.white24, size: 24),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                _buildModalTextField('Activity name...', _nameController, CupertinoIcons.pencil),
-                const SizedBox(height: 32),
-                
-                // Unit Selection Chips
-                Text('Choose Unit', style: GoogleFonts.outfit(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 40,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _unitOptions.length,
-                    itemBuilder: (context, index) {
-                      final unit = _unitOptions[index];
-                      bool isSelected = _selectedUnit == unit;
-                      return GestureDetector(
-                        onTap: () => setModalState(() => _selectedUnit = unit),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          margin: const EdgeInsets.only(right: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.orangeAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isSelected ? Colors.orangeAccent : Colors.white10),
-                          ),
-                          child: Center(
-                            child: Text(unit, style: GoogleFonts.outfit(color: isSelected ? Colors.white : Colors.white38, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                
-                const SizedBox(height: 32),
-                
-                // Add Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (_nameController.text.isEmpty) return;
-                      await _healthService.logActivity(
-                        type: _nameController.text,
-                        value: 0, // Default to 0 as it's just being created/initialized
-                        unit: _selectedUnit,
-                      );
-                      _nameController.clear();
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
-                    child: Text('Add Activity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
+        builder: (context, setModalState) {
+          // Filter icons based on search
+          final filteredIcons = _iconLibrary
+              .where((item) => item['tags'].toString().contains(searchQuery.toLowerCase()))
+              .toList();
+
+          return Container(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1D3D3D).withOpacity(0.98),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
             ),
-          ),
-        ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+                  ),
+                  const SizedBox(height: 24),
+                  Text('New Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 24),
+
+                  // Search Bar for Icons
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: TextField(
+                      onChanged: (v) => setModalState(() => searchQuery = v),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Search icons (e.g. run, gym)...',
+                        hintStyle: TextStyle(color: Colors.white24),
+                        prefixIcon: Icon(CupertinoIcons.search, color: Colors.white24, size: 20),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Icon Selector Grid (Filtered)
+                  SizedBox(
+                    height: 60,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: filteredIcons.length,
+                      itemBuilder: (context, index) {
+                        final icon = filteredIcons[index]['icon'] as IconData;
+                        bool isSelected = _selectedIcon == icon;
+                        return GestureDetector(
+                          onTap: () => setModalState(() => _selectedIcon = icon),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 50,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.tealAccent.withOpacity(0.2) : Colors.white.withOpacity(0.03),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: isSelected ? Colors.tealAccent : Colors.white10),
+                            ),
+                            child: Icon(icon, color: isSelected ? Colors.tealAccent : Colors.white24, size: 24),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  _buildModalTextField('Activity name...', _nameController, CupertinoIcons.pencil),
+                  const SizedBox(height: 32),
+                  
+                  Text('Choose Unit', style: GoogleFonts.outfit(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 40,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _unitOptions.length,
+                      itemBuilder: (context, index) {
+                        final unit = _unitOptions[index];
+                        bool isSelected = _selectedUnit == unit;
+                        return GestureDetector(
+                          onTap: () => setModalState(() => _selectedUnit = unit),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            margin: const EdgeInsets.only(right: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.orangeAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: isSelected ? Colors.orangeAccent : Colors.white10),
+                            ),
+                            child: Center(
+                              child: Text(unit, style: GoogleFonts.outfit(color: isSelected ? Colors.white : Colors.white38, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (_nameController.text.isEmpty) return;
+                        await _healthService.logActivity(
+                          type: _nameController.text,
+                          value: 0,
+                          unit: _selectedUnit,
+                        );
+                        _nameController.clear();
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: Text('Add Activity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -365,10 +416,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    DateTime now = DateTime.now();
-    DateTime todayStart = DateTime(now.year, now.month, now.day);
-    DateTime todayEnd = todayStart.add(const Duration(days: 1));
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: IconButton(icon: const Icon(CupertinoIcons.back, color: Colors.white), onPressed: () => Navigator.pop(context)), title: Text('Health Insights', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold))),
@@ -386,7 +433,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
               _buildSectionHeader('Detailed Activity'),
               const SizedBox(height: 16),
               
-              // DYNAMIC ACTIVITY GRID
               StreamBuilder<List<HealthLog>>(
                 stream: _healthService.getDailyLogs(DateTime.now()),
                 builder: (context, snapshot) {
@@ -399,24 +445,18 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                   
                   final activities = snapshot.data ?? [];
                   final uniqueTypes = activities.map((e) => e.type.toLowerCase()).toSet().toList();
-                  
-                  // Default placeholders if nothing logged yet
-                  final displayTypes = uniqueTypes.isEmpty 
-                    ? ['steps', 'calories', 'distance', 'sleep'] 
-                    : uniqueTypes;
+                  final displayTypes = uniqueTypes.isEmpty ? ['steps', 'calories', 'distance', 'sleep'] : uniqueTypes;
 
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 1.0),
-                    itemCount: uniqueTypes.length,
+                    itemCount: displayTypes.length,
                     itemBuilder: (context, index) {
-                      String type = uniqueTypes[index];
-                      // Match color/icon or default
+                      String type = displayTypes[index];
                       Color color = _getThemeColor(type);
                       IconData icon = _getThemeIcon(type);
-                      String unit = activities.firstWhere((e) => e.type == type, orElse: () => HealthLog(userId: '', type: type, value: 0, unit: _getDefaultUnit(type), timestamp: DateTime.now())).unit;
-
+                      String unit = activities.firstWhere((e) => e.type.toLowerCase() == type, orElse: () => HealthLog(userId: '', type: type, value: 0, unit: _getDefaultUnit(type), timestamp: DateTime.now())).unit;
                       return _buildHealthStatTile(type.toUpperCase(), unit, 10000, icon, color);
                     },
                   );
@@ -433,7 +473,6 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     );
   }
 
-  // Helper Methods for Dynamic Theming
   Color _getThemeColor(String type) {
     switch (type.toLowerCase()) {
       case 'steps': return Colors.tealAccent;
@@ -490,7 +529,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
             decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
             child: Stack(
               children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13)), const SizedBox(height: 4), Row(crossAxisAlignment: CrossAxisAlignment.end, children: [Text(valueStr, style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), const SizedBox(width: 4), Padding(padding: const EdgeInsets.only(bottom: 2), child: Text(unit, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 11)))]), const Spacer(), Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Text(badge, style: GoogleFonts.outfit(color: const Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold)))]),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.6), fontSize: 13)), const SizedBox(height: 4), Row(crossAxisAlignment: CrossAxisAlignment.end, children: [Text(valueStr, style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), const SizedBox(width: 4), Padding(padding: const EdgeInsets.only(bottom: 2), child: Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)))]), const Spacer(), Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(12)), child: Text(badge, style: GoogleFonts.outfit(color: const Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold)))]),
                 Positioned(bottom: 0, right: 0, child: SizedBox(width: 40, height: 40, child: Stack(alignment: Alignment.center, children: [CircularProgressIndicator(value: progress, strokeWidth: 4, backgroundColor: Colors.white.withOpacity(0.05), valueColor: const AlwaysStoppedAnimation(Colors.orange)), Icon(icon, color: Colors.white, size: 16)]))),
               ],
             ),
