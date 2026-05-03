@@ -19,7 +19,7 @@ class TaskService {
   }
 
   // Add a new task (defaults to Other tasks)
-  Future<void> addTask(String userId, String title) async {
+  Future<void> addTask(String userId, String title, {String routine = 'none'}) async {
     final tasks = await _firestore
         .collection('tasks')
         .where('userId', isEqualTo: userId)
@@ -30,10 +30,18 @@ class TaskService {
     await _firestore.collection('tasks').add({
       'title': title,
       'isCompleted': false,
-      'isRecent': false, // New tasks go to "Other"
+      'isRecent': false,
+      'routine': routine,
       'order': nextOrder,
       'userId': userId,
       'createdAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  // Update task routine
+  Future<void> updateTaskRoutine(String taskId, String routine) async {
+    await _firestore.collection('tasks').doc(taskId).update({
+      'routine': routine,
     });
   }
 

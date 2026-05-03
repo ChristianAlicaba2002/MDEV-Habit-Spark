@@ -18,55 +18,95 @@ class TasksListPage extends StatefulWidget {
 
 class _TasksListPageState extends State<TasksListPage> {
   final TaskService _taskService = TaskService();
+  String _selectedRoutine = 'none';
 
   void _showAddTaskModal() {
     final TextEditingController controller = TextEditingController();
+    _selectedRoutine = 'none';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        decoration: const BoxDecoration(
-          color: Color(0xFF1D3D3D),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('New Task', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Task title...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (controller.text.isNotEmpty) {
-                      await _taskService.addTask(widget.userId, controller.text);
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                  child: const Text('Add Task'),
-                ),
-              ),
-            ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1D3D3D),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
           ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('New Task', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Task title...',
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text('Select Routine', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildRoutineChip('morning', CupertinoIcons.sunrise, 'Morning', setModalState),
+                    _buildRoutineChip('afternoon', CupertinoIcons.sun_max, 'Afternoon', setModalState),
+                    _buildRoutineChip('evening', CupertinoIcons.moon_stars, 'Evening', setModalState),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (controller.text.isNotEmpty) {
+                        await _taskService.addTask(widget.userId, controller.text, routine: _selectedRoutine);
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+                    child: const Text('Add Task'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoutineChip(String value, IconData icon, String label, StateSetter setModalState) {
+    bool isSelected = _selectedRoutine == value;
+    return GestureDetector(
+      onTap: () => setModalState(() => _selectedRoutine = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? Colors.white : Colors.white.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: isSelected ? Colors.black : Colors.white70),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(color: isSelected ? Colors.black : Colors.white70, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+          ],
         ),
       ),
     );
@@ -89,27 +129,31 @@ class _TasksListPageState extends State<TasksListPage> {
         child: StreamBuilder<List<TaskModel>>(
           stream: _taskService.getTasksStream(widget.userId),
           builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.white70)));
-            }
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildSkeletonLoader();
-            }
+            if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}", style: const TextStyle(color: Colors.white70)));
+            if (snapshot.connectionState == ConnectionState.waiting) return _buildSkeletonLoader();
             
             final allTasks = snapshot.data ?? [];
             final recentTasks = allTasks.where((t) => t.isRecent).toList();
-            final otherTasks = allTasks.where((t) => !t.isRecent).toList();
+            final morningTasks = allTasks.where((t) => !t.isRecent && t.routine == 'morning').toList();
+            final afternoonTasks = allTasks.where((t) => !t.isRecent && t.routine == 'afternoon').toList();
+            final eveningTasks = allTasks.where((t) => !t.isRecent && t.routine == 'evening').toList();
+            final otherTasks = allTasks.where((t) => !t.isRecent && t.routine == 'none').toList();
 
             return SafeArea(
               child: Column(
                 children: [
                   Expanded(
                     child: ListView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       children: [
+                        const SizedBox(height: 10),
                         _buildDropZone('Recent Tasks (Max 3)', recentTasks, true, recentTasks.length >= 3),
-                        const SizedBox(height: 32),
-                        _buildDropZone('Other Tasks', otherTasks, false, false),
+                        const SizedBox(height: 24),
+                        _buildRoutineSection('Morning Routine', morningTasks, CupertinoIcons.sunrise),
+                        _buildRoutineSection('Afternoon Routine', afternoonTasks, CupertinoIcons.sun_max),
+                        _buildRoutineSection('Evening Routine', eveningTasks, CupertinoIcons.moon_stars),
+                        if (otherTasks.isNotEmpty) _buildDropZone('Other Tasks', otherTasks, false, false),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -120,6 +164,26 @@ class _TasksListPageState extends State<TasksListPage> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildRoutineSection(String title, List<TaskModel> tasks, IconData icon) {
+    if (tasks.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 16, bottom: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: Colors.white54),
+              const SizedBox(width: 8),
+              Text(title, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            ],
+          ),
+        ),
+        ...tasks.map((t) => _buildDraggableTask(t)).toList(),
+      ],
     );
   }
 
@@ -134,27 +198,20 @@ class _TasksListPageState extends State<TasksListPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: GoogleFonts.outfit(
-                color: isHovered ? Colors.white : Colors.white70,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+            if (tasks.isNotEmpty || isRecentZone) 
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(title, style: GoogleFonts.outfit(color: isHovered ? Colors.white : Colors.white70, fontSize: 18, fontWeight: FontWeight.w600)),
               ),
-            ),
-            const SizedBox(height: 16),
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isHovered ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.02),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: isHovered ? Colors.white.withOpacity(0.5) : Colors.white.withOpacity(0.05),
-                  width: 2,
-                ),
+                color: isHovered ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.02),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: isHovered ? Colors.white.withOpacity(0.5) : Colors.white.withOpacity(0.05)),
               ),
-              child: tasks.isEmpty 
+              child: tasks.isEmpty && isRecentZone
                 ? _buildEmptyPlaceholder(isRecentZone)
                 : Column(children: tasks.map((t) => _buildDraggableTask(t)).toList()),
             ),
@@ -167,23 +224,14 @@ class _TasksListPageState extends State<TasksListPage> {
   Widget _buildDraggableTask(TaskModel task) {
     return Draggable<TaskModel>(
       data: task,
-      axis: Axis.vertical, // Lock to vertical movement for better control
+      axis: Axis.vertical,
       feedback: Material(
         color: Colors.transparent,
         child: Container(
-          width: MediaQuery.of(context).size.width - 48,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10),
-            ],
-          ),
-          child: Text(
-            task.title,
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
-          ),
+          width: MediaQuery.of(context).size.width - 64,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)]),
+          child: Text(task.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 15)),
         ),
       ),
       childWhenDragging: Opacity(opacity: 0.3, child: _buildTaskCard(task)),
@@ -193,20 +241,20 @@ class _TasksListPageState extends State<TasksListPage> {
 
   Widget _buildTaskCard(TaskModel task) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: task.isCompleted ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: task.isCompleted ? Colors.green.withOpacity(0.3) : Colors.white.withOpacity(0.1)),
+          color: task.isCompleted ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: task.isCompleted ? Colors.green.withOpacity(0.2) : Colors.white.withOpacity(0.05)),
         ),
         child: Row(
           children: [
-            Expanded(child: Text(task.title, style: GoogleFonts.outfit(color: task.isCompleted ? Colors.white.withOpacity(0.5) : Colors.white, decoration: task.isCompleted ? TextDecoration.lineThrough : null))),
+            Expanded(child: Text(task.title, style: GoogleFonts.outfit(color: task.isCompleted ? Colors.white.withOpacity(0.5) : Colors.white, fontSize: 15, decoration: task.isCompleted ? TextDecoration.lineThrough : null))),
             GestureDetector(
               onTap: () => _taskService.toggleTask(task.id, task.isCompleted),
-              child: Icon(task.isCompleted ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle, color: task.isCompleted ? Colors.green : Colors.white.withOpacity(0.5)),
+              child: Icon(task.isCompleted ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle, color: task.isCompleted ? Colors.green : Colors.white.withOpacity(0.5), size: 22),
             ),
           ],
         ),
@@ -217,9 +265,8 @@ class _TasksListPageState extends State<TasksListPage> {
   Widget _buildEmptyPlaceholder(bool isRecent) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1), style: BorderStyle.none)),
-      child: Center(child: Text(isRecent ? 'Drag tasks here' : 'No other tasks', style: TextStyle(color: Colors.white.withOpacity(0.3)))),
+      padding: const EdgeInsets.all(20),
+      child: Center(child: Text(isRecent ? 'Drag tasks here' : 'No tasks', style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 13))),
     );
   }
 
@@ -242,14 +289,8 @@ class _TasksListPageState extends State<TasksListPage> {
         padding: const EdgeInsets.all(24),
         itemCount: 5,
         itemBuilder: (context, index) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Container(
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
         ),
       ),
     );
