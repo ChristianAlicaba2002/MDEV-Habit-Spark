@@ -6,6 +6,9 @@ class Habit {
   final String userId;
   final String? icon;
   final String? imageUrl;
+  final String habitType; // 'checkbox', 'distance', 'time', 'weight'
+  final double? targetValue;
+  final String? unit;
 
   Habit({
     required this.id,
@@ -15,6 +18,9 @@ class Habit {
     required this.userId,
     this.icon,
     this.imageUrl,
+    this.habitType = 'checkbox',
+    this.targetValue,
+    this.unit,
   });
 
   factory Habit.fromMap(Map<String, dynamic> map, String id) {
@@ -28,6 +34,9 @@ class Habit {
       userId: map['userId'] ?? '',
       icon: map['icon'] as String?,
       imageUrl: map['imageUrl'] as String?,
+      habitType: map['habitType'] ?? 'checkbox',
+      targetValue: map['targetValue']?.toDouble(),
+      unit: map['unit'] as String?,
     );
   }
 
@@ -39,6 +48,9 @@ class Habit {
       'userId': userId,
       if (icon != null) 'icon': icon,
       if (imageUrl != null) 'imageUrl': imageUrl,
+      'habitType': habitType,
+      if (targetValue != null) 'targetValue': targetValue,
+      if (unit != null) 'unit': unit,
     };
   }
 
@@ -50,6 +62,9 @@ class Habit {
     String? userId,
     String? icon,
     String? imageUrl,
+    String? habitType,
+    double? targetValue,
+    String? unit,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -59,6 +74,9 @@ class Habit {
       userId: userId ?? this.userId,
       icon: icon ?? this.icon,
       imageUrl: imageUrl ?? this.imageUrl,
+      habitType: habitType ?? this.habitType,
+      targetValue: targetValue ?? this.targetValue,
+      unit: unit ?? this.unit,
     );
   }
 }

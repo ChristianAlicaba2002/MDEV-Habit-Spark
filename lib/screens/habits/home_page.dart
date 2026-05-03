@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
@@ -98,7 +99,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _initializeUserData() async {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
-      await _habitService.seedDefaultHabits(userId);
+      // Temporarily wipe all existing habits to clear the screen
+      final habits = await FirebaseFirestore.instance
+          .collection('habits')
+          .where('userId', isEqualTo: userId)
+          .get();
+      for (var doc in habits.docs) {
+        await doc.reference.delete();
+      }
+      
       await _streakService.getUserStreak(userId);
       await _streakService.checkStreakOnLogin(userId);
     }

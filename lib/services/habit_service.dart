@@ -29,7 +29,14 @@ class HabitService {
   }
 
   // Add a new habit
-  Future<void> addHabit(String userId, String habitName, {String? icon}) async {
+  Future<void> addHabit(
+    String userId, 
+    String habitName, {
+    String? icon,
+    String habitType = 'checkbox',
+    double? targetValue,
+    String? unit,
+  }) async {
     try {
       if (habitName.trim().isEmpty) {
         throw AppException(message: 'Habit name cannot be empty.');
@@ -41,6 +48,9 @@ class HabitService {
         'createdAt': Timestamp.fromDate(DateTime.now()),
         'userId': userId,
         if (icon != null) 'icon': icon,
+        'habitType': habitType,
+        if (targetValue != null) 'targetValue': targetValue,
+        if (unit != null) 'unit': unit,
       });
     } catch (e) {
       throw ErrorHandler.handleException(e);
@@ -48,17 +58,33 @@ class HabitService {
   }
 
   // Update an existing habit
-  Future<void> updateHabit(String habitId, String habitName, {String? icon}) async {
+  Future<void> updateHabit(
+    String habitId, 
+    String habitName, {
+    String? icon,
+    String? habitType,
+    double? targetValue,
+    String? unit,
+  }) async {
     try {
       if (habitName.trim().isEmpty) {
         throw AppException(message: 'Habit name cannot be empty.');
       }
       
-      final updateData = {
+      final Map<String, dynamic> updateData = {
         'name': habitName,
       };
       if (icon != null) {
         updateData['icon'] = icon;
+      }
+      if (habitType != null) {
+        updateData['habitType'] = habitType;
+      }
+      if (targetValue != null) {
+        updateData['targetValue'] = targetValue;
+      }
+      if (unit != null) {
+        updateData['unit'] = unit;
       }
       await _firestore.collection('habits').doc(habitId).update(updateData);
     } catch (e) {
@@ -67,7 +93,16 @@ class HabitService {
   }
 
   // Toggle habit completion
-  Future<void> toggleHabit(String habitId, bool currentStatus, String userId) async {
+  Future<void> toggleHabit(
+    String habitId, 
+    bool currentStatus, 
+    String userId, {
+    double? distance,
+    int? durationSeconds,
+    double? weight,
+    double? value,
+    String? notes,
+  }) async {
     await _firestore.collection('habits').doc(habitId).update({
       'isDone': !currentStatus,
     });
@@ -77,6 +112,11 @@ class HabitService {
       habitId: habitId,
       userId: userId,
       isCompleted: !currentStatus,
+      distance: distance,
+      durationSeconds: durationSeconds,
+      weight: weight,
+      value: value,
+      notes: notes,
     );
     
     // If habit is being marked as done, check for achievements

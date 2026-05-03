@@ -140,33 +140,83 @@ class DashboardTab extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(35),
                   child: BackdropFilter(
-                    filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(
-                      height: 60,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(35),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                     filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                     child: Container(
+                       height: 60,
+                       padding: const EdgeInsets.symmetric(horizontal: 20),
+                       decoration: BoxDecoration(
+                         color: Colors.white.withOpacity(0.12),
+                         borderRadius: BorderRadius.circular(35),
+                         border: Border.all(color: Colors.white.withOpacity(0.1)),
+                       ),
+                       child: Row(
+                         children: [
+                           Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.6)),
+                           const SizedBox(width: 12),
+                           Expanded(
+                             child: TextField(
+                               controller: searchController,
+                               style: const TextStyle(color: Colors.white),
+                               decoration: InputDecoration(
+                                 hintText: 'Search...',
+                                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+                                 border: InputBorder.none,
+                               ),
+                             ),
+                           ),
+                         ],
+                       ),
+                     ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Streak Card
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 24),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.6)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: searchController,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                hintText: 'Search...',
-                                hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-                                border: InputBorder.none,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "5-Day Streak 🔥",
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
+                            // Mini completion bar
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: 5 / 7,
+                                backgroundColor: Colors.white.withOpacity(0.1),
+                                valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                                minHeight: 6,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -194,6 +244,7 @@ class DashboardTab extends StatelessWidget {
                       progress: 0.7,
                       badge: 'Good',
                       icon: CupertinoIcons.paw,
+                      showAddButton: true,
                     ),
                     SizedBox(width: 16),
                     _HealthStatCard(
@@ -203,6 +254,7 @@ class DashboardTab extends StatelessWidget {
                       progress: 0.4,
                       badge: 'Average',
                       icon: CupertinoIcons.flame_fill,
+                      showAddButton: true,
                     ),
                     SizedBox(width: 16),
                     _HealthStatCard(
@@ -212,9 +264,30 @@ class DashboardTab extends StatelessWidget {
                       progress: 0.8,
                       badge: 'Good',
                       icon: CupertinoIcons.location_fill,
+                      showAddButton: false,
                     ),
                   ],
                 ),
+              ),
+            ),
+
+            // ── Daily Checklist Header
+            _DashboardSectionHeader(
+              title: "Daily Tasks",
+              onTap: () {},
+            ),
+
+            // ── Daily Checklist Items
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const _DailyTaskItem(title: "Drink 2L Water", isCompleted: true),
+                  const SizedBox(height: 12),
+                  const _DailyTaskItem(title: "Read 10 Pages", isCompleted: false),
+                  const SizedBox(height: 12),
+                  const _DailyTaskItem(title: "Stretch 5 mins", isCompleted: false),
+                ]),
               ),
             ),
 
@@ -222,6 +295,14 @@ class DashboardTab extends StatelessWidget {
             _DashboardSectionHeader(
               title: "Today's workout",
               onTap: () {},
+            ),
+
+            // ── Focus Mode (Pomodoro Timer)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+                child: _FocusModeCard(),
+              ),
             ),
 
             // ── Large Workout Card
@@ -241,6 +322,155 @@ class DashboardTab extends StatelessWidget {
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 140)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FocusModeCard extends StatefulWidget {
+  const _FocusModeCard();
+
+  @override
+  State<_FocusModeCard> createState() => _FocusModeCardState();
+}
+
+class _FocusModeCardState extends State<_FocusModeCard> {
+  bool _isActive = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.timer, color: Colors.blueAccent, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Focus Mode", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(
+                    _isActive ? "25:00 remaining" : "25-min deep work",
+                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GestureDetector(
+            onTap: () => setState(() => _isActive = !_isActive),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: _isActive ? Colors.redAccent.withOpacity(0.2) : Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: _isActive ? Colors.redAccent.withOpacity(0.5) : Colors.white.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _isActive ? CupertinoIcons.stop_fill : CupertinoIcons.play_fill,
+                    color: _isActive ? Colors.redAccent : Colors.white,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _isActive ? "Stop" : "Start",
+                    style: TextStyle(
+                      color: _isActive ? Colors.redAccent : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyTaskItem extends StatefulWidget {
+  final String title;
+  final bool isCompleted;
+
+  const _DailyTaskItem({required this.title, required this.isCompleted});
+
+  @override
+  State<_DailyTaskItem> createState() => _DailyTaskItemState();
+}
+
+class _DailyTaskItemState extends State<_DailyTaskItem> {
+  late bool _isCompleted;
+
+  @override
+  void initState() {
+    super.initState();
+    _isCompleted = widget.isCompleted;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() => _isCompleted = !_isCompleted),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: _isCompleted ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _isCompleted ? Colors.green.withOpacity(0.3) : Colors.white.withOpacity(0.1),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              widget.title,
+              style: TextStyle(
+                color: _isCompleted ? Colors.white.withOpacity(0.5) : Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                decoration: _isCompleted ? TextDecoration.lineThrough : null,
+              ),
+            ),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isCompleted ? Colors.green : Colors.transparent,
+                border: Border.all(
+                  color: _isCompleted ? Colors.green : Colors.white.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              child: _isCompleted ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+            ),
           ],
         ),
       ),
@@ -294,6 +524,7 @@ class _HealthStatCard extends StatelessWidget {
   final double progress;
   final String badge;
   final IconData icon;
+  final bool showAddButton;
 
   const _HealthStatCard({
     required this.title,
@@ -302,6 +533,7 @@ class _HealthStatCard extends StatelessWidget {
     required this.progress,
     required this.badge,
     required this.icon,
+    this.showAddButton = false,
   });
 
   @override
@@ -311,7 +543,7 @@ class _HealthStatCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Stack(
@@ -377,6 +609,22 @@ class _HealthStatCard extends StatelessWidget {
               ),
             ),
           ),
+          if (showAddButton)
+            Positioned(
+              right: -5,
+              top: -5,
+              child: GestureDetector(
+                onTap: () {}, // Increment progress action
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(CupertinoIcons.add, color: Colors.white, size: 16),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -399,14 +647,14 @@ class _LargeWorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(35),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
         filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           height: 240,
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(35),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: Stack(
@@ -419,8 +667,8 @@ class _LargeWorkoutCard extends StatelessWidget {
                 width: 180,
                 child: ClipRRect(
                   borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(35),
-                    bottomRight: Radius.circular(35),
+                    topRight: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
                   ),
                   child: Image.network(
                     imageUrl,
@@ -506,34 +754,3 @@ class _WorkoutBadge extends StatelessWidget {
     );
   }
 }
-
-class _AppLogo extends StatelessWidget {
-  const _AppLogo({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: GridView.count(
-        crossAxisCount: 3,
-        mainAxisSpacing: 2,
-        crossAxisSpacing: 2,
-        physics: const NeverScrollableScrollPhysics(),
-        children: List.generate(
-          9,
-          (index) => Container(
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
