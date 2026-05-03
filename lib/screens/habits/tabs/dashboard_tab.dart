@@ -185,51 +185,63 @@ class DashboardTab extends StatelessWidget {
 
             // ── Streak Card
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 24),
+              child: StreamBuilder<Map<String, dynamic>>(
+                stream: streakService.getStreakStream(userId),
+                builder: (context, snapshot) {
+                  final streakData = snapshot.data;
+                  final currentStreak = streakData?['currentStreak'] ?? 0;
+                  
+                  // For the progress bar, use 7-day milestones
+                  final progress = currentStreak == 0 ? 0.0 : (currentStreak % 7 == 0 ? 1.0 : (currentStreak % 7) / 7);
+                  final streakText = currentStreak == 0 ? "Start your streak! 🔥" : "$currentStreak-Day Streak 🔥";
+
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "5-Day Streak 🔥",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.2),
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(height: 8),
-                            // Mini completion bar
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: 5 / 7,
-                                backgroundColor: Colors.white.withOpacity(0.1),
-                                valueColor: const AlwaysStoppedAnimation(Colors.orange),
-                                minHeight: 6,
-                              ),
+                            child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  streakText,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 8),
+                                // Mini completion bar
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    backgroundColor: Colors.white.withOpacity(0.1),
+                                    valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                                    minHeight: 6,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
 
