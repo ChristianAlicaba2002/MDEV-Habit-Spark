@@ -45,6 +45,14 @@ class TaskService {
     });
   }
 
+  // Update task title and routine
+  Future<void> updateTaskTitleAndRoutine(String taskId, String title, String routine) async {
+    await _firestore.collection('tasks').doc(taskId).update({
+      'title': title,
+      'routine': routine,
+    });
+  }
+
   // Toggle completion
   Future<void> toggleTask(String taskId, bool currentStatus) async {
     await _firestore.collection('tasks').doc(taskId).update({

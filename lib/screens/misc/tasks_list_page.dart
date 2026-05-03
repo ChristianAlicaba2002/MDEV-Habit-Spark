@@ -20,9 +20,11 @@ class _TasksListPageState extends State<TasksListPage> {
   final TaskService _taskService = TaskService();
   String _selectedRoutine = 'none';
 
-  void _showAddTaskModal() {
-    final TextEditingController controller = TextEditingController();
-    _selectedRoutine = 'none';
+  void _showTaskModal({TaskModel? existingTask}) {
+    final TextEditingController controller = TextEditingController(
+      text: existingTask?.title ?? '',
+    );
+    _selectedRoutine = existingTask?.routine ?? 'none';
 
     showModalBottomSheet(
       context: context,
@@ -41,7 +43,23 @@ class _TasksListPageState extends State<TasksListPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('New Task', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      existingTask == null ? 'New Task' : 'Edit Task',
+                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    if (existingTask != null)
+                      IconButton(
+                        onPressed: () async {
+                          await _taskService.deleteTask(existingTask.id);
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(CupertinoIcons.trash, color: Colors.redAccent),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: controller,
@@ -73,12 +91,21 @@ class _TasksListPageState extends State<TasksListPage> {
                   child: ElevatedButton(
                     onPressed: () async {
                       if (controller.text.isNotEmpty) {
-                        await _taskService.addTask(widget.userId, controller.text, routine: _selectedRoutine);
+                        if (existingTask == null) {
+                          await _taskService.addTask(widget.userId, controller.text, routine: _selectedRoutine);
+                        } else {
+                          // Update existing task
+                          await _taskService.updateTaskTitleAndRoutine(existingTask.id, controller.text, _selectedRoutine);
+                        }
                         Navigator.pop(context);
                       }
                     },
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                    child: const Text('Add Task'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: Text(existingTask == null ? 'Add Task' : 'Save Changes'),
                   ),
                 ),
               ],
@@ -152,7 +179,7 @@ class _TasksListPageState extends State<TasksListPage> {
                         _buildRoutineSection('Morning Routine', morningTasks, CupertinoIcons.sunrise),
                         _buildRoutineSection('Afternoon Routine', afternoonTasks, CupertinoIcons.sun_max),
                         _buildRoutineSection('Evening Routine', eveningTasks, CupertinoIcons.moon_stars),
-                        if (otherTasks.isNotEmpty) _buildDropZone('Other Tasks', otherTasks, false, false),
+                        _buildDropZone('Other Tasks', otherTasks, false, false),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -178,15 +205,7 @@ class _TasksListPageState extends State<TasksListPage> {
             children: [
               Icon(icon, size: 16, color: Colors.white),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
+              Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
             ],
           ),
         ),
@@ -209,14 +228,7 @@ class _TasksListPageState extends State<TasksListPage> {
             if (tasks.isNotEmpty || isRecentZone) 
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Text(
-                  title,
-                  style: GoogleFonts.outfit(
-                    color: isHovered ? Colors.white : Colors.white.withOpacity(0.9),
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: Text(title, style: GoogleFonts.outfit(color: isHovered ? Colors.white : Colors.white.withOpacity(0.9), fontSize: 15, fontWeight: FontWeight.bold)),
               ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -224,10 +236,7 @@ class _TasksListPageState extends State<TasksListPage> {
               decoration: BoxDecoration(
                 color: isHovered ? Colors.white.withOpacity(0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isHovered ? Colors.white.withOpacity(0.3) : Colors.transparent,
-                  width: 2,
-                ),
+                border: Border.all(color: isHovered ? Colors.white.withOpacity(0.3) : Colors.transparent, width: 2),
               ),
               child: tasks.isEmpty && isRecentZone
                 ? _buildEmptyPlaceholder(isRecentZone)
@@ -240,20 +249,31 @@ class _TasksListPageState extends State<TasksListPage> {
   }
 
   Widget _buildDraggableTask(TaskModel task) {
-    return Draggable<TaskModel>(
-      data: task,
-      axis: Axis.vertical,
-      feedback: Material(
-        color: Colors.transparent,
-        child: Container(
-          width: MediaQuery.of(context).size.width - 64,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)]),
-          child: Text(task.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 15)),
-        ),
+    return Dismissible(
+      key: Key(task.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) => _taskService.deleteTask(task.id),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.8), borderRadius: BorderRadius.circular(20)),
+        child: const Icon(CupertinoIcons.trash, color: Colors.white),
       ),
-      childWhenDragging: Opacity(opacity: 0.3, child: _buildTaskCard(task)),
-      child: _buildTaskCard(task),
+      child: Draggable<TaskModel>(
+        data: task,
+        axis: Axis.vertical,
+        feedback: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: MediaQuery.of(context).size.width - 64,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)]),
+            child: Text(task.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 15)),
+          ),
+        ),
+        childWhenDragging: Opacity(opacity: 0.3, child: _buildTaskCard(task)),
+        child: _buildTaskCard(task),
+      ),
     );
   }
 
@@ -269,7 +289,12 @@ class _TasksListPageState extends State<TasksListPage> {
         ),
         child: Row(
           children: [
-            Expanded(child: Text(task.title, style: GoogleFonts.outfit(color: task.isCompleted ? Colors.white.withOpacity(0.5) : Colors.white, fontSize: 15, decoration: task.isCompleted ? TextDecoration.lineThrough : null))),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => _showTaskModal(existingTask: task),
+                child: Text(task.title, style: GoogleFonts.outfit(color: task.isCompleted ? Colors.white.withOpacity(0.5) : Colors.white, fontSize: 15, decoration: task.isCompleted ? TextDecoration.lineThrough : null)),
+              ),
+            ),
             GestureDetector(
               onTap: () => _taskService.toggleTask(task.id, task.isCompleted),
               child: Icon(task.isCompleted ? CupertinoIcons.checkmark_circle_fill : CupertinoIcons.circle, color: task.isCompleted ? Colors.green : Colors.white.withOpacity(0.5), size: 22),
@@ -292,7 +317,7 @@ class _TasksListPageState extends State<TasksListPage> {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: ElevatedButton(
-        onPressed: _showAddTaskModal,
+        onPressed: () => _showTaskModal(),
         style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, minimumSize: const Size(double.infinity, 60), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
         child: const Text('Add New Task', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
