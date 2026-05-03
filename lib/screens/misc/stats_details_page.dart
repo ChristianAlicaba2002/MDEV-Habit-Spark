@@ -304,7 +304,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     return StreamBuilder<double>(
       stream: _healthService.getTypeTotalForPeriod(type, start, end),
       builder: (context, snapshot) {
-        String total = snapshot.hasData ? snapshot.data!.toStringAsFixed(snapshot.data! % 1 == 0 ? 0 : 1) : '0';
+        double total = snapshot.data ?? 0.0;
         return _buildTotalView(label, total, unit, status, color);
       },
     );
@@ -431,8 +431,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     return value == 0 ? "0" : (value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1));
   }
 
-  Widget _buildTotalView(String label, String totalStr, String unit, String status, Color color) {
-    double value = double.tryParse(totalStr) ?? 0.0;
+  Widget _buildTotalView(String label, double value, String unit, String status, Color color) {
     String smartUnit = _getSmartUnit(label, value);
     String formattedValue = _formatTotalValue(value, unit);
     bool isTime = unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins' || unit.toLowerCase() == 'secs';
