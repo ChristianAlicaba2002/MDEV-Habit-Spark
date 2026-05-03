@@ -194,7 +194,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   searchController: _searchController,
                   onAddHabit: _showAddHabitDialog,
                   onProfileTap: () => setState(() => _selectedIndex = 3),
-                  onStatsTap: () => setState(() => _selectedIndex = 2),
                 ),
                 CheckInTab(
                   habits: habits,
