@@ -1,15 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/services/fcm_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: '82887882958-lkomt7qtpbgg34bp05tfndqnu9fd49n5.apps.googleusercontent.com',
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -127,8 +126,10 @@ class AuthService {
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
+      debugPrint('Firebase Auth Error during Google Sign-In: ${e.code} - ${e.message}');
       throw _handleAuthException(e);
     } catch (e) {
+      debugPrint('Generic Error during Google Sign-In: $e');
       throw 'Google sign-in failed: $e';
     }
   }

@@ -328,34 +328,49 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        height: 60,
-        padding: EdgeInsets.symmetric(horizontal: selected ? 20 : 12),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+        height: 56,
+        padding: EdgeInsets.symmetric(
+          horizontal: selected ? 20 : 16,
+        ),
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(28),
           border: selected ? null : Border.all(color: Colors.white.withOpacity(0.2)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               selected ? activeIcon : icon,
               size: 24,
               color: selected ? const Color(0xFF0A1F1F) : Colors.white,
             ),
-            if (selected) ...[
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Color(0xFF0A1F1F),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+            // Stable animation for the text
+            ClipRect(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: !selected
+                    ? const SizedBox.shrink()
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(width: 10),
+                          Text(
+                            label,
+                            style: const TextStyle(
+                              color: Color(0xFF0A1F1F),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
-            ],
+            ),
           ],
         ),
       ),
