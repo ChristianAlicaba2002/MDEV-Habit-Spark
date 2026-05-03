@@ -18,7 +18,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.7,
+          height: MediaQuery.of(context).size.height * 0.65,
           decoration: BoxDecoration(
             color: const Color(0xFF1D3D3D).withOpacity(0.95),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -56,19 +56,21 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                     child: Column(
                       children: [
                         Container(
-                          height: 45,
+                          height: 50,
+                          padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: TabBar(
                             indicator: BoxDecoration(
                               color: color.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(15),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: color.withOpacity(0.3)),
                             ),
                             labelColor: color,
                             unselectedLabelColor: Colors.white54,
+                            indicatorSize: TabBarIndicatorSize.tab,
                             labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
                             tabs: const [
                               Tab(text: 'Today'),
@@ -77,14 +79,14 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 40),
                         SizedBox(
-                          height: 250,
+                          height: 220,
                           child: TabBarView(
                             children: [
-                              _buildPeriodView('Today\'s Performance', 'High', '75%', color, [0.3, 0.5, 0.8, 0.4, 0.9]),
-                              _buildPeriodView('Weekly Performance', 'Average', '62%', color, [0.4, 0.7, 0.9, 0.5, 0.8, 0.6, 0.3]),
-                              _buildPeriodView('Monthly Performance', 'Great', '88%', color, [0.2, 0.5, 0.3, 0.8, 0.4, 0.7, 0.9, 0.6, 0.4, 0.8, 0.5, 0.7]),
+                              _buildTotalView('Current Total', '5,400', unit, 'Excellent', color),
+                              _buildTotalView('Weekly Total', '35,210', unit, 'On Track', color),
+                              _buildTotalView('Monthly Total', '142,800', unit, 'Great', color),
                             ],
                           ),
                         ),
@@ -102,7 +104,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
-                          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                          side: const BorderSide(color: Colors.white10),
                         ),
                       ),
                       child: const Text('Close'),
@@ -117,49 +119,51 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     );
   }
 
-  Widget _buildPeriodView(String subtitle, String status, String percentage, Color color, List<double> chartData) {
+  Widget _buildTotalView(String label, String total, String unit, String status, Color color) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14, letterSpacing: 1.0)),
+        const SizedBox(height: 12),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(subtitle, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
-                const SizedBox(height: 4),
-                Text(status, style: GoogleFonts.outfit(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
+            Text(
+              total,
+              style: GoogleFonts.outfit(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold),
             ),
-            Text(percentage, style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                unit.toUpperCase(),
+                style: GoogleFonts.outfit(color: color, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 32),
-        SizedBox(
-          height: 120,
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withOpacity(0.2)),
+          ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: chartData.map((h) => _buildMiniChartBar(h, color)).toList(),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(CupertinoIcons.checkmark_seal_fill, color: color, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Status: $status',
+                style: GoogleFonts.outfit(color: color, fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildMiniChartBar(double height, Color color) {
-    return Container(
-      width: 12,
-      height: 100 * height,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [color.withOpacity(0.8), color.withOpacity(0.1)],
-        ),
-        borderRadius: BorderRadius.circular(4),
-      ),
     );
   }
 
