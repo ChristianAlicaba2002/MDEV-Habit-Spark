@@ -65,68 +65,70 @@ class DashboardTab extends StatelessWidget {
             // ── Custom App Bar
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    Stack(
-                      children: [
-                        RoundIconButton(
-                          icon: CupertinoIcons.bell,
-                          onTap: () {},
-                          outlined: true,
-                        ),
-                        Positioned(
-                          right: 12,
-                          top: 12,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Greeting & Date
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w300,
-                          height: 1.2,
-                        ),
-                        children: [
-                          const TextSpan(text: 'Welcome, '),
-                          TextSpan(
-                            text: userName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w300,
+                                    height: 1.2,
+                                  ),
+                                  children: [
+                                    const TextSpan(text: 'Welcome, '),
+                                    TextSpan(
+                                      text: userName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    const TextSpan(text: '!'),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Today is ${DateFormat('dd MMMM yyyy').format(DateTime.now())}',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.5),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
-                          const TextSpan(text: '!'),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Today is ${DateFormat('dd MMMM yyyy').format(DateTime.now())}',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
-                        fontSize: 16,
-                      ),
+                        ),
+                        const SizedBox(width: 16),
+                        Stack(
+                          children: [
+                            RoundIconButton(
+                              icon: CupertinoIcons.bell,
+                              onTap: () {},
+                              outlined: true,
+                            ),
+                            Positioned(
+                              right: 12,
+                              top: 12,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
