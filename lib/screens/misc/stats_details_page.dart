@@ -271,9 +271,15 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                           height: 280,
                           child: TabBarView(
                             children: [
-                              _buildTotalStreamView('Today\'s Total', title, unit, 'Excellent', color, DateTime.now(), DateTime.now().add(const Duration(days: 1))),
-                              _buildTotalStreamView('Weekly Total', title, unit, 'On Track', color, DateTime.now().subtract(const Duration(days: 7)), DateTime.now()),
-                              _buildTotalStreamView('Monthly Total', title, unit, 'Great', color, DateTime.now().subtract(const Duration(days: 30)), DateTime.now()),
+                              _buildTotalStreamView('Today\'s Total', title, unit, 'Excellent', color, 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day), 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(const Duration(days: 1))),
+                              _buildTotalStreamView('Weekly Total', title, unit, 'On Track', color, 
+                                  DateTime.now().subtract(const Duration(days: 7)), 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(const Duration(days: 1))),
+                              _buildTotalStreamView('Monthly Total', title, unit, 'Great', color, 
+                                  DateTime.now().subtract(const Duration(days: 30)), 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(const Duration(days: 1))),
                               _buildHistoryCalendarView(color, unit, setModalState),
                             ],
                           ),
