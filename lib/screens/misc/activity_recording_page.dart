@@ -109,34 +109,51 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
                   ],
                 ),
                 const Spacer(),
-                // Controls
+                // 3-Button Controls
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildControlButton(
-                      _isRunning ? CupertinoIcons.pause_fill : CupertinoIcons.play_fill,
-                      () {
-                        setState(() {
-                          if (_isRunning) {
-                            _stopwatch.stop();
-                          } else {
-                            _stopwatch.start();
-                          }
-                          _isRunning = !_isRunning;
-                        });
-                      },
-                      widget.themeColor,
-                    ),
-                    const SizedBox(width: 32),
+                    // Finish Button (Left)
                     _buildControlButton(
                       CupertinoIcons.stop_fill,
                       () => Navigator.pop(context),
                       Colors.redAccent,
+                      label: 'FINISH',
+                      isSmall: true,
+                    ),
+                    // Start/Resume Button (Center)
+                    _buildControlButton(
+                      CupertinoIcons.play_fill,
+                      () {
+                        if (!_isRunning) {
+                          setState(() {
+                            _stopwatch.start();
+                            _isRunning = true;
+                          });
+                        }
+                      },
+                      _isRunning ? widget.themeColor.withOpacity(0.3) : widget.themeColor,
+                      label: 'START',
+                      isLarge: true,
+                    ),
+                    // Pause Button (Right)
+                    _buildControlButton(
+                      CupertinoIcons.pause_fill,
+                      () {
+                        if (_isRunning) {
+                          setState(() {
+                            _stopwatch.stop();
+                            _isRunning = false;
+                          });
+                        }
+                      },
+                      !_isRunning ? Colors.amberAccent.withOpacity(0.3) : Colors.amberAccent,
+                      label: 'PAUSE',
                       isSmall: true,
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -161,20 +178,29 @@ class _ActivityRecordingPageState extends State<ActivityRecordingPage> {
     );
   }
 
-  Widget _buildControlButton(IconData icon, VoidCallback onTap, Color color, {bool isSmall = false}) {
-    double size = isSmall ? 65 : 95;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          shape: BoxShape.circle,
-          border: Border.all(color: color.withOpacity(0.5), width: 2),
+  Widget _buildControlButton(IconData icon, VoidCallback onTap, Color color, {required String label, bool isLarge = false, bool isSmall = false}) {
+    double size = isLarge ? 90 : 70;
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: color.withOpacity(0.5), width: 2),
+            ),
+            child: Icon(icon, color: color, size: size * 0.4),
+          ),
         ),
-        child: Icon(icon, color: color, size: size * 0.4),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: GoogleFonts.outfit(color: color.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+        ),
+      ],
     );
   }
 }
