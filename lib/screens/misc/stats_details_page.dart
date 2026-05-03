@@ -271,9 +271,15 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                           height: 280,
                           child: TabBarView(
                             children: [
-                              _buildTotalStreamView('Today\'s Total', title, unit, 'Excellent', color, DateTime.now(), DateTime.now().add(const Duration(days: 1))),
-                              _buildTotalStreamView('Weekly Total', title, unit, 'On Track', color, DateTime.now().subtract(const Duration(days: 7)), DateTime.now()),
-                              _buildTotalStreamView('Monthly Total', title, unit, 'Great', color, DateTime.now().subtract(const Duration(days: 30)), DateTime.now()),
+                              _buildTotalStreamView('Today\'s Total', title, unit, 'Excellent', color, 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day), 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(const Duration(days: 1))),
+                              _buildTotalStreamView('Weekly Total', title, unit, 'On Track', color, 
+                                  DateTime.now().subtract(const Duration(days: 7)), 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(const Duration(days: 1))),
+                              _buildTotalStreamView('Monthly Total', title, unit, 'Great', color, 
+                                  DateTime.now().subtract(const Duration(days: 30)), 
+                                  DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(const Duration(days: 1))),
                               _buildHistoryCalendarView(color, unit, setModalState),
                             ],
                           ),
@@ -298,7 +304,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     return StreamBuilder<double>(
       stream: _healthService.getTypeTotalForPeriod(type, start, end),
       builder: (context, snapshot) {
-        String total = snapshot.hasData ? snapshot.data!.toStringAsFixed(snapshot.data! % 1 == 0 ? 0 : 1) : '0';
+        double total = snapshot.data ?? 0.0;
         return _buildTotalView(label, total, unit, status, color);
       },
     );
@@ -425,8 +431,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     return value == 0 ? "0" : (value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1));
   }
 
-  Widget _buildTotalView(String label, String totalStr, String unit, String status, Color color) {
-    double value = double.tryParse(totalStr) ?? 0.0;
+  Widget _buildTotalView(String label, double value, String unit, String status, Color color) {
     String smartUnit = _getSmartUnit(label, value);
     String formattedValue = _formatTotalValue(value, unit);
     bool isTime = unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins' || unit.toLowerCase() == 'secs';
@@ -581,29 +586,42 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
   void _showActivityOptions(String type, Color color) {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: Text('Manage $type', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _showCreateActivityModal(editOldName: type);
-            },
-            child: const Text('Edit Activity'),
-          ),
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context);
-              _showDeleteConfirmation(type);
-            },
-            child: const Text('Delete Activity'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+      builder: (context) => StreamBuilder<bool>(
+        stream: _healthService.isActivityPinned(type),
+        builder: (context, snapshot) {
+          final isPinned = snapshot.data ?? false;
+          return CupertinoActionSheet(
+            title: Text('Manage $type', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+            actions: [
+              CupertinoActionSheetAction(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _healthService.togglePinActivity(type, !isPinned);
+                },
+                child: Text(isPinned ? 'Unpin from Dashboard' : 'Pin to Dashboard'),
+              ),
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showCreateActivityModal(editOldName: type);
+                },
+                child: const Text('Edit Activity'),
+              ),
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation(type);
+                },
+                child: const Text('Delete Activity'),
+              ),
+            ],
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          );
+        }
       ),
     );
   }

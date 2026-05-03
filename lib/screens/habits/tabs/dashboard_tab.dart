@@ -11,6 +11,7 @@ import 'package:habit_spark/screens/misc/tasks_list_page.dart';
 import 'package:habit_spark/screens/misc/stats_details_page.dart';
 import 'package:habit_spark/models/task_model.dart';
 import 'package:habit_spark/services/task_service.dart';
+import 'package:habit_spark/services/health_service.dart';
 import 'package:shimmer/shimmer.dart';
 
 class DashboardTab extends StatelessWidget {
@@ -30,6 +31,7 @@ class DashboardTab extends StatelessWidget {
   final VoidCallback onAddHabit;
   final VoidCallback onProfileTap;
   final TaskService _taskService = TaskService();
+  final HealthService _healthService = HealthService();
 
   DashboardTab({
     super.key,
@@ -185,55 +187,66 @@ class DashboardTab extends StatelessWidget {
 
             // ── Streak Card
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 24),
+              child: StreamBuilder<Map<String, dynamic>>(
+                stream: streakService.getStreakStream(userId),
+                builder: (context, snapshot) {
+                  final streakData = snapshot.data;
+                  final currentStreak = streakData?['currentStreak'] ?? 0;
+                  
+                  // For the progress bar, use 7-day milestones
+                  final progress = currentStreak == 0 ? 0.0 : (currentStreak % 7 == 0 ? 1.0 : (currentStreak % 7) / 7);
+                  final streakText = currentStreak == 0 ? "Start your streak! 🔥" : "$currentStreak-Day Streak 🔥";
+
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "5-Day Streak 🔥",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.2),
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(height: 8),
-                            // Mini completion bar
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: LinearProgressIndicator(
-                                value: 5 / 7,
-                                backgroundColor: Colors.white.withOpacity(0.1),
-                                valueColor: const AlwaysStoppedAnimation(Colors.orange),
-                                minHeight: 6,
-                              ),
+                            child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 24),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  streakText,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 8),
+                                // Mini completion bar
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    backgroundColor: Colors.white.withOpacity(0.1),
+                                    valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                                    minHeight: 6,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
 
-            // ── Today's Stats Header
             _DashboardSectionHeader(
               title: "Today's stats",
               onTap: () {
@@ -244,45 +257,46 @@ class DashboardTab extends StatelessWidget {
               },
             ),
 
-            // ── Stats Horizontal List
+            // ── Stats Horizontal List (Dynamic Pinned Activities)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 160,
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  children: const [
-                    _HealthStatCard(
-                      title: 'Step to wall',
-                      value: '5,400',
-                      unit: 'steps',
-                      progress: 0.7,
-                      badge: 'Good',
-                      icon: CupertinoIcons.paw,
-                      showAddButton: true,
-                    ),
-                    SizedBox(width: 16),
-                    _HealthStatCard(
-                      title: 'Cal burnt',
-                      value: '312',
-                      unit: 'KCAL',
-                      progress: 0.4,
-                      badge: 'Average',
-                      icon: CupertinoIcons.flame_fill,
-                      showAddButton: true,
-                    ),
-                    SizedBox(width: 16),
-                    _HealthStatCard(
-                      title: 'Kilometers',
-                      value: '4.2',
-                      unit: 'KM',
-                      progress: 0.8,
-                      badge: 'Good',
-                      icon: CupertinoIcons.location_fill,
-                      showAddButton: false,
-                    ),
-                  ],
+                child: StreamBuilder<List<String>>(
+                  stream: _healthService.getPinnedActivitiesStream(userId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CupertinoActivityIndicator(color: Colors.orangeAccent));
+                    }
+                    
+                    final pinnedTypes = snapshot.data ?? [];
+                    
+                    if (pinnedTypes.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Center(
+                          child: Text(
+                            "Pin activities from 'View more' to see them here!",
+                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: pinnedTypes.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final type = pinnedTypes[index];
+                        return _PinnedStatCard(
+                          type: type,
+                          healthService: _healthService,
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ),
@@ -363,36 +377,6 @@ class DashboardTab extends StatelessWidget {
               },
             ),
 
-            // ── Today's Workout Header
-            _DashboardSectionHeader(
-              title: "Today's workout",
-              onTap: () {},
-            ),
-
-            // ── Focus Mode (Pomodoro Timer)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
-                child: _FocusModeCard(),
-              ),
-            ),
-
-            // ── Large Workout Card
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: _LargeWorkoutCard(
-                  title: 'Upper body\nstrength',
-                  subtitle: '16 exercises',
-                  stats: const [
-                    _WorkoutBadge(icon: CupertinoIcons.stopwatch, label: '350 Cal'),
-                    _WorkoutBadge(icon: CupertinoIcons.flame_fill, label: '350 Cal'),
-                  ],
-                  imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800',
-                ),
-              ),
-            ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 140)),
           ],
         ),
@@ -401,89 +385,7 @@ class DashboardTab extends StatelessWidget {
   }
 }
 
-class _FocusModeCard extends StatefulWidget {
-  const _FocusModeCard();
 
-  @override
-  State<_FocusModeCard> createState() => _FocusModeCardState();
-}
-
-class _FocusModeCardState extends State<_FocusModeCard> {
-  bool _isActive = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(CupertinoIcons.timer, color: Colors.blueAccent, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Focus Mode", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(
-                    _isActive ? "25:00 remaining" : "25-min deep work",
-                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          GestureDetector(
-            onTap: () => setState(() => _isActive = !_isActive),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: _isActive ? Colors.redAccent.withOpacity(0.2) : Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _isActive ? Colors.redAccent.withOpacity(0.5) : Colors.white.withOpacity(0.2),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _isActive ? CupertinoIcons.stop_fill : CupertinoIcons.play_fill,
-                    color: _isActive ? Colors.redAccent : Colors.white,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _isActive ? "Stop" : "Start",
-                    style: TextStyle(
-                      color: _isActive ? Colors.redAccent : Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _DailyTaskItem extends StatelessWidget {
   final String title;
@@ -581,6 +483,103 @@ class _DashboardSectionHeader extends StatelessWidget {
   }
 }
 
+class _PinnedStatCard extends StatelessWidget {
+  final String type;
+  final HealthService healthService;
+
+  const _PinnedStatCard({required this.type, required this.healthService});
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime now = DateTime.now();
+    DateTime start = DateTime(now.year, now.month, now.day);
+    DateTime end = start.add(const Duration(days: 1));
+
+    return StreamBuilder<double>(
+      stream: healthService.getTypeTotalForPeriod(type, start, end),
+      builder: (context, snapshot) {
+        final value = snapshot.data ?? 0.0;
+        final unit = _getDefaultUnit(type);
+        final color = _getThemeColor(type);
+        final icon = _getThemeIcon(type);
+        final formattedValue = _formatTotalValue(value, unit);
+        
+        return _HealthStatCard(
+          title: type.toUpperCase(),
+          value: formattedValue,
+          unit: _getSmartUnit(type, value),
+          progress: (value / 10000).clamp(0.0, 1.0), // Simplified goal
+          badge: value > 0 ? 'Active' : 'Start',
+          icon: icon,
+          color: color,
+        );
+      },
+    );
+  }
+
+  // Helper methods duplicated from StatsDetailsPage for consistency
+  String _getSmartUnit(String type, double value) {
+    final t = type.toLowerCase();
+    if (t.contains('step')) return 'steps';
+    if (t.contains('walk') || t.contains('run') || t.contains('bike') || t.contains('cycle') || t.contains('distance')) return 'km';
+    if (t.contains('eat') || t.contains('water') || t.contains('drink')) return 'ml';
+    double seconds = value * 3600;
+    if (seconds < 60) return 'secs';
+    if (seconds < 3600) return 'mins';
+    return 'hrs';
+  }
+
+  String _formatTotalValue(double value, String unit) {
+    if (unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins' || unit.toLowerCase() == 'secs') {
+      int totalSeconds = unit.toLowerCase() == 'hrs' ? (value * 3600).round() : (unit.toLowerCase() == 'mins' ? (value * 60).round() : value.round());
+      if (totalSeconds < 60) return "$totalSeconds";
+      int m = totalSeconds ~/ 60;
+      int s = totalSeconds % 60;
+      if (m < 60) return "$m:${s.toString().padLeft(2, '0')}";
+      int h = m ~/ 60;
+      int remM = m % 60;
+      return "$h:${remM.toString().padLeft(2, '0')}";
+    }
+    return value == 0 ? "0" : (value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1));
+  }
+
+  Color _getThemeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return Colors.tealAccent;
+      case 'calories': return Colors.orangeAccent;
+      case 'distance': return Colors.blueAccent;
+      case 'sleep': return Colors.purpleAccent;
+      case 'gym': return Colors.redAccent;
+      case 'yoga': return Colors.pinkAccent;
+      case 'water': return Colors.cyanAccent;
+      default: return Colors.orangeAccent;
+    }
+  }
+
+  IconData _getThemeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return Icons.directions_walk;
+      case 'calories': return CupertinoIcons.flame;
+      case 'distance': return CupertinoIcons.map;
+      case 'sleep': return CupertinoIcons.moon;
+      case 'gym': return Icons.fitness_center;
+      case 'yoga': return Icons.self_improvement;
+      case 'water': return Icons.local_drink;
+      default: return Icons.bolt;
+    }
+  }
+
+  String _getDefaultUnit(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return 'steps';
+      case 'calories': return 'kcal';
+      case 'distance': return 'km';
+      case 'sleep': return 'hrs';
+      default: return 'unit';
+    }
+  }
+}
+
 class _HealthStatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -588,6 +587,7 @@ class _HealthStatCard extends StatelessWidget {
   final double progress;
   final String badge;
   final IconData icon;
+  final Color color;
   final bool showAddButton;
 
   const _HealthStatCard({
@@ -597,6 +597,7 @@ class _HealthStatCard extends StatelessWidget {
     required this.progress,
     required this.badge,
     required this.icon,
+    required this.color,
     this.showAddButton = false,
   });
 
@@ -661,12 +662,12 @@ class _HealthStatCard extends StatelessWidget {
                     value: progress,
                     strokeWidth: 4,
                     backgroundColor: Colors.white.withOpacity(0.1),
-                    valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                    valueColor: AlwaysStoppedAnimation(color),
                   ),
                   Container(
                     width: 32,
                     height: 32,
-                    decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                     child: Icon(icon, color: Colors.white, size: 16),
                   ),
                 ],
@@ -689,130 +690,6 @@ class _HealthStatCard extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LargeWorkoutCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final List<_WorkoutBadge> stats;
-  final String imageUrl;
-
-  const _LargeWorkoutCard({
-    required this.title,
-    required this.subtitle,
-    required this.stats,
-    required this.imageUrl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: 240,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: Stack(
-            children: [
-              // Image on the right
-              Positioned(
-                right: 0,
-                bottom: 0,
-                top: 0,
-                width: 180,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              // Content on the left
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 16,
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: stats,
-                    ),
-                  ],
-                ),
-              ),
-              // Play button
-              Positioned(
-                right: 20,
-                bottom: 20,
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(CupertinoIcons.play_fill, color: Colors.black),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WorkoutBadge extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _WorkoutBadge({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.black, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold),
-          ),
         ],
       ),
     );
