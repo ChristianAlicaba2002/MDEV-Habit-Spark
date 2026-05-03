@@ -8,7 +8,7 @@ import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
 import 'package:habit_spark/screens/misc/tasks_list_page.dart';
-import 'package:habit_spark/screens/misc/stats_details_page.dart';
+// import 'package:habit_spark/screens/misc/stats_details_page.dart'; - Removed as part of stats refactor
 import 'package:habit_spark/models/task_model.dart';
 import 'package:habit_spark/services/task_service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -29,6 +29,7 @@ class DashboardTab extends StatelessWidget {
   final TextEditingController searchController;
   final VoidCallback onAddHabit;
   final VoidCallback onProfileTap;
+  final VoidCallback onStatsTap;
   final TaskService _taskService = TaskService();
 
   DashboardTab({
@@ -48,6 +49,7 @@ class DashboardTab extends StatelessWidget {
     required this.searchController,
     required this.onAddHabit,
     required this.onProfileTap,
+    required this.onStatsTap,
   });
 
   @override
@@ -236,12 +238,7 @@ class DashboardTab extends StatelessWidget {
             // ── Today's Stats Header
             _DashboardSectionHeader(
               title: "Today's stats",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const StatsDetailsPage()),
-                );
-              },
+              onTap: onStatsTap,
             ),
 
             // ── Stats Horizontal List
