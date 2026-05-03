@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class StatsDetailsPage extends StatefulWidget {
   const StatsDetailsPage({super.key});
@@ -18,7 +19,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.65,
+          height: MediaQuery.of(context).size.height * 0.8,
           decoration: BoxDecoration(
             color: const Color(0xFF1D3D3D).withOpacity(0.95),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -44,15 +45,17 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                         child: Icon(icon, color: color, size: 24),
                       ),
                       const SizedBox(width: 16),
-                      Text(
-                        '$title Progress',
-                        style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                      Expanded(
+                        child: Text(
+                          '$title Progress',
+                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 32),
                   DefaultTabController(
-                    length: 3,
+                    length: 4,
                     child: Column(
                       children: [
                         Container(
@@ -71,22 +74,24 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                             labelColor: color,
                             unselectedLabelColor: Colors.white54,
                             indicatorSize: TabBarIndicatorSize.tab,
-                            labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+                            labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 11),
                             tabs: const [
                               Tab(text: 'Today'),
                               Tab(text: 'Weekly'),
                               Tab(text: 'Monthly'),
+                              Tab(icon: Icon(CupertinoIcons.calendar, size: 18)),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 32),
                         SizedBox(
-                          height: 220,
+                          height: 400,
                           child: TabBarView(
                             children: [
                               _buildTotalView('Current Total', '5,400', unit, 'Excellent', color),
                               _buildTotalView('Weekly Total', '35,210', unit, 'On Track', color),
                               _buildTotalView('Monthly Total', '142,800', unit, 'Great', color),
+                              _buildHistoryCalendarView(color, unit),
                             ],
                           ),
                         ),
@@ -116,6 +121,53 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildHistoryCalendarView(Color color, String unit) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Daily History', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('May 2026', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: 31,
+            itemBuilder: (context, index) {
+              int day = index + 1;
+              String value = (day * 150).toString(); // Mock value for demonstration
+              bool isToday = day == DateTime.now().day;
+              return Container(
+                decoration: BoxDecoration(
+                  color: isToday ? color.withOpacity(0.2) : Colors.white.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: isToday ? color.withOpacity(0.4) : Colors.white.withOpacity(0.05)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(day.toString(), style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10)),
+                    const SizedBox(height: 4),
+                    Text(value, style: GoogleFonts.outfit(color: isToday ? color : Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                    Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 7)),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
