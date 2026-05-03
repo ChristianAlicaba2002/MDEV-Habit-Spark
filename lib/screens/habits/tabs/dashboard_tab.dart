@@ -7,6 +7,7 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
+import 'package:habit_spark/screens/misc/tasks_list_page.dart';
 
 class DashboardTab extends StatelessWidget {
   final String userId;
@@ -74,8 +75,10 @@ class DashboardTab extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               RichText(
                                 text: TextSpan(
@@ -106,6 +109,7 @@ class DashboardTab extends StatelessWidget {
                             ],
                           ),
                         ),
+                      ),
                         const SizedBox(width: 16),
                         Stack(
                           children: [
@@ -276,7 +280,14 @@ class DashboardTab extends StatelessWidget {
             // ── Daily Checklist Header
             _DashboardSectionHeader(
               title: "Daily Tasks",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TasksListPage(title: 'Daily Tasks'),
+                  ),
+                );
+              },
             ),
 
             // ── Daily Checklist Items
