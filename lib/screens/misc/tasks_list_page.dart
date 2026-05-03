@@ -173,12 +173,20 @@ class _TasksListPageState extends State<TasksListPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 12),
+          padding: const EdgeInsets.only(top: 16, bottom: 10),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: Colors.white54),
+              Icon(icon, size: 16, color: Colors.white),
               const SizedBox(width: 8),
-              Text(title, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ],
           ),
         ),
@@ -200,16 +208,26 @@ class _TasksListPageState extends State<TasksListPage> {
           children: [
             if (tasks.isNotEmpty || isRecentZone) 
               Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(title, style: GoogleFonts.outfit(color: isHovered ? Colors.white : Colors.white70, fontSize: 18, fontWeight: FontWeight.w600)),
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    color: isHovered ? Colors.white : Colors.white.withOpacity(0.9),
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
-                color: isHovered ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.02),
+                color: isHovered ? Colors.white.withOpacity(0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: isHovered ? Colors.white.withOpacity(0.5) : Colors.white.withOpacity(0.05)),
+                border: Border.all(
+                  color: isHovered ? Colors.white.withOpacity(0.3) : Colors.transparent,
+                  width: 2,
+                ),
               ),
               child: tasks.isEmpty && isRecentZone
                 ? _buildEmptyPlaceholder(isRecentZone)
