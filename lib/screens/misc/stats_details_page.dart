@@ -370,28 +370,55 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     );
   }
 
-  String _formatTotalValue(double value, String unit) {
-    if (unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins') {
-      // Convert to seconds
-      int totalSeconds = unit.toLowerCase() == 'hrs' 
-          ? (value * 3600).round() 
-          : (value * 60).round();
-      
-      int h = totalSeconds ~/ 3600;
-      int m = (totalSeconds % 3600) ~/ 60;
-      int s = totalSeconds % 60;
-      return "${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}";
+  String _getSmartUnit(String type, double value) {
+    final t = type.toLowerCase();
+    if (t.contains('step')) {
+      return 'steps';
+    }
+    if (t.contains('walk') || t.contains('run') || t.contains('bike') || t.contains('cycle') || t.contains('distance')) {
+      return 'km';
+    }
+    if (t.contains('eat') || t.contains('water') || t.contains('drink')) {
+      return 'ml';
     }
     
-    // Default number formatting for steps, km, etc.
+    // Time-based detection
+    double seconds = value * 3600;
+    if (seconds < 60) return 'secs';
+    if (seconds < 3600) return 'mins';
+    return 'hrs';
+  }
+
+  String _formatTotalValue(double value, String unit) {
+    if (unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins' || unit.toLowerCase() == 'secs') {
+      int totalSeconds = unit.toLowerCase() == 'hrs' 
+          ? (value * 3600).round() 
+          : (unit.toLowerCase() == 'mins' ? (value * 60).round() : value.round());
+      
+      if (totalSeconds < 60) {
+        return "$totalSeconds";
+      }
+      
+      int m = totalSeconds ~/ 60;
+      int s = totalSeconds % 60;
+      
+      if (m < 60) {
+        return "$m:${s.toString().padLeft(2, '0')}";
+      }
+      
+      int h = m ~/ 60;
+      int remM = m % 60;
+      return "$h:${remM.toString().padLeft(2, '0')}";
+    }
+    
     return value == 0 ? "0" : (value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1));
   }
 
   Widget _buildTotalView(String label, String totalStr, String unit, String status, Color color) {
-    // We need the raw value to format correctly
     double value = double.tryParse(totalStr) ?? 0.0;
+    String smartUnit = _getSmartUnit(label, value);
     String formattedValue = _formatTotalValue(value, unit);
-    bool isTime = unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins';
+    bool isTime = unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins' || unit.toLowerCase() == 'secs';
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -406,9 +433,17 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
               formattedValue,
               style: GoogleFonts.outfit(
                 color: Colors.white, 
-                fontSize: isTime ? 54 : 48, 
-                fontWeight: FontWeight.bold,
-                letterSpacing: isTime ? -1 : 0,
+                fontSize: isTime ? 64 : 72, 
+                fontWeight: FontWeight.w900,
+                letterSpacing: isTime ? -2 : -1,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Padding(
+              padding: EdgeInsets.only(bottom: isTime ? 12 : 16),
+              child: Text(
+                smartUnit,
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -568,10 +603,19 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                           valueStr, 
                           style: GoogleFonts.outfit(
                             color: Colors.white, 
-                            fontSize: isTime ? 18 : 20, 
-                            fontWeight: FontWeight.bold
+                            fontSize: isTime ? 34 : 38, 
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: isTime ? -1.5 : -1,
                           )
                         ), 
+                        const SizedBox(width: 6),
+                        Padding(
+                          padding: EdgeInsets.only(bottom: isTime ? 6 : 8),
+                          child: Text(
+                            _getSmartUnit(title, current),
+                            style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ]
                     ), 
                     const Spacer(), 
