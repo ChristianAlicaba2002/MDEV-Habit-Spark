@@ -8,6 +8,7 @@ import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
 import 'package:habit_spark/screens/misc/tasks_list_page.dart';
+import 'package:habit_spark/screens/misc/stats_details_page.dart';
 import 'package:habit_spark/models/task_model.dart';
 import 'package:habit_spark/services/task_service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -235,7 +236,12 @@ class DashboardTab extends StatelessWidget {
             // ── Today's Stats Header
             _DashboardSectionHeader(
               title: "Today's stats",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const StatsDetailsPage()),
+                );
+              },
             ),
 
             // ── Stats Horizontal List
