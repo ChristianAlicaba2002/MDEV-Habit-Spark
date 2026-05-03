@@ -18,6 +18,174 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
   DateTime _displayMonth = DateTime.now();
   final HealthService _healthService = HealthService();
 
+  // Modal State
+  final _nameController = TextEditingController();
+  final _valueController = TextEditingController();
+  IconData _selectedIcon = Icons.directions_walk;
+  String _selectedUnit = 'km';
+  
+  final List<String> _unitOptions = ['km', 'm', 'cm', 'hrs', 'mins', 'steps', 'kcal', 'kg', 'ml', 'count'];
+
+  final List<IconData> _iconLibrary = [
+    Icons.directions_walk, Icons.run_circle, Icons.directions_bike, Icons.fitness_center,
+    Icons.self_improvement, Icons.pool, Icons.hiking, Icons.sports_basketball,
+    Icons.sports_soccer, Icons.sports_tennis, Icons.bedtime, Icons.local_drink,
+    Icons.restaurant, Icons.timer, Icons.favorite, Icons.bolt,
+    Icons.psychology, Icons.auto_stories, Icons.edit, Icons.code,
+    Icons.music_note, Icons.brush, Icons.camera_alt, Icons.pets,
+    Icons.cleaning_services, Icons.eco, Icons.savings, Icons.shopping_cart,
+    Icons.work, Icons.home, Icons.celebration, Icons.star,
+    Icons.wb_sunny, Icons.cloud, Icons.umbrella, Icons.landscape
+  ];
+
+  void _showCreateActivityModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1D3D3D).withOpacity(0.98),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+                ),
+                const SizedBox(height: 24),
+                Text('New Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 24),
+                
+                // Icon Selector Grid (30+ icons, no labels)
+                SizedBox(
+                  height: 60,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _iconLibrary.length,
+                    itemBuilder: (context, index) {
+                      final icon = _iconLibrary[index];
+                      bool isSelected = _selectedIcon == icon;
+                      return GestureDetector(
+                        onTap: () => setModalState(() => _selectedIcon = icon),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 50,
+                          margin: const EdgeInsets.only(right: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.tealAccent.withOpacity(0.2) : Colors.white.withOpacity(0.03),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: isSelected ? Colors.tealAccent : Colors.white10),
+                          ),
+                          child: Icon(icon, color: isSelected ? Colors.tealAccent : Colors.white24, size: 24),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Activity Name Input
+                _buildModalTextField('Activity name...', _nameController, CupertinoIcons.pencil),
+                const SizedBox(height: 16),
+                
+                // Value Input
+                _buildModalTextField('0.0', _valueController, CupertinoIcons.number, isNumeric: true),
+                const SizedBox(height: 24),
+                
+                // Unit Selection Chips
+                Text('Choose Unit', style: GoogleFonts.outfit(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 40,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _unitOptions.length,
+                    itemBuilder: (context, index) {
+                      final unit = _unitOptions[index];
+                      bool isSelected = _selectedUnit == unit;
+                      return GestureDetector(
+                        onTap: () => setModalState(() => _selectedUnit = unit),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.orangeAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: isSelected ? Colors.orangeAccent : Colors.white10),
+                          ),
+                          child: Center(
+                            child: Text(unit, style: GoogleFonts.outfit(color: isSelected ? Colors.white : Colors.white38, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Add Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (_nameController.text.isEmpty || _valueController.text.isEmpty) return;
+                      await _healthService.logActivity(
+                        type: _nameController.text,
+                        value: double.parse(_valueController.text),
+                        unit: _selectedUnit,
+                      );
+                      _nameController.clear();
+                      _valueController.clear();
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: Text('Add Activity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModalTextField(String hint, TextEditingController controller, IconData icon, {bool isNumeric = false}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: isNumeric ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        style: GoogleFonts.outfit(color: Colors.white, fontSize: 18),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.white24),
+          prefixIcon: Icon(icon, color: Colors.white24, size: 20),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        ),
+      ),
+    );
+  }
+
   void _showStatProgressModal(String title, String unit, Color color, IconData icon) {
     showModalBottomSheet(
       context: context,
@@ -40,7 +208,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                   Container(
                     width: 40,
                     height: 4,
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -232,7 +400,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         const SizedBox(height: 16),
         Expanded(
           child: StreamBuilder<List<HealthLog>>(
-            stream: _healthService.getDailyLogs(_displayMonth), // This would need to be updated to a monthly stream for a better calendar
+            stream: _healthService.getDailyLogs(_displayMonth),
             builder: (context, snapshot) {
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -244,7 +412,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                 itemCount: daysInMonth,
                 itemBuilder: (context, index) {
                   int day = index + 1;
-                  String value = '0'; // Logic to match log to day would go here
+                  String value = '0';
                   bool isToday = day == DateTime.now().day && _displayMonth.month == DateTime.now().month && _displayMonth.year == DateTime.now().year;
                   
                   return Container(
@@ -552,14 +720,14 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: _showCreateActivityModal,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         ),
         child: Text(
-          'Log Today\'s Activity',
+          'New Activity',
           style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
