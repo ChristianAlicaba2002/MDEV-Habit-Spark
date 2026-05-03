@@ -103,5 +103,51 @@ class HealthService {
       batch.update(doc.reference, {'type': newType.toLowerCase()});
     }
     await batch.commit();
+
+    // Also update pinning if exists
+    final pinDoc = await _db.collection('pinned_activities').doc('${_userId}_$oldType').get();
+    if (pinDoc.exists) {
+      await _db.collection('pinned_activities').doc('${_userId}_$newType').set({
+        'userId': _userId,
+        'type': newType.toLowerCase(),
+        'pinnedAt': FieldValue.serverTimestamp(),
+      });
+      await _db.collection('pinned_activities').doc('${_userId}_$oldType').delete();
+    }
+  }
+
+  // PINNING: Pin or unpin an activity to the dashboard
+  Future<void> togglePinActivity(String type, bool isPinned) async {
+    if (_userId.isEmpty) return;
+    final docId = '${_userId}_${type.toLowerCase()}';
+    
+    if (isPinned) {
+      await _db.collection('pinned_activities').doc(docId).set({
+        'userId': _userId,
+        'type': type.toLowerCase(),
+        'pinnedAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await _db.collection('pinned_activities').doc(docId).delete();
+    }
+  }
+
+  // READ: Get stream of pinned activity types
+  Stream<List<String>> getPinnedActivitiesStream() {
+    return _db
+        .collection('pinned_activities')
+        .where('userId', isEqualTo: _userId)
+        .orderBy('pinnedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data()['type'] as String).toList());
+  }
+
+  // READ: Check if a specific type is pinned
+  Stream<bool> isActivityPinned(String type) {
+    return _db
+        .collection('pinned_activities')
+        .doc('${_userId}_${type.toLowerCase()}')
+        .snapshots()
+        .map((snapshot) => snapshot.exists);
   }
 }

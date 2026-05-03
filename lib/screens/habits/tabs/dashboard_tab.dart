@@ -11,6 +11,7 @@ import 'package:habit_spark/screens/misc/tasks_list_page.dart';
 import 'package:habit_spark/screens/misc/stats_details_page.dart';
 import 'package:habit_spark/models/task_model.dart';
 import 'package:habit_spark/services/task_service.dart';
+import 'package:habit_spark/services/health_service.dart';
 import 'package:shimmer/shimmer.dart';
 
 class DashboardTab extends StatelessWidget {
@@ -30,6 +31,7 @@ class DashboardTab extends StatelessWidget {
   final VoidCallback onAddHabit;
   final VoidCallback onProfileTap;
   final TaskService _taskService = TaskService();
+  final HealthService _healthService = HealthService();
 
   DashboardTab({
     super.key,
@@ -255,45 +257,46 @@ class DashboardTab extends StatelessWidget {
               },
             ),
 
-            // ── Stats Horizontal List
+            // ── Stats Horizontal List (Dynamic Pinned Activities)
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 160,
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  children: const [
-                    _HealthStatCard(
-                      title: 'Step to wall',
-                      value: '5,400',
-                      unit: 'steps',
-                      progress: 0.7,
-                      badge: 'Good',
-                      icon: CupertinoIcons.paw,
-                      showAddButton: true,
-                    ),
-                    SizedBox(width: 16),
-                    _HealthStatCard(
-                      title: 'Cal burnt',
-                      value: '312',
-                      unit: 'KCAL',
-                      progress: 0.4,
-                      badge: 'Average',
-                      icon: CupertinoIcons.flame_fill,
-                      showAddButton: true,
-                    ),
-                    SizedBox(width: 16),
-                    _HealthStatCard(
-                      title: 'Kilometers',
-                      value: '4.2',
-                      unit: 'KM',
-                      progress: 0.8,
-                      badge: 'Good',
-                      icon: CupertinoIcons.location_fill,
-                      showAddButton: false,
-                    ),
-                  ],
+                child: StreamBuilder<List<String>>(
+                  stream: _healthService.getPinnedActivitiesStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CupertinoActivityIndicator(color: Colors.orangeAccent));
+                    }
+                    
+                    final pinnedTypes = snapshot.data ?? [];
+                    
+                    if (pinnedTypes.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Center(
+                          child: Text(
+                            "Pin activities from 'View more' to see them here!",
+                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: pinnedTypes.length,
+                      separatorBuilder: (context, index) => const SizedBox(width: 16),
+                      itemBuilder: (context, index) {
+                        final type = pinnedTypes[index];
+                        return _PinnedStatCard(
+                          type: type,
+                          healthService: _healthService,
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ),
@@ -480,6 +483,103 @@ class _DashboardSectionHeader extends StatelessWidget {
   }
 }
 
+class _PinnedStatCard extends StatelessWidget {
+  final String type;
+  final HealthService healthService;
+
+  const _PinnedStatCard({required this.type, required this.healthService});
+
+  @override
+  Widget build(BuildContext context) {
+    DateTime now = DateTime.now();
+    DateTime start = DateTime(now.year, now.month, now.day);
+    DateTime end = start.add(const Duration(days: 1));
+
+    return StreamBuilder<double>(
+      stream: healthService.getTypeTotalForPeriod(type, start, end),
+      builder: (context, snapshot) {
+        final value = snapshot.data ?? 0.0;
+        final unit = _getDefaultUnit(type);
+        final color = _getThemeColor(type);
+        final icon = _getThemeIcon(type);
+        final formattedValue = _formatTotalValue(value, unit);
+        
+        return _HealthStatCard(
+          title: type.toUpperCase(),
+          value: formattedValue,
+          unit: _getSmartUnit(type, value),
+          progress: (value / 10000).clamp(0.0, 1.0), // Simplified goal
+          badge: value > 0 ? 'Active' : 'Start',
+          icon: icon,
+          color: color,
+        );
+      },
+    );
+  }
+
+  // Helper methods duplicated from StatsDetailsPage for consistency
+  String _getSmartUnit(String type, double value) {
+    final t = type.toLowerCase();
+    if (t.contains('step')) return 'steps';
+    if (t.contains('walk') || t.contains('run') || t.contains('bike') || t.contains('cycle') || t.contains('distance')) return 'km';
+    if (t.contains('eat') || t.contains('water') || t.contains('drink')) return 'ml';
+    double seconds = value * 3600;
+    if (seconds < 60) return 'secs';
+    if (seconds < 3600) return 'mins';
+    return 'hrs';
+  }
+
+  String _formatTotalValue(double value, String unit) {
+    if (unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins' || unit.toLowerCase() == 'secs') {
+      int totalSeconds = unit.toLowerCase() == 'hrs' ? (value * 3600).round() : (unit.toLowerCase() == 'mins' ? (value * 60).round() : value.round());
+      if (totalSeconds < 60) return "$totalSeconds";
+      int m = totalSeconds ~/ 60;
+      int s = totalSeconds % 60;
+      if (m < 60) return "$m:${s.toString().padLeft(2, '0')}";
+      int h = m ~/ 60;
+      int remM = m % 60;
+      return "$h:${remM.toString().padLeft(2, '0')}";
+    }
+    return value == 0 ? "0" : (value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1));
+  }
+
+  Color _getThemeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return Colors.tealAccent;
+      case 'calories': return Colors.orangeAccent;
+      case 'distance': return Colors.blueAccent;
+      case 'sleep': return Colors.purpleAccent;
+      case 'gym': return Colors.redAccent;
+      case 'yoga': return Colors.pinkAccent;
+      case 'water': return Colors.cyanAccent;
+      default: return Colors.orangeAccent;
+    }
+  }
+
+  IconData _getThemeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return Icons.directions_walk;
+      case 'calories': return CupertinoIcons.flame;
+      case 'distance': return CupertinoIcons.map;
+      case 'sleep': return CupertinoIcons.moon;
+      case 'gym': return Icons.fitness_center;
+      case 'yoga': return Icons.self_improvement;
+      case 'water': return Icons.local_drink;
+      default: return Icons.bolt;
+    }
+  }
+
+  String _getDefaultUnit(String type) {
+    switch (type.toLowerCase()) {
+      case 'steps': return 'steps';
+      case 'calories': return 'kcal';
+      case 'distance': return 'km';
+      case 'sleep': return 'hrs';
+      default: return 'unit';
+    }
+  }
+}
+
 class _HealthStatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -487,6 +587,7 @@ class _HealthStatCard extends StatelessWidget {
   final double progress;
   final String badge;
   final IconData icon;
+  final Color color;
   final bool showAddButton;
 
   const _HealthStatCard({
@@ -496,6 +597,7 @@ class _HealthStatCard extends StatelessWidget {
     required this.progress,
     required this.badge,
     required this.icon,
+    required this.color,
     this.showAddButton = false,
   });
 
@@ -560,12 +662,12 @@ class _HealthStatCard extends StatelessWidget {
                     value: progress,
                     strokeWidth: 4,
                     backgroundColor: Colors.white.withOpacity(0.1),
-                    valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                    valueColor: AlwaysStoppedAnimation(color),
                   ),
                   Container(
                     width: 32,
                     height: 32,
-                    decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                     child: Icon(icon, color: Colors.white, size: 16),
                   ),
                 ],

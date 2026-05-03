@@ -586,29 +586,42 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
   void _showActivityOptions(String type, Color color) {
     showCupertinoModalPopup(
       context: context,
-      builder: (context) => CupertinoActionSheet(
-        title: Text('Manage $type', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _showCreateActivityModal(editOldName: type);
-            },
-            child: const Text('Edit Activity'),
-          ),
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context);
-              _showDeleteConfirmation(type);
-            },
-            child: const Text('Delete Activity'),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+      builder: (context) => StreamBuilder<bool>(
+        stream: _healthService.isActivityPinned(type),
+        builder: (context, snapshot) {
+          final isPinned = snapshot.data ?? false;
+          return CupertinoActionSheet(
+            title: Text('Manage $type', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+            actions: [
+              CupertinoActionSheetAction(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _healthService.togglePinActivity(type, !isPinned);
+                },
+                child: Text(isPinned ? 'Unpin from Dashboard' : 'Pin to Dashboard'),
+              ),
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showCreateActivityModal(editOldName: type);
+                },
+                child: const Text('Edit Activity'),
+              ),
+              CupertinoActionSheetAction(
+                isDestructiveAction: true,
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation(type);
+                },
+                child: const Text('Delete Activity'),
+              ),
+            ],
+            cancelButton: CupertinoActionSheetAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          );
+        }
       ),
     );
   }
