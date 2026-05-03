@@ -130,17 +130,29 @@ class _TasksListPageState extends State<TasksListPage> {
         await _taskService.updateTaskStatus(task.id, isRecentZone);
       },
       builder: (context, candidateData, rejectedData) {
+        final isHovered = candidateData.isNotEmpty;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: GoogleFonts.outfit(
+                color: isHovered ? Colors.white : Colors.white70,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 16),
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: candidateData.isNotEmpty ? Colors.white.withOpacity(0.1) : Colors.transparent,
-                borderRadius: BorderRadius.circular(24),
-                border: candidateData.isNotEmpty ? Border.all(color: Colors.white.withOpacity(0.3)) : null,
+                color: isHovered ? Colors.white.withOpacity(0.15) : Colors.white.withOpacity(0.02),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: isHovered ? Colors.white.withOpacity(0.5) : Colors.white.withOpacity(0.05),
+                  width: 2,
+                ),
               ),
               child: tasks.isEmpty 
                 ? _buildEmptyPlaceholder(isRecentZone)
@@ -153,15 +165,25 @@ class _TasksListPageState extends State<TasksListPage> {
   }
 
   Widget _buildDraggableTask(TaskModel task) {
-    return LongPressDraggable<TaskModel>(
+    return Draggable<TaskModel>(
       data: task,
+      axis: Axis.vertical, // Lock to vertical movement for better control
       feedback: Material(
         color: Colors.transparent,
         child: Container(
           width: MediaQuery.of(context).size.width - 48,
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(24)),
-          child: Text(task.title, style: GoogleFonts.outfit(color: Colors.white)),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10),
+            ],
+          ),
+          child: Text(
+            task.title,
+            style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
+          ),
         ),
       ),
       childWhenDragging: Opacity(opacity: 0.3, child: _buildTaskCard(task)),
