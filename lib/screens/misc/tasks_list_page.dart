@@ -3,10 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class TasksListPage extends StatelessWidget {
+class TasksListPage extends StatefulWidget {
   final String title;
 
   const TasksListPage({super.key, required this.title});
+
+  @override
+  State<TasksListPage> createState() => _TasksListPageState();
+}
+
+class _TasksListPageState extends State<TasksListPage> {
+  // Initial tasks that can be modified
+  final List<Map<String, dynamic>> _tasks = [
+    {'title': 'Drink 2L Water', 'isCompleted': true},
+    {'title': 'Read 10 Pages', 'isCompleted': false},
+    {'title': 'Stretch 5 mins', 'isCompleted': false},
+  ];
+
+  void _toggleTask(int index) {
+    setState(() {
+      _tasks[index]['isCompleted'] = !_tasks[index]['isCompleted'];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,15 +33,17 @@ class TasksListPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: false,
         leading: IconButton(
           icon: const Icon(CupertinoIcons.back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          title,
+          widget.title,
           style: GoogleFonts.outfit(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
       ),
@@ -33,101 +53,169 @@ class TasksListPage extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0A1F1F),
-              Color(0xFF1D3D3D),
+              Color(0xFF2C3E3E),
+              Color(0xFF4A6666),
             ],
           ),
         ),
-        child: Stack(
-          children: [
-            // Background blur elements
-            Positioned(
-              top: -100,
-              right: -50,
-              child: _BlurCircle(color: Colors.blue.withOpacity(0.1), size: 300),
-            ),
-            Positioned(
-              bottom: 100,
-              left: -50,
-              child: _BlurCircle(color: Colors.purple.withOpacity(0.1), size: 250),
-            ),
-            
-            // Empty State Content
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  children: [
+                    _buildSectionHeader('Recent Tasks'),
+                    ..._tasks.asMap().entries.map((entry) {
+                      return _buildTaskItem(entry.value, entry.key);
+                    }).toList(),
+                    
+                    const SizedBox(height: 32),
+                    _buildSectionHeader('Other Tasks'),
+                    
+                    // Placeholder for "Other Tasks" empty state
+                    Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      padding: const EdgeInsets.all(40),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            CupertinoIcons.square_stack_3d_up,
+                            size: 48,
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No additional tasks',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white.withOpacity(0.4),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Icon(
-                      CupertinoIcons.square_list,
-                      size: 80,
-                      color: Colors.white.withOpacity(0.2),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'No tasks found',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'You haven\'t added any detailed tasks yet.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(CupertinoIcons.add),
-                    label: const Text('Add New Task'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF0A1F1F),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+              
+              // Bottom Action Area
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  width: double.infinity,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(30),
+                      onTap: () {
+                        // Action to add new task
+                      },
+                      child: Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(CupertinoIcons.add, color: Color(0xFF2C3E3E), size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Add New Task',
+                              style: GoogleFonts.outfit(
+                                color: const Color(0xFF2C3E3E),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _BlurCircle extends StatelessWidget {
-  final Color color;
-  final double size;
-
-  const _BlurCircle({required this.color, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16, top: 8),
+      child: Text(
+        title,
+        style: GoogleFonts.outfit(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
       ),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-        child: Container(color: Colors.transparent),
+    );
+  }
+
+  Widget _buildTaskItem(Map<String, dynamic> task, int index) {
+    final bool isCompleted = task['isCompleted'];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
+        onTap: () => _toggleTask(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isCompleted ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isCompleted ? Colors.green.withOpacity(0.3) : Colors.white.withOpacity(0.1),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  task['title'],
+                  style: GoogleFonts.outfit(
+                    color: isCompleted ? Colors.white.withOpacity(0.5) : Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCompleted ? Colors.green : Colors.transparent,
+                  border: Border.all(
+                    color: isCompleted ? Colors.green : Colors.white.withOpacity(0.5),
+                    width: 2,
+                  ),
+                ),
+                child: isCompleted ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
