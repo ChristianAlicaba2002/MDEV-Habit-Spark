@@ -8,6 +8,9 @@ import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
 import 'package:habit_spark/screens/misc/tasks_list_page.dart';
+import 'package:habit_spark/models/task_model.dart';
+import 'package:habit_spark/services/task_service.dart';
+import 'package:shimmer/shimmer.dart';
 
 class DashboardTab extends StatelessWidget {
   final String userId;
@@ -25,8 +28,9 @@ class DashboardTab extends StatelessWidget {
   final TextEditingController searchController;
   final VoidCallback onAddHabit;
   final VoidCallback onProfileTap;
+  final TaskService _taskService = TaskService();
 
-  const DashboardTab({
+  DashboardTab({
     super.key,
     required this.userId,
     required this.userName,
@@ -284,24 +288,73 @@ class DashboardTab extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const TasksListPage(title: 'Daily Tasks'),
+                    builder: (context) => TasksListPage(title: 'Daily Tasks', userId: userId),
                   ),
                 );
               },
             ),
 
-            // ── Daily Checklist Items
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const _DailyTaskItem(title: "Drink 2L Water", isCompleted: true),
-                  const SizedBox(height: 12),
-                  const _DailyTaskItem(title: "Read 10 Pages", isCompleted: false),
-                  const SizedBox(height: 12),
-                  const _DailyTaskItem(title: "Stretch 5 mins", isCompleted: false),
-                ]),
-              ),
+            // ── Daily Checklist Items (Dynamic Stream)
+            StreamBuilder<List<TaskModel>>(
+              stream: _taskService.getTasksStream(userId),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Center(child: Text("Couldn't load tasks", style: TextStyle(color: Colors.white54))),
+                    ),
+                  );
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SliverToBoxAdapter(
+                    child: Shimmer.fromColors(
+                      baseColor: Colors.white.withOpacity(0.05),
+                      highlightColor: Colors.white.withOpacity(0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          children: List.generate(3, (index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+                          )),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                
+                final tasks = snapshot.data?.where((t) => t.isRecent).toList() ?? [];
+                
+                if (tasks.isEmpty) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Center(child: Text("No recent tasks. Go to 'View more' to add some!", style: TextStyle(color: Colors.white54))),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final task = tasks[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _DailyTaskItem(
+                            title: task.title, 
+                            isCompleted: task.isCompleted,
+                            onToggle: () => _taskService.toggleTask(task.id, task.isCompleted),
+                          ),
+                        );
+                      },
+                      childCount: tasks.length,
+                    ),
+                  ),
+                );
+              },
             ),
 
             // ── Today's Workout Header
@@ -426,49 +479,41 @@ class _FocusModeCardState extends State<_FocusModeCard> {
   }
 }
 
-class _DailyTaskItem extends StatefulWidget {
+class _DailyTaskItem extends StatelessWidget {
   final String title;
   final bool isCompleted;
+  final VoidCallback onToggle;
 
-  const _DailyTaskItem({required this.title, required this.isCompleted});
-
-  @override
-  State<_DailyTaskItem> createState() => _DailyTaskItemState();
-}
-
-class _DailyTaskItemState extends State<_DailyTaskItem> {
-  late bool _isCompleted;
-
-  @override
-  void initState() {
-    super.initState();
-    _isCompleted = widget.isCompleted;
-  }
+  const _DailyTaskItem({
+    required this.title, 
+    required this.isCompleted,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => setState(() => _isCompleted = !_isCompleted),
+      onTap: onToggle,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: _isCompleted ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.12),
+          color: isCompleted ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.12),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: _isCompleted ? Colors.green.withOpacity(0.3) : Colors.white.withOpacity(0.1),
+            color: isCompleted ? Colors.green.withOpacity(0.3) : Colors.white.withOpacity(0.1),
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              widget.title,
+              title,
               style: TextStyle(
-                color: _isCompleted ? Colors.white.withOpacity(0.5) : Colors.white,
+                color: isCompleted ? Colors.white.withOpacity(0.5) : Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                decoration: _isCompleted ? TextDecoration.lineThrough : null,
+                decoration: isCompleted ? TextDecoration.lineThrough : null,
               ),
             ),
             Container(
@@ -476,13 +521,13 @@ class _DailyTaskItemState extends State<_DailyTaskItem> {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _isCompleted ? Colors.green : Colors.transparent,
+                color: isCompleted ? Colors.green : Colors.transparent,
                 border: Border.all(
-                  color: _isCompleted ? Colors.green : Colors.white.withOpacity(0.5),
+                  color: isCompleted ? Colors.green : Colors.white.withOpacity(0.5),
                   width: 2,
                 ),
               ),
-              child: _isCompleted ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+              child: isCompleted ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
             ),
           ],
         ),
