@@ -46,11 +46,11 @@ class StatsDetailsPage extends StatelessWidget {
                 '5,400',
                 'steps',
                 'Good',
-                CupertinoIcons.paw,
+                Icons.directions_walk,
                 0.75,
-                Colors.orange,
+                const Color(0xFF00BFA5), // Vibrant Teal
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildStatDetailCard(
                 'Calories Burnt',
                 '312',
@@ -58,9 +58,9 @@ class StatsDetailsPage extends StatelessWidget {
                 'Average',
                 CupertinoIcons.flame,
                 0.45,
-                Colors.redAccent,
+                const Color(0xFFFFAB40), // Soft Amber
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildStatDetailCard(
                 'Distance',
                 '4.2',
@@ -68,9 +68,9 @@ class StatsDetailsPage extends StatelessWidget {
                 'Great',
                 CupertinoIcons.map,
                 0.85,
-                Colors.blueAccent,
+                const Color(0xFF40C4FF), // Sky Blue
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildStatDetailCard(
                 'Sleep',
                 '7.5',
@@ -78,7 +78,7 @@ class StatsDetailsPage extends StatelessWidget {
                 'Target',
                 CupertinoIcons.moon,
                 0.9,
-                Colors.indigoAccent,
+                const Color(0xFFB388FF), // Lavender
               ),
               const SizedBox(height: 40),
               _buildLogButton(),
@@ -119,7 +119,7 @@ class StatsDetailsPage extends StatelessWidget {
                 'Weekly Progress',
                 style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16),
               ),
-              const Icon(CupertinoIcons.graph_square, color: Colors.orange, size: 20),
+              const Icon(CupertinoIcons.graph_square, color: Color(0xFF00BFA5), size: 20),
             ],
           ),
           const SizedBox(height: 24),
@@ -155,7 +155,7 @@ class StatsDetailsPage extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.orange.withOpacity(0.8), Colors.orange.withOpacity(0.2)],
+              colors: [const Color(0xFF00BFA5).withOpacity(0.8), const Color(0xFF00BFA5).withOpacity(0.2)],
             ),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -166,23 +166,23 @@ class StatsDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatDetailCard(String title, String value, String unit, String badge, IconData icon, double progress, Color color) {
+  Widget _buildStatDetailCard(String title, String value, String unit, String badge, IconData icon, double progress, Color accentColor) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: accentColor.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: accentColor, size: 24),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -211,7 +211,7 @@ class StatsDetailsPage extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     backgroundColor: Colors.white.withOpacity(0.05),
-                    valueColor: AlwaysStoppedAnimation(color),
+                    valueColor: AlwaysStoppedAnimation(accentColor),
                     minHeight: 6,
                   ),
                 ),
@@ -222,13 +222,13 @@ class StatsDetailsPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.2)),
+              border: Border.all(color: accentColor.withOpacity(0.2)),
             ),
             child: Text(
               badge,
-              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -241,13 +241,13 @@ class StatsDetailsPage extends StatelessWidget {
       width: double.infinity,
       height: 60,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
         gradient: const LinearGradient(
-          colors: [Colors.orange, Color(0xFFFF8C00)],
+          colors: [Color(0xFF00BFA5), Color(0xFF00897B)],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: const Color(0xFF00BFA5).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -258,7 +258,7 @@ class StatsDetailsPage extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         ),
         child: Text(
           'Log Today\'s Activity',
