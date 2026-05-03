@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'activity_recording_page.dart';
 
 class StatsDetailsPage extends StatefulWidget {
   const StatsDetailsPage({super.key});
@@ -87,7 +88,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                         ),
                         const SizedBox(height: 32),
                         SizedBox(
-                          height: 400,
+                          height: 280, // Slightly reduced to make room for buttons
                           child: TabBarView(
                             children: [
                               _buildTotalView('Current Total', '5,400', unit, 'Excellent', color),
@@ -101,6 +102,33 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                     ),
                   ),
                   const Spacer(),
+                  // Action Buttons
+                  SizedBox(
+                    width: double.infinity,
+                    height: 60,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context); // Close modal
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ActivityRecordingPage(
+                              activityType: title,
+                              themeColor: color,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(CupertinoIcons.play_fill, size: 20),
+                      label: Text('START RECORDING', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     height: 55,
