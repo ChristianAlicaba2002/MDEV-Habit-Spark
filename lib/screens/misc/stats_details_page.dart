@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'activity_recording_page.dart';
 import '../../services/health_service.dart';
-import '../../models/health_log_model.dart';
+
 
 class StatsDetailsPage extends StatefulWidget {
   const StatsDetailsPage({super.key});
@@ -280,7 +280,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                               _buildTotalStreamView('Monthly Total', title, unit, 'Great', color, 
                                   DateTime.now().subtract(const Duration(days: 30)), 
                                   DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day).add(const Duration(days: 1))),
-                              _buildHistoryCalendarView(color, unit, setModalState),
+                              _buildHistoryCalendarView(color, unit, title, setModalState),
                             ],
                           ),
                         ),
@@ -342,7 +342,7 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
     );
   }
 
-  Widget _buildHistoryCalendarView(Color color, String unit, StateSetter setModalState) {
+  Widget _buildHistoryCalendarView(Color color, String unit, String type, StateSetter setModalState) {
     int daysInMonth = DateUtils.getDaysInMonth(_displayMonth.year, _displayMonth.month);
     String monthYear = DateFormat('MMMM yyyy').format(_displayMonth);
 
@@ -365,18 +365,34 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: StreamBuilder<List<HealthLog>>(
-            stream: _healthService.getDailyLogs(_displayMonth),
+          child: StreamBuilder<Map<int, double>>(
+            stream: _healthService.getMonthlyDailyTotals(type, _displayMonth.year, _displayMonth.month),
             builder: (context, snapshot) {
+              final dailyTotals = snapshot.data ?? {};
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.8),
                 itemCount: daysInMonth,
                 itemBuilder: (context, index) {
                   int day = index + 1;
                   bool isToday = day == DateTime.now().day && _displayMonth.month == DateTime.now().month && _displayMonth.year == DateTime.now().year;
+                  double dayValue = dailyTotals[day] ?? 0.0;
+                  String displayValue = _formatDayValue(dayValue, unit);
+                  bool hasData = dayValue > 0;
                   return Container(
-                    decoration: BoxDecoration(color: isToday ? color.withOpacity(0.2) : Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(10), border: Border.all(color: isToday ? color.withOpacity(0.4) : Colors.white.withOpacity(0.05))),
-                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text(day.toString(), style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10)), const SizedBox(height: 4), Text('0', style: GoogleFonts.outfit(color: isToday ? color : Colors.white, fontSize: 11, fontWeight: FontWeight.bold)), Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 7))]),
+                    decoration: BoxDecoration(
+                      color: isToday ? color.withOpacity(0.2) : (hasData ? color.withOpacity(0.08) : Colors.white.withOpacity(0.03)),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: isToday ? color.withOpacity(0.4) : (hasData ? color.withOpacity(0.25) : Colors.white.withOpacity(0.05))),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(day.toString(), style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10)),
+                        const SizedBox(height: 4),
+                        Text(displayValue, style: GoogleFonts.outfit(color: isToday ? color : (hasData ? color : Colors.white), fontSize: 11, fontWeight: FontWeight.bold)),
+                        Text(unit, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 7)),
+                      ],
+                    ),
                   );
                 },
               );
@@ -385,6 +401,26 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
         ),
       ],
     );
+  }
+
+  /// Compact formatter for calendar day cells (e.g. 1.5 hrs → "1.5", 30 mins → "0:30")
+  String _formatDayValue(double value, String unit) {
+    if (value == 0) return '0';
+    final u = unit.toLowerCase();
+    if (u == 'hrs') {
+      int totalSeconds = (value * 3600).round();
+      if (totalSeconds < 60) return '${totalSeconds}s';
+      int m = totalSeconds ~/ 60;
+      if (m < 60) return '${m}m';
+      int h = m ~/ 60;
+      int remM = m % 60;
+      return remM == 0 ? '${h}h' : '${h}h${remM}m';
+    }
+    if (u == 'mins') {
+      int m = value.round();
+      return '${m}m';
+    }
+    return value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1);
   }
 
   String _getSmartUnit(String type, double value) {
@@ -507,8 +543,8 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
               _buildSectionHeader('Detailed Activity'),
               const SizedBox(height: 16),
               
-              StreamBuilder<List<HealthLog>>(
-                stream: _healthService.getDailyLogs(DateTime.now()),
+              StreamBuilder<List<Map<String, String>>>(
+                stream: _healthService.getAllActivityTypes(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent, fontSize: 10)));
@@ -516,21 +552,29 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CupertinoActivityIndicator(color: Colors.orangeAccent));
                   }
-                  
-                  final activities = snapshot.data ?? [];
-                  final uniqueTypes = activities.map((e) => e.type.toLowerCase()).toSet().toList();
-                  final displayTypes = uniqueTypes.isEmpty ? ['steps', 'calories', 'distance', 'sleep'] : uniqueTypes;
+
+                  final allTypes = snapshot.data ?? [];
+                  // Fall back to defaults if the user has never logged anything
+                  final displayItems = allTypes.isEmpty
+                      ? [
+                          {'type': 'steps', 'unit': 'steps'},
+                          {'type': 'calories', 'unit': 'kcal'},
+                          {'type': 'distance', 'unit': 'km'},
+                          {'type': 'sleep', 'unit': 'hrs'},
+                        ]
+                      : allTypes;
 
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 1.0),
-                    itemCount: displayTypes.length,
+                    itemCount: displayItems.length,
                     itemBuilder: (context, index) {
-                      String type = displayTypes[index];
-                      Color color = _getThemeColor(type);
-                      IconData icon = _getThemeIcon(type);
-                      String unit = activities.firstWhere((e) => e.type.toLowerCase() == type, orElse: () => HealthLog(userId: '', type: type, value: 0, unit: _getDefaultUnit(type), timestamp: DateTime.now())).unit;
+                      final item = displayItems[index];
+                      final type = item['type']!;
+                      final unit = item['unit']!.isEmpty ? _getDefaultUnit(type) : item['unit']!;
+                      final color = _getThemeColor(type);
+                      final icon = _getThemeIcon(type);
                       return _buildHealthStatTile(type.toUpperCase(), unit, 10000, icon, color);
                     },
                   );

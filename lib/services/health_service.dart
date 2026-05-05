@@ -141,6 +141,53 @@ class HealthService {
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()['type'] as String).toList());
   }
 
+  // READ: Get all unique activity types ever logged by this user
+  Stream<List<Map<String, String>>> getAllActivityTypes() {
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .snapshots()
+        .map((snapshot) {
+      final seen = <String>{};
+      final result = <Map<String, String>>[];
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final type = (data['type'] ?? '').toString().toLowerCase();
+        final unit = (data['unit'] ?? '').toString();
+        if (type.isNotEmpty && !seen.contains(type)) {
+          seen.add(type);
+          result.add({'type': type, 'unit': unit});
+        }
+      }
+      return result;
+    });
+  }
+
+  // READ: Get per-day totals for a given type and month (Map<dayOfMonth, total>)
+  Stream<Map<int, double>> getMonthlyDailyTotals(String type, int year, int month) {
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1);
+
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: type.toLowerCase())
+        .snapshots()
+        .map((snapshot) {
+      final Map<int, double> dailyTotals = {};
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
+            timestamp.isBefore(end)) {
+          final day = timestamp.day;
+          dailyTotals[day] = (dailyTotals[day] ?? 0) + (data['value'] ?? 0).toDouble();
+        }
+      }
+      return dailyTotals;
+    });
+  }
+
   // READ: Check if a specific type is pinned
   Stream<bool> isActivityPinned(String type) {
     return _db
