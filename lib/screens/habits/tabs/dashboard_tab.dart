@@ -248,7 +248,7 @@ class DashboardTab extends StatelessWidget {
             ),
 
             _DashboardSectionHeader(
-              title: "Today's stats",
+              title: "Today's Activity",
               onTap: () {
                 Navigator.push(
                   context,
@@ -491,25 +491,24 @@ class _PinnedStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DateTime now = DateTime.now();
-    DateTime start = DateTime(now.year, now.month, now.day);
-    DateTime end = start.add(const Duration(days: 1));
-
-    return StreamBuilder<double>(
-      stream: healthService.getTypeTotalForPeriod(type, start, end),
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: healthService.getActivityMonthlyStats(type),
       builder: (context, snapshot) {
-        final value = snapshot.data ?? 0.0;
-        final unit = _getDefaultUnit(type);
+        final stats = snapshot.data ?? {'total': 0.0, 'unit': ''};
+        final double value = (stats['total'] ?? 0.0) as double;
+        // Use the real stored unit from Firestore; fall back to smart detection
+        final String storedUnit = (stats['unit'] ?? '').toString();
+        final String unit = storedUnit.isNotEmpty ? storedUnit : _getDefaultUnit(type);
         final color = _getThemeColor(type);
         final icon = _getThemeIcon(type);
         final formattedValue = _formatTotalValue(value, unit);
-        
+
         return _HealthStatCard(
           title: type.toUpperCase(),
           value: formattedValue,
-          unit: _getSmartUnit(type, value),
-          progress: (value / 10000).clamp(0.0, 1.0), // Simplified goal
-          badge: value > 0 ? 'Active' : 'Start',
+          unit: _getSmartUnit(type, value, unit),
+          progress: (value / 10000).clamp(0.0, 1.0),
+          badge: value > 0 ? 'Monthly' : 'Start',
           icon: icon,
           color: color,
         );
@@ -518,11 +517,20 @@ class _PinnedStatCard extends StatelessWidget {
   }
 
   // Helper methods duplicated from StatsDetailsPage for consistency
-  String _getSmartUnit(String type, double value) {
+  String _getSmartUnit(String type, double value, [String storedUnit = '']) {
     final t = type.toLowerCase();
     if (t.contains('step')) return 'steps';
     if (t.contains('walk') || t.contains('run') || t.contains('bike') || t.contains('cycle') || t.contains('distance')) return 'km';
     if (t.contains('eat') || t.contains('water') || t.contains('drink')) return 'ml';
+    // If we know the stored unit is time-based, derive display unit from value
+    final su = storedUnit.toLowerCase();
+    if (su == 'hrs' || su == 'mins' || su == 'secs') {
+      double seconds = value * 3600;
+      if (seconds < 60) return 'secs';
+      if (seconds < 3600) return 'mins';
+      return 'hrs';
+    }
+    // Fallback: keyword-free guess
     double seconds = value * 3600;
     if (seconds < 60) return 'secs';
     if (seconds < 3600) return 'mins';

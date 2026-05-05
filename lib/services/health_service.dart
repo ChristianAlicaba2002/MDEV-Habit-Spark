@@ -70,6 +70,63 @@ class HealthService {
     });
   }
 
+  // READ: Monthly total + real stored unit for dashboard cards
+  Stream<Map<String, dynamic>> getActivityMonthlyStats(String type) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, 1);
+    final end = DateTime(now.year, now.month + 1, 1);
+
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: type.toLowerCase())
+        .snapshots()
+        .map((snapshot) {
+      double total = 0;
+      String unit = '';
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
+            timestamp.isBefore(end)) {
+          total += (data['value'] ?? 0).toDouble();
+          if (unit.isEmpty) unit = (data['unit'] ?? '').toString();
+        }
+      }
+      return {'total': total, 'unit': unit};
+    });
+  }
+
+  // READ: Per-day session counts for the current week (Mon=0 … Sun=6), normalized 0–1
+  Stream<Map<int, double>> getWeeklyActivitySummary() {
+    final now = DateTime.now();
+    // Monday of current week
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekStart = DateTime(monday.year, monday.month, monday.day);
+    final weekEnd = weekStart.add(const Duration(days: 7));
+
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .snapshots()
+        .map((snapshot) {
+      final Map<int, double> counts = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        if (timestamp.isAfter(weekStart.subtract(const Duration(seconds: 1))) &&
+            timestamp.isBefore(weekEnd)) {
+          final dayIndex = timestamp.weekday - 1; // 0=Mon, 6=Sun
+          counts[dayIndex] = (counts[dayIndex] ?? 0) + 1.0;
+        }
+      }
+      // Normalize to 0-1 based on the busiest day
+      final maxVal = counts.values.fold(0.0, (a, b) => a > b ? a : b);
+      if (maxVal == 0) return counts;
+      return counts.map((k, v) => MapEntry(k, v / maxVal));
+    });
+  }
+
   // DELETE: Remove a log
   Future<void> deleteLog(String logId) async {
     await _db.collection('health_logs').doc(logId).delete();
@@ -139,6 +196,53 @@ class HealthService {
         .where('userId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()['type'] as String).toList());
+  }
+
+  // READ: Get all unique activity types ever logged by this user
+  Stream<List<Map<String, String>>> getAllActivityTypes() {
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .snapshots()
+        .map((snapshot) {
+      final seen = <String>{};
+      final result = <Map<String, String>>[];
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final type = (data['type'] ?? '').toString().toLowerCase();
+        final unit = (data['unit'] ?? '').toString();
+        if (type.isNotEmpty && !seen.contains(type)) {
+          seen.add(type);
+          result.add({'type': type, 'unit': unit});
+        }
+      }
+      return result;
+    });
+  }
+
+  // READ: Get per-day totals for a given type and month (Map<dayOfMonth, total>)
+  Stream<Map<int, double>> getMonthlyDailyTotals(String type, int year, int month) {
+    final start = DateTime(year, month, 1);
+    final end = DateTime(year, month + 1, 1);
+
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: type.toLowerCase())
+        .snapshots()
+        .map((snapshot) {
+      final Map<int, double> dailyTotals = {};
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
+            timestamp.isBefore(end)) {
+          final day = timestamp.day;
+          dailyTotals[day] = (dailyTotals[day] ?? 0) + (data['value'] ?? 0).toDouble();
+        }
+      }
+      return dailyTotals;
+    });
   }
 
   // READ: Check if a specific type is pinned
