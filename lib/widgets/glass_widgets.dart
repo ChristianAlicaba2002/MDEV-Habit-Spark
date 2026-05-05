@@ -42,6 +42,7 @@ class RoundIconButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool outlined;
   final double size;
+  final bool isSquare; // Added to support the new square box aesthetic
 
   const RoundIconButton({
     super.key,
@@ -49,6 +50,7 @@ class RoundIconButton extends StatelessWidget {
     required this.onTap,
     this.outlined = false,
     this.size = 44,
+    this.isSquare = false,
   });
 
   @override
@@ -59,9 +61,10 @@ class RoundIconButton extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
+          shape: isSquare ? BoxShape.rectangle : BoxShape.circle,
+          borderRadius: isSquare ? BorderRadius.circular(12) : null,
           border: outlined ? Border.all(color: Colors.white.withOpacity(0.2)) : null,
-          color: outlined ? null : Colors.white.withOpacity(0.1),
+          color: outlined ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.1),
         ),
         child: Icon(icon, color: Colors.white, size: size * 0.45),
       ),

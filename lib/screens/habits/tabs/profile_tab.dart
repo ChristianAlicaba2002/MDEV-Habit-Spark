@@ -63,6 +63,7 @@ class ProfileTab extends StatelessWidget {
                             icon: CupertinoIcons.arrow_left,
                             onTap: onBackTap,
                             outlined: true,
+                            isSquare: true,
                           ),
                           const Text(
                             'Profile',
@@ -82,6 +83,7 @@ class ProfileTab extends StatelessWidget {
                               ),
                             ),
                             outlined: true,
+                            isSquare: true,
                           ),
                         ],
                       ),

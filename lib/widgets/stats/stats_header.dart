@@ -26,14 +26,12 @@ class StatsHeader extends StatelessWidget {
             ),
           ),
         ),
-        _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+        const _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
         const SizedBox(width: 12),
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.white.withOpacity(0.08),
+        _HeaderIcon(
           child: Text(
             userInitial,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
       ],
@@ -42,23 +40,26 @@ class StatsHeader extends StatelessWidget {
 }
 
 class _HeaderIcon extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? child;
   final bool hasNotification;
-  const _HeaderIcon({required this.icon, this.hasNotification = false});
+  const _HeaderIcon({this.icon, this.child, this.hasNotification = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 40,
-      height: 40,
+      width: 42, // Slightly larger for better touch target
+      height: 42,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          if (icon != null) Icon(icon, color: Colors.white, size: 20),
+          if (child != null) child!,
           if (hasNotification)
             Positioned(
               top: 10,
