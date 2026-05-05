@@ -314,47 +314,80 @@ class _DailyActivityGrid extends StatelessWidget {
       children: [
         Row(
           children: [
-            _ActivityCard(
-              title: 'Distance Run',
-              value: '20.4',
-              unit: 'km',
-              subtitle: 'vs last week',
-              trend: '',
-              visual: const _SpeedometerVisual(),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: _ActivityCardNew(
+                  icon: CupertinoIcons.cloud_drizzle,
+                  iconColor: Colors.tealAccent,
+                  iconBgColor: Colors.tealAccent.withOpacity(0.2),
+                  title: 'Distance Run',
+                  value: '20.4',
+                  unit: 'km',
+                  subtitle: 'vs last week',
+                  trend: '↑ 12%',
+                  trendColor: Colors.greenAccent,
+                  visual: const _SpeedometerVisual(),
+                ),
+              ),
             ),
             const SizedBox(width: 12),
-            _ActivityCard(
-              title: 'Workouts',
-              value: '4',
-              unit: 'sessions',
-              subtitle: 'vs last week',
-              trend: '18 ↑',
-              trendColor: Colors.greenAccent,
-              visual: const _MiniBarChart(),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: _ActivityCardNew(
+                  icon: CupertinoIcons.bolt_fill,
+                  iconColor: Colors.purpleAccent,
+                  iconBgColor: Colors.purpleAccent.withOpacity(0.2),
+                  title: 'Workouts',
+                  value: '4',
+                  unit: 'sessions',
+                  subtitle: 'vs last week',
+                  trend: '↑ 18%',
+                  trendColor: Colors.greenAccent,
+                  visual: const _MiniBarChart(),
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            _ActivityCard(
-              title: 'Day Streak',
-              value: '10',
-              unit: 'days',
-              subtitle: 'vs last week',
-              trend: '15 ↓',
-              trendColor: Colors.orangeAccent,
-              visual: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 40),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: _ActivityCardNew(
+                  icon: CupertinoIcons.flame_fill,
+                  iconColor: Colors.orangeAccent,
+                  iconBgColor: Colors.orangeAccent.withOpacity(0.2),
+                  title: 'Day Streak',
+                  value: '10',
+                  unit: 'days',
+                  subtitle: 'vs last week',
+                  trend: '↓ 15%',
+                  trendColor: Colors.orangeAccent,
+                  visual: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50),
+                ),
+              ),
             ),
             const SizedBox(width: 12),
-            _ActivityCard(
-              title: 'Calories Burned',
-              value: '3,500',
-              unit: 'kcal',
-              subtitle: 'vs last week',
-              trend: '10 ↑',
-              trendColor: Colors.greenAccent,
-              visual: const _WaveVisual(),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: _ActivityCardNew(
+                  icon: CupertinoIcons.flame,
+                  iconColor: Colors.tealAccent,
+                  iconBgColor: Colors.tealAccent.withOpacity(0.2),
+                  title: 'Calories Burned',
+                  value: '3,500',
+                  unit: 'kcal',
+                  subtitle: 'vs last week',
+                  trend: '↑ 10%',
+                  trendColor: Colors.greenAccent,
+                  visual: const _WaveVisual(),
+                ),
+              ),
             ),
           ],
         ),
@@ -426,6 +459,131 @@ class _ActivityCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityCardNew extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBgColor;
+  final String title;
+  final String value;
+  final String unit;
+  final String subtitle;
+  final String trend;
+  final Color trendColor;
+  final Widget visual;
+
+  const _ActivityCardNew({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBgColor,
+    required this.title,
+    required this.value,
+    required this.unit,
+    required this.subtitle,
+    required this.trend,
+    required this.trendColor,
+    required this.visual,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withOpacity(0.12),
+              Colors.white.withOpacity(0.06),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Icon, Title, Trend
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.3)),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: trendColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(trend, style: GoogleFonts.outfit(color: trendColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Value and Visual
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: -1)),
+                      const SizedBox(height: 1),
+                      Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 1),
+                      Text(subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w400)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 35,
+                  height: 35,
+                  child: visual,
+                ),
+              ],
+            ),
           ],
         ),
       ),
