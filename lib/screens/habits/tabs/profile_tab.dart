@@ -26,6 +26,30 @@ class ProfileTab extends StatelessWidget {
     required this.onBackTap,
   });
 
+  void _showLogoutConfirmation(BuildContext context) {
+    showCupertinoDialog(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(context);
+              await authService.signOut();
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<UserModel?>(
@@ -217,6 +241,13 @@ class ProfileTab extends StatelessWidget {
                           hasToggle: true,
                           onTap: () {},
                         ),
+                        const SizedBox(height: 12),
+                        _GlassPillItem(
+                          icon: CupertinoIcons.arrow_right_arrow_left,
+                          label: 'Logout',
+                          isLogout: true,
+                          onTap: () => _showLogoutConfirmation(context),
+                        ),
                       ]),
                     ),
                   ),
@@ -334,12 +365,14 @@ class _GlassPillItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool hasToggle;
+  final bool isLogout;
   final VoidCallback onTap;
 
   const _GlassPillItem({
     required this.icon,
     required this.label,
     this.hasToggle = false,
+    this.isLogout = false,
     required this.onTap,
   });
 
@@ -355,9 +388,15 @@ class _GlassPillItem extends StatelessWidget {
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: isLogout 
+                  ? Colors.red.withOpacity(0.15)
+                  : Colors.white.withOpacity(0.12),
               borderRadius: BorderRadius.circular(35),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(
+                color: isLogout 
+                    ? Colors.red.withOpacity(0.3)
+                    : Colors.white.withOpacity(0.1),
+              ),
             ),
             child: Row(
               children: [
@@ -365,16 +404,22 @@ class _GlassPillItem extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: isLogout 
+                        ? Colors.red.withOpacity(0.2)
+                        : Colors.white.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: Colors.white, size: 18),
+                  child: Icon(
+                    icon, 
+                    color: isLogout ? Colors.red : Colors.white, 
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isLogout ? Colors.red : Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -390,7 +435,9 @@ class _GlassPillItem extends StatelessWidget {
                 else
                   Icon(
                     CupertinoIcons.chevron_right,
-                    color: Colors.white.withOpacity(0.4),
+                    color: isLogout 
+                        ? Colors.red.withOpacity(0.6)
+                        : Colors.white.withOpacity(0.4),
                     size: 16,
                   ),
               ],
