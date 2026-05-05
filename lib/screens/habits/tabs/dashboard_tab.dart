@@ -85,6 +85,7 @@ class DashboardTab extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
@@ -113,22 +114,10 @@ class DashboardTab extends StatelessWidget {
               ),
             ),
 
-            // Divider Line
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Divider(
-                  color: Colors.white.withOpacity(0.1),
-                  height: 1,
-                  thickness: 1,
-                ),
-              ),
-            ),
-
           // Search Bar
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: _SearchBar(controller: _searchController),
             ),
           ),
