@@ -37,6 +37,7 @@ class HabitService {
     double? targetValue,
     String? unit,
     String routine = 'General',
+    String category = 'General',
   }) async {
     try {
       if (habitName.trim().isEmpty) {
@@ -53,6 +54,7 @@ class HabitService {
         if (targetValue != null) 'targetValue': targetValue,
         if (unit != null) 'unit': unit,
         'routine': routine,
+        'category': category,
       });
     } catch (e) {
       throw ErrorHandler.handleException(e);

@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
+import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/models/habit.dart';
@@ -28,6 +29,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
   final StreakService _streakService = StreakService();
+  final CategoryService _categoryService = CategoryService();
 
   int _selectedIndex = 0;
   final _searchController = TextEditingController(); // Added
@@ -67,15 +69,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _initializeUserData() async {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
-      // Temporarily wipe all existing habits to clear the screen
-      final habits = await FirebaseFirestore.instance
-          .collection('habits')
-          .where('userId', isEqualTo: userId)
-          .get();
-      for (var doc in habits.docs) {
-        await doc.reference.delete();
-      }
-      
       await _streakService.getUserStreak(userId);
       await _streakService.checkStreakOnLogin(userId);
     }
@@ -134,6 +127,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   userName: firstName,
                   userInitial: userInitial,
                   habitService: _habitService,
+                  categoryService: _categoryService,
                 ),
                 StatsTab(
                   userId: userId,
@@ -212,7 +206,7 @@ class _BottomNav extends StatelessWidget {
                     _NavItem(
                       icon: CupertinoIcons.checkmark_square,
                       activeIcon: CupertinoIcons.checkmark_square_fill,
-                      label: 'Habits/Tasks',
+                      label: 'Habit',
                       selected: selectedIndex == 1,
                       onTap: () => onTap(1),
                     ),
