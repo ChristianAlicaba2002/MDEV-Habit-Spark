@@ -57,7 +57,7 @@ class _StatsTabState extends State<StatsTab> {
 
   @override
   Widget build(BuildContext context) {
-    const double cardHeight = 200.0; // Increased to prevent overflow
+    const double cardHeight = 220.0; // Increased to 220 to prevent overflow
 
     return StreamBuilder<List<CategoryModel>>(
       stream: _categoryService.getCategoriesStream(widget.userId),
@@ -162,7 +162,7 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // Active Minutes & Consistency
+                      // Active Minutes & Consistency Row
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -177,14 +177,14 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // Recovery & PRs
+                      // Highest Streak & PRs Row
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Expanded(child: _HeartRateRecoveryCard(height: cardHeight)),
+                              Expanded(child: _HighestStreakCard(streakService: widget.streakService, userId: widget.userId, height: cardHeight)),
                               const SizedBox(width: 16),
                               Expanded(child: _RealPersonalRecordsCard(healthService: _healthService, height: cardHeight)),
                             ],
@@ -283,7 +283,6 @@ class _SessionTimerCard extends StatelessWidget {
       initialData: timerService.currentSeconds,
       builder: (context, snapshot) {
         final seconds = snapshot.data ?? 0;
-        // Progress based on 24 hours (86400 seconds)
         final progress = (seconds / 86400).clamp(0.0, 1.0);
         int h = seconds ~/ 3600;
         int m = (seconds % 3600) ~/ 60;
@@ -291,19 +290,19 @@ class _SessionTimerCard extends StatelessWidget {
 
         return Container(
           height: height,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Active Minutes", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text("Active Minutes", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               const Spacer(),
               Stack(
                 alignment: Alignment.center,
                 children: [
                   SizedBox(
-                    width: 80, 
-                    height: 80, 
+                    width: 90, 
+                    height: 90, 
                     child: CircularProgressIndicator(
                       value: progress, 
                       strokeWidth: 8, 
@@ -312,11 +311,11 @@ class _SessionTimerCard extends StatelessWidget {
                       strokeCap: StrokeCap.round,
                     )
                   ),
-                  Text("${h*60 + m}", style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text("${h*60 + m}", style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
                 ],
               ),
               const Spacer(),
-              Text("Session: ${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+              Text("Session: ${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         );
@@ -335,26 +334,25 @@ class _RealHabitConsistencyCard extends StatelessWidget {
     final displayHabits = habits.take(6).toList();
     return Container(
       height: height,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Consistency", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+          Text("Consistency", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
           if (displayHabits.isEmpty)
-            const Expanded(child: Center(child: Text("No habits", style: TextStyle(color: Colors.white24, fontSize: 10))))
+            const Expanded(child: Center(child: Text("No habits", style: TextStyle(color: Colors.white24, fontSize: 12))))
           else
             Expanded(
               child: GridView.count(
                 crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
                 physics: const NeverScrollableScrollPhysics(),
                 children: displayHabits.map((h) => _ConsistencyItem(
                   icon: h.icon != null ? IconData(int.parse(h.icon!), fontFamily: 'MaterialIcons') : Icons.check,
                   progress: h.isDone ? 1.0 : 0.0,
-                  label: h.name,
                 )).toList(),
               ),
             ),
@@ -367,8 +365,7 @@ class _RealHabitConsistencyCard extends StatelessWidget {
 class _ConsistencyItem extends StatelessWidget {
   final IconData icon;
   final double progress;
-  final String label;
-  const _ConsistencyItem({required this.icon, required this.progress, required this.label});
+  const _ConsistencyItem({required this.icon, required this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -379,8 +376,8 @@ class _ConsistencyItem extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 38,
-              height: 38,
+              width: 40,
+              height: 40,
               child: CircularProgressIndicator(
                 value: progress,
                 strokeWidth: 3,
@@ -389,7 +386,7 @@ class _ConsistencyItem extends StatelessWidget {
                 strokeCap: StrokeCap.round,
               ),
             ),
-            Icon(icon, color: Colors.orange.withOpacity(0.8), size: 18),
+            Icon(icon, color: Colors.orange.withOpacity(0.8), size: 20),
           ],
         ),
         const SizedBox(height: 6),
@@ -402,36 +399,50 @@ class _ConsistencyItem extends StatelessWidget {
   }
 }
 
-class _HeartRateRecoveryCard extends StatelessWidget {
+class _HighestStreakCard extends StatelessWidget {
+  final StreakService streakService;
+  final String userId;
   final double height;
-  const _HeartRateRecoveryCard({required this.height});
+  const _HighestStreakCard({required this.streakService, required this.userId, required this.height});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: height,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("HR Recovery", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-          const Spacer(),
-          SizedBox(height: 100, child: CustomPaint(painter: _SimpleLinePainter(), child: Container())),
-        ],
-      ),
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: streakService.getStreakStream(userId),
+      builder: (context, snapshot) {
+        final longestStreak = snapshot.data?['longestStreak'] ?? 0;
+        final currentStreak = snapshot.data?['currentStreak'] ?? 0;
+
+        return Container(
+          height: height,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Highest Streak", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              Center(
+                child: Column(
+                  children: [
+                    const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 48),
+                    const SizedBox(height: 8),
+                    Text(
+                      "$longestStreak", 
+                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)
+                    ),
+                    Text("DAYS", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Center(child: Text("Current: $currentStreak days", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11))),
+            ],
+          ),
+        );
+      }
     );
   }
-}
-
-class _SimpleLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.orange..style = PaintingStyle.stroke..strokeWidth = 2;
-    final path = Path()..moveTo(0, size.height * 0.2)..lineTo(size.width * 0.3, size.height * 0.5)..lineTo(size.width * 0.7, size.height * 0.7)..lineTo(size.width, size.height * 0.9);
-    canvas.drawPath(path, paint);
-  }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _RealPersonalRecordsCard extends StatelessWidget {
@@ -442,16 +453,16 @@ class _RealPersonalRecordsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Records", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text("Records", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const Spacer(),
-          _PRStreamItem(label: "Run", type: "running", unit: "km", healthService: healthService),
-          const SizedBox(height: 12),
-          _PRStreamItem(label: "Lift", type: "lifting", unit: "kg", healthService: healthService),
+          _PRStreamItem(label: "Longest Run", type: "running", unit: "km", healthService: healthService),
+          const SizedBox(height: 16),
+          _PRStreamItem(label: "Max Lift", type: "lifting", unit: "kg", healthService: healthService),
           const Spacer(),
         ],
       ),
@@ -472,8 +483,8 @@ class _PRStreamItem extends StatelessWidget {
       builder: (context, snapshot) {
         final total = snapshot.data?['total'] ?? 0.0;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
-          Text("${total.toInt()} $unit", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+          Text("${total.toInt()} $unit", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 18, fontWeight: FontWeight.bold)),
         ]);
       },
     );
