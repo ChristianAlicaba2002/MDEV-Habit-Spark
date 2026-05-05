@@ -1,37 +1,22 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:habit_spark/models/habit.dart';
-import 'package:habit_spark/services/auth_service.dart';
-import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
-import 'package:habit_spark/widgets/glass_widgets.dart';
-import 'package:habit_spark/screens/misc/tasks_list_page.dart';
-import 'package:habit_spark/screens/misc/stats_details_page.dart';
-import 'package:habit_spark/models/task_model.dart';
-import 'package:habit_spark/services/task_service.dart';
 import 'package:habit_spark/services/health_service.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:habit_spark/services/habit_service.dart';
+import 'package:habit_spark/constants/app_colors.dart';
 
 class DashboardTab extends StatelessWidget {
   final String userId;
   final String userName;
   final String userInitial;
   final List<Habit> habits;
-  final int completedCount;
-  final int totalCount;
-  final double progress;
-  final Animation<double> heroFadeAnim;
-  final Animation<double> ringProgressAnim;
-  final NotificationService notificationService;
-  final StreakService streakService;
-  final AuthService authService;
-  final TextEditingController searchController;
+  final HabitService habitService;
   final VoidCallback onAddHabit;
-  final VoidCallback onProfileTap;
-  final TaskService _taskService = TaskService();
   final HealthService _healthService = HealthService();
+  final StreakService _streakService = StreakService();
+  final TextEditingController _searchController = TextEditingController();
 
   DashboardTab({
     super.key,
@@ -39,667 +24,686 @@ class DashboardTab extends StatelessWidget {
     required this.userName,
     required this.userInitial,
     required this.habits,
-    required this.completedCount,
-    required this.totalCount,
-    required this.progress,
-    required this.heroFadeAnim,
-    required this.ringProgressAnim,
-    required this.notificationService,
-    required this.streakService,
-    required this.authService,
-    required this.searchController,
+    required this.habitService,
     required this.onAddHabit,
-    required this.onProfileTap,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF2C3E3E),
-            Color(0xFF4A6666),
-          ],
-        ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── Custom App Bar
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              RichText(
-                                text: TextSpan(
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w300,
-                                    height: 1.2,
-                                  ),
-                                  children: [
-                                    const TextSpan(text: 'Welcome, '),
-                                    TextSpan(
-                                      text: userName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
-                                    ),
-                                    const TextSpan(text: '!'),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Today is ${DateFormat('dd MMMM yyyy').format(DateTime.now())}',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                        const SizedBox(width: 16),
-                        Stack(
-                          children: [
-                            RoundIconButton(
-                              icon: CupertinoIcons.bell,
-                              onTap: () {},
-                              outlined: true,
-                            ),
-                            Positioned(
-                              right: 12,
-                              top: 12,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Search Bar
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(35),
-                  child: BackdropFilter(
-                     filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                     child: Container(
-                       height: 60,
-                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                       decoration: BoxDecoration(
-                         color: Colors.white.withOpacity(0.12),
-                         borderRadius: BorderRadius.circular(35),
-                         border: Border.all(color: Colors.white.withOpacity(0.1)),
-                       ),
-                       child: Row(
-                         children: [
-                           Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.6)),
-                           const SizedBox(width: 12),
-                           Expanded(
-                             child: TextField(
-                               controller: searchController,
-                               style: const TextStyle(color: Colors.white),
-                               decoration: InputDecoration(
-                                 hintText: 'Search...',
-                                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-                                 border: InputBorder.none,
-                               ),
-                             ),
-                           ),
-                         ],
-                       ),
-                     ),
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Streak Card
-            SliverToBoxAdapter(
-              child: StreamBuilder<Map<String, dynamic>>(
-                stream: streakService.getStreakStream(userId),
-                builder: (context, snapshot) {
-                  final streakData = snapshot.data;
-                  final currentStreak = streakData?['currentStreak'] ?? 0;
-                  
-                  // For the progress bar, use 7-day milestones
-                  final progress = currentStreak == 0 ? 0.0 : (currentStreak % 7 == 0 ? 1.0 : (currentStreak % 7) / 7);
-                  final streakText = currentStreak == 0 ? "Start your streak! 🔥" : "$currentStreak-Day Streak 🔥";
-
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 24),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  streakText,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                const SizedBox(height: 8),
-                                // Mini completion bar
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: progress,
-                                    backgroundColor: Colors.white.withOpacity(0.1),
-                                    valueColor: const AlwaysStoppedAnimation(Colors.orange),
-                                    minHeight: 6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            _DashboardSectionHeader(
-              title: "Today's Activity",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const StatsDetailsPage()),
-                );
-              },
-            ),
-
-            // ── Stats Horizontal List (Dynamic Pinned Activities)
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 160,
-                child: StreamBuilder<List<String>>(
-                  stream: _healthService.getPinnedActivitiesStream(userId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CupertinoActivityIndicator(color: Colors.orangeAccent));
-                    }
-                    
-                    final pinnedTypes = snapshot.data ?? [];
-                    
-                    if (pinnedTypes.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Center(
-                          child: Text(
-                            "Pin activities from 'View more' to see them here!",
-                            style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: pinnedTypes.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 16),
-                      itemBuilder: (context, index) {
-                        final type = pinnedTypes[index];
-                        return _PinnedStatCard(
-                          type: type,
-                          healthService: _healthService,
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            // ── Daily Checklist Header
-            _DashboardSectionHeader(
-              title: "Daily Tasks",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TasksListPage(title: 'Daily Tasks', userId: userId),
-                  ),
-                );
-              },
-            ),
-
-            // ── Daily Checklist Items (Dynamic Stream)
-            StreamBuilder<List<TaskModel>>(
-              stream: _taskService.getTasksStream(userId),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Center(child: Text("Couldn't load tasks", style: TextStyle(color: Colors.white54))),
-                    ),
-                  );
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SliverToBoxAdapter(
-                    child: Shimmer.fromColors(
-                      baseColor: Colors.white.withOpacity(0.05),
-                      highlightColor: Colors.white.withOpacity(0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          children: List.generate(3, (index) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
-                          )),
-                        ),
-                      ),
-                    ),
-                  );
-                }
-                
-                final tasks = snapshot.data?.where((t) => t.isRecent).toList() ?? [];
-                
-                if (tasks.isEmpty) {
-                  return const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Center(child: Text("No recent tasks. Go to 'View more' to add some!", style: TextStyle(color: Colors.white54))),
-                    ),
-                  );
-                }
-
-                return SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final task = tasks[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _DailyTaskItem(
-                            title: task.title, 
-                            isCompleted: task.isCompleted,
-                            onToggle: () => _taskService.toggleTask(task.id, task.isCompleted),
-                          ),
-                        );
-                      },
-                      childCount: tasks.length,
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 140)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-
-class _DailyTaskItem extends StatelessWidget {
-  final String title;
-  final bool isCompleted;
-  final VoidCallback onToggle;
-
-  const _DailyTaskItem({
-    required this.title, 
-    required this.isCompleted,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onToggle,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: isCompleted ? Colors.white.withOpacity(0.05) : Colors.white.withOpacity(0.12),
+  void _confirmDelete(BuildContext context, Habit habit) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E2E2E),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isCompleted ? Colors.green.withOpacity(0.3) : Colors.white.withOpacity(0.1),
+          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+        ),
+        title: Text('Delete Habit?', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+        content: Text(
+          'Are you sure you want to delete "${habit.name}"?',
+          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70)),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                color: isCompleted ? Colors.white.withOpacity(0.5) : Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                decoration: isCompleted ? TextDecoration.lineThrough : null,
-              ),
-            ),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isCompleted ? Colors.green : Colors.transparent,
-                border: Border.all(
-                  color: isCompleted ? Colors.green : Colors.white.withOpacity(0.5),
-                  width: 2,
-                ),
-              ),
-              child: isCompleted ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
-            ),
-          ],
-        ),
+          TextButton(
+            onPressed: () {
+              habitService.deleteHabit(habit.id);
+              Navigator.pop(ctx);
+            },
+            child: Text('Delete', style: GoogleFonts.outfit(color: AppColors.secondaryLight, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
-}
-
-class _DashboardSectionHeader extends StatelessWidget {
-  final String title;
-  final VoidCallback onTap;
-
-  const _DashboardSectionHeader({required this.title, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            GestureDetector(
-              onTap: onTap,
-              child: Text(
-                'View more',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    // Group habits by routine
+    final morningHabits = habits.where((h) => h.routine == 'Morning').toList();
+    final afternoonHabits = habits.where((h) => h.routine == 'Afternoon').toList();
+    final eveningHabits = habits.where((h) => h.routine == 'Evening').toList();
+    final otherHabits = habits.where((h) => !['Morning', 'Afternoon', 'Evening'].contains(h.routine)).toList();
 
-class _PinnedStatCard extends StatelessWidget {
-  final String type;
-  final HealthService healthService;
-
-  const _PinnedStatCard({required this.type, required this.healthService});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<Map<String, dynamic>>(
-      stream: healthService.getActivityMonthlyStats(type),
-      builder: (context, snapshot) {
-        final stats = snapshot.data ?? {'total': 0.0, 'unit': ''};
-        final double value = (stats['total'] ?? 0.0) as double;
-        // Use the real stored unit from Firestore; fall back to smart detection
-        final String storedUnit = (stats['unit'] ?? '').toString();
-        final String unit = storedUnit.isNotEmpty ? storedUnit : _getDefaultUnit(type);
-        final color = _getThemeColor(type);
-        final icon = _getThemeIcon(type);
-        final formattedValue = _formatTotalValue(value, unit);
-
-        return _HealthStatCard(
-          title: type.toUpperCase(),
-          value: formattedValue,
-          unit: _getSmartUnit(type, value, unit),
-          progress: (value / 10000).clamp(0.0, 1.0),
-          badge: value > 0 ? 'Monthly' : 'Start',
-          icon: icon,
-          color: color,
-        );
-      },
-    );
-  }
-
-  // Helper methods duplicated from StatsDetailsPage for consistency
-  String _getSmartUnit(String type, double value, [String storedUnit = '']) {
-    final t = type.toLowerCase();
-    if (t.contains('step')) return 'steps';
-    if (t.contains('walk') || t.contains('run') || t.contains('bike') || t.contains('cycle') || t.contains('distance')) return 'km';
-    if (t.contains('eat') || t.contains('water') || t.contains('drink')) return 'ml';
-    // If we know the stored unit is time-based, derive display unit from value
-    final su = storedUnit.toLowerCase();
-    if (su == 'hrs' || su == 'mins' || su == 'secs') {
-      double seconds = value * 3600;
-      if (seconds < 60) return 'secs';
-      if (seconds < 3600) return 'mins';
-      return 'hrs';
-    }
-    // Fallback: keyword-free guess
-    double seconds = value * 3600;
-    if (seconds < 60) return 'secs';
-    if (seconds < 3600) return 'mins';
-    return 'hrs';
-  }
-
-  String _formatTotalValue(double value, String unit) {
-    if (unit.toLowerCase() == 'hrs' || unit.toLowerCase() == 'mins' || unit.toLowerCase() == 'secs') {
-      int totalSeconds = unit.toLowerCase() == 'hrs' ? (value * 3600).round() : (unit.toLowerCase() == 'mins' ? (value * 60).round() : value.round());
-      if (totalSeconds < 60) return "$totalSeconds";
-      int m = totalSeconds ~/ 60;
-      int s = totalSeconds % 60;
-      if (m < 60) return "$m:${s.toString().padLeft(2, '0')}";
-      int h = m ~/ 60;
-      int remM = m % 60;
-      return "$h:${remM.toString().padLeft(2, '0')}";
-    }
-    return value == 0 ? "0" : (value < 1 ? value.toStringAsFixed(2) : value.toStringAsFixed(1));
-  }
-
-  Color _getThemeColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'steps': return Colors.tealAccent;
-      case 'calories': return Colors.orangeAccent;
-      case 'distance': return Colors.blueAccent;
-      case 'sleep': return Colors.purpleAccent;
-      case 'gym': return Colors.redAccent;
-      case 'yoga': return Colors.pinkAccent;
-      case 'water': return Colors.cyanAccent;
-      default: return Colors.orangeAccent;
-    }
-  }
-
-  IconData _getThemeIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'steps': return Icons.directions_walk;
-      case 'calories': return CupertinoIcons.flame;
-      case 'distance': return CupertinoIcons.map;
-      case 'sleep': return CupertinoIcons.moon;
-      case 'gym': return Icons.fitness_center;
-      case 'yoga': return Icons.self_improvement;
-      case 'water': return Icons.local_drink;
-      default: return Icons.bolt;
-    }
-  }
-
-  String _getDefaultUnit(String type) {
-    switch (type.toLowerCase()) {
-      case 'steps': return 'steps';
-      case 'calories': return 'kcal';
-      case 'distance': return 'km';
-      case 'sleep': return 'hrs';
-      default: return 'unit';
-    }
-  }
-}
-
-class _HealthStatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String unit;
-  final double progress;
-  final String badge;
-  final IconData icon;
-  final Color color;
-  final bool showAddButton;
-
-  const _HealthStatCard({
-    required this.title,
-    required this.value,
-    required this.unit,
-    required this.progress,
-    required this.badge,
-    required this.icon,
-    required this.color,
-    this.showAddButton = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
-      width: 160,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-      ),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
-              ),
-              const SizedBox(height: 4),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: value,
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    TextSpan(
-                      text: ' $unit',
-                      style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1D3D3D),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  badge,
-                  style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          Positioned(
-            right: -10,
-            bottom: -10,
-            child: SizedBox(
-              width: 70,
-              height: 70,
-              child: Stack(
-                alignment: Alignment.center,
+      color: const Color(0xFF162626),
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // Header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
+              child: Row(
                 children: [
-                  CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 4,
-                    backgroundColor: Colors.white.withOpacity(0.1),
-                    valueColor: AlwaysStoppedAnimation(color),
+                  Expanded(
+                    child: Text(
+                      "$userName's Activity",
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                    child: Icon(icon, color: Colors.white, size: 16),
+                  _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+                  const SizedBox(width: 12),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white.withOpacity(0.1),
+                    child: Text(userInitial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
             ),
           ),
-          if (showAddButton)
-            Positioned(
-              right: -5,
-              top: -5,
-              child: GestureDetector(
-                onTap: () {}, // Increment progress action
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(CupertinoIcons.add, color: Colors.white, size: 16),
-                ),
+
+          // Search Bar
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              child: _SearchBar(controller: _searchController),
+            ),
+          ),
+
+          // Daily Activity Section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Daily Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  _DailyActivityGrid(healthService: _healthService, streakService: _streakService, userId: userId),
+                ],
               ),
+            ),
+          ),
+
+          // Daily Tasks / Routines
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      GestureDetector(
+                        onTap: onAddHabit,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
+                          child: const Icon(Icons.add, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _RoutineSection(title: 'Morning Routine', habits: morningHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
+                  const SizedBox(height: 12),
+                  _RoutineSection(title: 'Afternoon Routine', habits: afternoonHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h), initiallyExpanded: true),
+                  const SizedBox(height: 12),
+                  _RoutineSection(title: 'Evening Routine', habits: eveningHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
+                  if (otherHabits.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _RoutineSection(title: 'General Habits', habits: otherHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          // Weekly Performance
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: _WeeklyPerformance(healthService: _healthService, userId: userId),
+            ),
+          ),
+
+          // Recent Activities
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Recent Activities', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  const _RecentActivityItem(title: 'Morning Run', detail: '5.2 km, PR Pace', icon: Icons.directions_run, iconColor: Colors.tealAccent),
+                  const SizedBox(height: 12),
+                  const _RecentActivityItem(title: 'Heavy Push Day', detail: '85 kg bench', icon: Icons.fitness_center, iconColor: Colors.orangeAccent),
+                ],
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
+// --- Sub-widgets ---
+
+class _HeaderIcon extends StatelessWidget {
+  final IconData icon;
+  final bool hasNotification;
+  const _HeaderIcon({required this.icon, this.hasNotification = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Icon(icon, color: Colors.white, size: 28),
+        if (hasNotification)
+          Positioned(
+            right: 0,
+            top: 0,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(color: AppColors.secondaryLight, shape: BoxShape.circle),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  const _SearchBar({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: 'Search',
+          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+          prefixIcon: Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.4)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyActivityGrid extends StatelessWidget {
+  final HealthService healthService;
+  final StreakService streakService;
+  final String userId;
+
+  const _DailyActivityGrid({required this.healthService, required this.streakService, required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            _ActivityCard(
+              title: 'Distance Run',
+              value: '20.4',
+              unit: 'km',
+              subtitle: 'vs last week',
+              trend: '',
+              visual: const _SpeedometerVisual(),
+            ),
+            const SizedBox(width: 12),
+            _ActivityCard(
+              title: 'Workouts',
+              value: '4',
+              unit: 'sessions',
+              subtitle: 'vs last week',
+              trend: '18 ↑',
+              trendColor: Colors.greenAccent,
+              visual: const _MiniBarChart(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _ActivityCard(
+              title: 'Day Streak',
+              value: '10',
+              unit: 'days',
+              subtitle: 'vs last week',
+              trend: '15 ↓',
+              trendColor: Colors.orangeAccent,
+              visual: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 40),
+            ),
+            const SizedBox(width: 12),
+            _ActivityCard(
+              title: 'Calories Burned',
+              value: '3,500',
+              unit: 'kcal',
+              subtitle: 'vs last week',
+              trend: '10 ↑',
+              trendColor: Colors.greenAccent,
+              visual: const _WaveVisual(),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ActivityCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String unit;
+  final String subtitle;
+  final String trend;
+  final Color trendColor;
+  final Widget visual;
+
+  const _ActivityCard({
+    required this.title,
+    required this.value,
+    required this.unit,
+    required this.subtitle,
+    required this.trend,
+    this.trendColor = Colors.white,
+    required this.visual,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+                if (trend.isNotEmpty)
+                  Text(trend, style: GoogleFonts.outfit(color: trendColor, fontSize: 11, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+                ),
+                const Spacer(),
+                visual,
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoutineSection extends StatefulWidget {
+  final String title;
+  final List<Habit> habits;
+  final String userId;
+  final HabitService habitService;
+  final Function(Habit) onConfirmDelete;
+  final bool initiallyExpanded;
+
+  const _RoutineSection({
+    required this.title,
+    required this.habits,
+    required this.userId,
+    required this.habitService,
+    required this.onConfirmDelete,
+    this.initiallyExpanded = false,
+  });
+
+  @override
+  State<_RoutineSection> createState() => _RoutineSectionState();
+}
+
+class _RoutineSectionState extends State<_RoutineSection> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final completedCount = widget.habits.where((h) => h.isDone).length;
+    final totalCount = widget.habits.length;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(_isExpanded ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_right, color: Colors.white, size: 18),
+                  const SizedBox(width: 12),
+                  Text(widget.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  if (totalCount > 0)
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: CircularProgressIndicator(
+                            value: completedCount / totalCount,
+                            strokeWidth: 3,
+                            backgroundColor: Colors.white10,
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+                          ),
+                        ),
+                        Text('$completedCount/$totalCount', style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (_isExpanded && widget.habits.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                children: widget.habits.map((habit) => _HabitCheckItem(
+                  habit: habit,
+                  userId: widget.userId,
+                  habitService: widget.habitService,
+                  onDelete: () => widget.onConfirmDelete(habit),
+                )).toList(),
+              ),
+            ),
+          if (_isExpanded && widget.habits.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text('No tasks in this routine', style: TextStyle(color: Colors.white38, fontSize: 12)),
             ),
         ],
       ),
     );
   }
+}
+
+class _HabitCheckItem extends StatelessWidget {
+  final Habit habit;
+  final String userId;
+  final HabitService habitService;
+  final VoidCallback onDelete;
+
+  const _HabitCheckItem({required this.habit, required this.userId, required this.habitService, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => habitService.toggleHabit(habit.id, habit.isDone, userId),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.orangeAccent, width: 2),
+                color: habit.isDone ? Colors.orangeAccent : Colors.transparent,
+              ),
+              child: habit.isDone ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              habit.name,
+              style: GoogleFonts.outfit(
+                color: habit.isDone ? Colors.white54 : Colors.white,
+                fontSize: 16,
+                decoration: habit.isDone ? TextDecoration.lineThrough : null,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(CupertinoIcons.trash, color: Colors.white24, size: 16),
+            onPressed: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeeklyPerformance extends StatelessWidget {
+  final HealthService healthService;
+  final String userId;
+  const _WeeklyPerformance({required this.healthService, required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(text: 'Total progress: ', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
+                  TextSpan(text: '1300I 🔥', style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
+                    bool isTue = day == 'Tue';
+                    return Column(
+                      children: [
+                        Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: isTue ? Colors.orangeAccent : Colors.tealAccent.withOpacity(0.4),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 1,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [0.3, 1.0, 0.4, 0.2, 0.6, 0.3, 0.1].map((h) => Container(
+                    width: 8,
+                    height: 30 * h,
+                    decoration: BoxDecoration(
+                      color: h == 1.0 ? Colors.orangeAccent : Colors.white10,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  )).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RecentActivityItem extends StatelessWidget {
+  final String title;
+  final String detail;
+  final IconData icon;
+  final Color iconColor;
+
+  const _RecentActivityItem({required this.title, required this.detail, required this.icon, required this.iconColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: iconColor.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(text: '$title ', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  TextSpan(text: '($detail)', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpeedometerVisual extends StatelessWidget {
+  const _SpeedometerVisual();
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 25,
+      child: CustomPaint(
+        painter: _SpeedometerPainter(),
+      ),
+    );
+  }
+}
+
+class _SpeedometerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white10..strokeWidth = 3..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
+    canvas.drawArc(Rect.fromLTWH(0, 0, size.width, size.height * 2), 3.14, 3.14, false, paint);
+    paint.color = Colors.tealAccent;
+    canvas.drawArc(Rect.fromLTWH(0, 0, size.width, size.height * 2), 3.14, 2.1, false, paint);
+    
+    final center = Offset(size.width / 2, size.height);
+    canvas.drawLine(center, center + Offset.fromDirection(-0.8, 15), Paint()..color = Colors.tealAccent..strokeWidth = 2);
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _MiniBarChart extends StatelessWidget {
+  const _MiniBarChart();
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [0.3, 0.6, 1.0, 0.4, 0.7].map((h) => Container(
+        width: 4,
+        height: 20 * h,
+        margin: const EdgeInsets.only(left: 2),
+        decoration: BoxDecoration(color: h == 1.0 ? Colors.orange : Colors.white24, borderRadius: BorderRadius.circular(1)),
+      )).toList(),
+    );
+  }
+}
+
+class _WaveVisual extends StatelessWidget {
+  const _WaveVisual();
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 20,
+      child: CustomPaint(
+        painter: _WavePainter(),
+      ),
+    );
+  }
+}
+
+class _WavePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.tealAccent..strokeWidth = 2..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
+    final path = Path();
+    path.moveTo(0, size.height);
+    path.quadraticBezierTo(size.width * 0.25, 0, size.width * 0.5, size.height * 0.5);
+    path.quadraticBezierTo(size.width * 0.75, size.height, size.width, 0);
+    canvas.drawPath(path, paint);
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
