@@ -8,7 +8,6 @@ import 'package:habit_spark/services/habit_log_service.dart';
 import 'package:habit_spark/services/storage_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
-import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 import 'package:habit_spark/screens/misc/workout_timer_page.dart';
 import 'package:habit_spark/screens/misc/history_page.dart';
 import 'package:habit_spark/services/auth_service.dart';
@@ -353,23 +352,6 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                   builder: (_) => HistoryPage(habit: widget.habit),
                 ),
               );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
-            onPressed: () {
-              final userId = _authService.currentUser?.uid;
-              if (userId != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => CreateEditHabitPage(
-                      habit: widget.habit,
-                      userId: userId,
-                    ),
-                  ),
-                );
-              }
             },
           ),
         ],

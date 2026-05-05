@@ -36,6 +36,7 @@ class HabitService {
     String habitType = 'checkbox',
     double? targetValue,
     String? unit,
+    String routine = 'General',
   }) async {
     try {
       if (habitName.trim().isEmpty) {
@@ -51,6 +52,7 @@ class HabitService {
         'habitType': habitType,
         if (targetValue != null) 'targetValue': targetValue,
         if (unit != null) 'unit': unit,
+        'routine': routine,
       });
     } catch (e) {
       throw ErrorHandler.handleException(e);
@@ -65,6 +67,7 @@ class HabitService {
     String? habitType,
     double? targetValue,
     String? unit,
+    String? routine,
   }) async {
     try {
       if (habitName.trim().isEmpty) {
@@ -85,6 +88,9 @@ class HabitService {
       }
       if (unit != null) {
         updateData['unit'] = unit;
+      }
+      if (routine != null) {
+        updateData['routine'] = routine;
       }
       await _firestore.collection('habits').doc(habitId).update(updateData);
     } catch (e) {

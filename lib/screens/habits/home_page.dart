@@ -1,24 +1,14 @@
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
-import 'package:habit_spark/services/theme_service.dart';
-import 'package:habit_spark/screens/misc/notifications_page.dart';
-import 'package:habit_spark/screens/misc/personal_information_page.dart';
-import 'package:habit_spark/screens/misc/reminder_settings_page.dart';
-import 'package:habit_spark/screens/habits/habit_detail_page.dart';
-import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
-import 'package:habit_spark/screens/calendar/training_calendar_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
-import 'package:habit_spark/widgets/app_header.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/constants/app_text_styles.dart';
 import 'package:habit_spark/constants/app_ui_components.dart';
@@ -37,7 +27,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
-  final NotificationService _notificationService = NotificationService();
   final StreakService _streakService = StreakService();
 
   int _selectedIndex = 0;
@@ -45,10 +34,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String _searchQuery = ''; // Added
 
   late AnimationController _heroAnimController;
-  late AnimationController _ringAnimController;
-  late Animation<double> _heroFadeAnim;
-  late Animation<double> _ringProgressAnim;
-  double _currentRingProgress = 0;
   Stream<List<Habit>>? _habitStream;
 
   @override
@@ -63,17 +48,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _heroFadeAnim = CurvedAnimation(
-      parent: _heroAnimController,
-      curve: Curves.easeOut,
-    );
-    _ringAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _ringProgressAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _ringAnimController, curve: Curves.easeInOut),
-    );
     _heroAnimController.forward();
     final userId = _authService.currentUser?.uid ?? '';
     if (userId.isNotEmpty) {
@@ -86,15 +60,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void dispose() {
     _searchController.dispose(); // Added
     _heroAnimController.dispose();
-    _ringAnimController.dispose();
     super.dispose();
   }
 
-  void _animateRing(double target) {
-    _ringAnimController.reset();
-    _currentRingProgress = target;
-    _ringAnimController.forward();
-  }
 
   Future<void> _initializeUserData() async {
     final userId = _authService.currentUser?.uid;
@@ -113,25 +81,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _showAddHabitDialog() {
-    final userId = _authService.currentUser?.uid;
-    if (userId != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => CreateEditHabitPage(userId: userId)),
-      );
-    }
-  }
 
-
-  String _getJoinedDate() {
-    final now = DateTime.now();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${months[now.month - 1]} ${now.year}';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,14 +116,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 .toList();
             final completedCount = habits.where((h) => h.isDone == true).length;
             final totalCount = habits.length;
-            final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
 
-            // Animate ring whenever progress changes
-            if (_currentRingProgress != progress) {
-              WidgetsBinding.instance.addPostFrameCallback(
-                (_) => _animateRing(progress),
-              );
-            }
 
             return IndexedStack(
               index: _selectedIndex,
@@ -183,23 +126,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   userName: firstName,
                   userInitial: userInitial,
                   habits: filteredHabits,
-                  completedCount: completedCount,
-                  totalCount: totalCount,
-                  progress: progress,
-                  heroFadeAnim: _heroFadeAnim,
-                  ringProgressAnim: _ringProgressAnim,
-                  notificationService: _notificationService,
-                  streakService: _streakService,
-                  authService: _authService,
-                  searchController: _searchController,
-                  onAddHabit: _showAddHabitDialog,
-                  onProfileTap: () => setState(() => _selectedIndex = 3),
+                  habitService: _habitService,
                 ),
                 CheckInTab(
                   habits: habits,
                   userId: userId,
+                  userName: firstName,
+                  userInitial: userInitial,
                   habitService: _habitService,
-                  onAddHabit: _showAddHabitDialog,
                 ),
                 StatsTab(
                   userId: userId,
@@ -278,7 +212,7 @@ class _BottomNav extends StatelessWidget {
                     _NavItem(
                       icon: CupertinoIcons.checkmark_square,
                       activeIcon: CupertinoIcons.checkmark_square_fill,
-                      label: 'Habits',
+                      label: 'Habits/Tasks',
                       selected: selectedIndex == 1,
                       onTap: () => onTap(1),
                     ),
