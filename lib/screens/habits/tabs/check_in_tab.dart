@@ -43,7 +43,9 @@ class _CheckInTabState extends State<CheckInTab> {
   @override
   Widget build(BuildContext context) {
     final morningHabits = widget.habits.where((h) => h.routine == 'Morning').toList();
+    final afternoonHabits = widget.habits.where((h) => h.routine == 'Afternoon').toList();
     final eveningHabits = widget.habits.where((h) => h.routine == 'Evening').toList();
+    final midnightHabits = widget.habits.where((h) => h.routine == 'Midnight').toList();
 
     return Container(
       color: const Color(0xFF101C1C),
@@ -98,23 +100,49 @@ class _CheckInTabState extends State<CheckInTab> {
                       children: [
                         Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 12),
-                        _ExpandableRoutineCard(
-                          title: 'Morning Routine',
-                          habits: morningHabits,
-                          isExpanded: _expandedRoutine == 'Morning',
-                          onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Morning' ? null : 'Morning'),
-                          habitService: widget.habitService,
-                          userId: widget.userId,
-                        ),
-                        const SizedBox(height: 12),
-                        _ExpandableRoutineCard(
-                          title: 'Evening Routine',
-                          habits: eveningHabits,
-                          isExpanded: _expandedRoutine == 'Evening',
-                          onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Evening' ? null : 'Evening'),
-                          habitService: widget.habitService,
-                          userId: widget.userId,
-                        ),
+                        if (morningHabits.isNotEmpty) ...[
+                          _ExpandableRoutineCard(
+                            title: 'Morning Routine',
+                            habits: morningHabits,
+                            isExpanded: _expandedRoutine == 'Morning',
+                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Morning' ? null : 'Morning'),
+                            habitService: widget.habitService,
+                            userId: widget.userId,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (afternoonHabits.isNotEmpty) ...[
+                          _ExpandableRoutineCard(
+                            title: 'Afternoon Routine',
+                            habits: afternoonHabits,
+                            isExpanded: _expandedRoutine == 'Afternoon',
+                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Afternoon' ? null : 'Afternoon'),
+                            habitService: widget.habitService,
+                            userId: widget.userId,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (eveningHabits.isNotEmpty) ...[
+                          _ExpandableRoutineCard(
+                            title: 'Evening Routine',
+                            habits: eveningHabits,
+                            isExpanded: _expandedRoutine == 'Evening',
+                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Evening' ? null : 'Evening'),
+                            habitService: widget.habitService,
+                            userId: widget.userId,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                        if (midnightHabits.isNotEmpty) ...[
+                          _ExpandableRoutineCard(
+                            title: 'Midnight Routine',
+                            habits: midnightHabits,
+                            isExpanded: _expandedRoutine == 'Midnight',
+                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Midnight' ? null : 'Midnight'),
+                            habitService: widget.habitService,
+                            userId: widget.userId,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -202,13 +230,13 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 180)),
+                const SliverToBoxAdapter(child: SizedBox(height: 200)), // Increased padding to avoid button overlap
               ],
             ),
 
             // Add New Habit Button
             Positioned(
-              bottom: 110,
+              bottom: 100,
               left: 20,
               right: 20,
               child: GestureDetector(
@@ -259,6 +287,7 @@ class _CreateHabitModal extends StatefulWidget {
 class _CreateHabitModalState extends State<_CreateHabitModal> {
   final _nameController = TextEditingController();
   String _selectedCategory = 'Productivity';
+  String _selectedRoutine = 'Morning';
   String _selectedFrequency = 'Daily';
   int _targetGoal = 3;
   IconData _selectedIcon = Icons.book;
@@ -310,20 +339,24 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
               const SizedBox(height: 24),
               Text("Icon Selection", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
               const SizedBox(height: 12),
-              Row(
-                children: _icons.map((icon) => GestureDetector(
-                  onTap: () => setState(() => _selectedIcon = icon),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: _selectedIcon == icon ? AppColors.warning.withOpacity(0.2) : Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _selectedIcon == icon ? AppColors.warning : Colors.transparent),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: _icons.map((icon) => GestureDetector(
+                    onTap: () => setState(() => _selectedIcon = icon),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _selectedIcon == icon ? AppColors.warning.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _selectedIcon == icon ? AppColors.warning : Colors.transparent),
+                      ),
+                      child: Icon(icon, color: _selectedIcon == icon ? AppColors.warning : Colors.white70, size: 20),
                     ),
-                    child: Icon(icon, color: _selectedIcon == icon ? AppColors.warning : Colors.white70, size: 20),
-                  ),
-                )).toList(),
+                  )).toList(),
+                ),
               ),
               const SizedBox(height: 24),
               Text("Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
@@ -341,6 +374,29 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
                       ),
                       child: Center(
                         child: Text(cat, style: GoogleFonts.outfit(color: _selectedCategory == cat ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
+                  ),
+                )).toList(),
+              ),
+              const SizedBox(height: 24),
+              Text("Routine", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: ['Morning', 'Afternoon', 'Evening', 'Midnight'].map((rout) => SizedBox(
+                  width: (MediaQuery.of(context).size.width - 64) / 2, // 2 items per row
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedRoutine = rout),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedRoutine == rout ? AppColors.warning : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(rout, style: GoogleFonts.outfit(color: _selectedRoutine == rout ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
                       ),
                     ),
                   ),
@@ -379,7 +435,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
                         _nameController.text,
                         icon: '${_selectedIcon.codePoint}',
                         targetValue: _targetGoal.toDouble(),
-                        routine: 'Morning',
+                        routine: _selectedRoutine,
                       );
                       Navigator.pop(context);
                     }
