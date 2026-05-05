@@ -372,14 +372,22 @@ class _ActivityCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                visual,
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: visual,
+                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -544,73 +552,31 @@ class _WeeklyPerformance extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(text: 'Total progress: ', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
-                  TextSpan(text: '1300I 🔥', style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ],
-        ),
+        Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
-                    bool isTue = day == 'Tue';
-                    return Column(
-                      children: [
-                        Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: isTue ? Colors.orangeAccent : Colors.tealAccent.withOpacity(0.4),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [0.3, 1.0, 0.4, 0.2, 0.6, 0.3, 0.1].map((h) => Container(
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
+              bool isTue = day == 'Tue';
+              return Column(
+                children: [
+                  Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
+                  const SizedBox(height: 8),
+                  Container(
                     width: 8,
-                    height: 30 * h,
+                    height: 8,
                     decoration: BoxDecoration(
-                      color: h == 1.0 ? Colors.orangeAccent : Colors.white10,
-                      borderRadius: BorderRadius.circular(2),
+                      color: isTue ? Colors.orangeAccent : Colors.tealAccent.withOpacity(0.4),
+                      shape: BoxShape.circle,
                     ),
-                  )).toList(),
-                ),
-              ),
-            ),
-          ],
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
