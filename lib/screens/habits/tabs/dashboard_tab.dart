@@ -66,7 +66,16 @@ class DashboardTab extends StatelessWidget {
     final otherHabits = habits.where((h) => !['Morning', 'Afternoon', 'Evening'].contains(h.routine)).toList();
 
     return Container(
-      color: const Color(0xFF162626),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2C3E3E),
+            Color(0xFF4A6666),
+          ],
+        ),
+      ),
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [

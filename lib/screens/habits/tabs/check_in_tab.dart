@@ -95,7 +95,16 @@ class _CheckInTabState extends State<CheckInTab> {
         final categories = catSnapshot.data ?? [];
 
         return Container(
-          color: const Color(0xFF101C1C),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2C3E3E),
+            Color(0xFF4A6666),
+          ],
+        ),
+      ),
           child: SafeArea(
             child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
