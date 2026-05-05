@@ -212,7 +212,7 @@ class _BottomNav extends StatelessWidget {
                     _NavItem(
                       icon: CupertinoIcons.checkmark_square,
                       activeIcon: CupertinoIcons.checkmark_square_fill,
-                      label: 'Habits/Tasks',
+                      label: 'Habit',
                       selected: selectedIndex == 1,
                       onTap: () => onTap(1),
                     ),
