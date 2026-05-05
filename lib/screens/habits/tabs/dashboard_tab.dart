@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
