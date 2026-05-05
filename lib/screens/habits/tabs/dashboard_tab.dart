@@ -76,41 +76,54 @@ class DashboardTab extends StatelessWidget {
           ],
         ),
       ),
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "$userName's Activity",
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+      child: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "$userName's Activity",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
-                  const SizedBox(width: 12),
-                  _HeaderIcon(
-                    child: Text(
-                      userInitial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+                    const SizedBox(width: 12),
+                    _HeaderIcon(
+                      child: Text(
+                        userInitial,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
+
+            // Divider Line
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Divider(
+                  color: Colors.white.withOpacity(0.1),
+                  height: 1,
+                  thickness: 1,
+                ),
+              ),
+            ),
 
           // Search Bar
           SliverToBoxAdapter(
@@ -190,6 +203,7 @@ class DashboardTab extends StatelessWidget {
 
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
+      ),
       ),
     );
   }
