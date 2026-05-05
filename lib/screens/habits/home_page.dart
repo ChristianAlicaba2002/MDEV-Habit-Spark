@@ -5,6 +5,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
+import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/models/habit.dart';
@@ -28,6 +29,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
   final HabitService _habitService = HabitService();
   final StreakService _streakService = StreakService();
+  final CategoryService _categoryService = CategoryService();
 
   int _selectedIndex = 0;
   final _searchController = TextEditingController(); // Added
@@ -125,6 +127,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   userName: firstName,
                   userInitial: userInitial,
                   habitService: _habitService,
+                  categoryService: _categoryService,
                 ),
                 StatsTab(
                   userId: userId,

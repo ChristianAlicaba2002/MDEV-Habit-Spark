@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/habit_service.dart';
+import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 
 class CheckInTab extends StatefulWidget {
@@ -11,6 +13,7 @@ class CheckInTab extends StatefulWidget {
   final String userName;
   final String userInitial;
   final HabitService habitService;
+  final CategoryService categoryService;
 
   const CheckInTab({
     super.key,
@@ -19,6 +22,7 @@ class CheckInTab extends StatefulWidget {
     required this.userName,
     required this.userInitial,
     required this.habitService,
+    required this.categoryService,
   });
 
   @override
@@ -28,6 +32,13 @@ class CheckInTab extends StatefulWidget {
 class _CheckInTabState extends State<CheckInTab> {
   String? _expandedRoutine = 'Morning';
   String? _selectedCategoryFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed default categories if needed
+    widget.categoryService.seedDefaultCategories(widget.userId);
+  }
 
   Color _getCategoryColor(String category) {
     switch (category) {
@@ -39,7 +50,7 @@ class _CheckInTabState extends State<CheckInTab> {
     }
   }
 
-  void _showAddHabitModal() {
+  void _showAddHabitModal(List<CategoryModel> categories) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -47,33 +58,46 @@ class _CheckInTabState extends State<CheckInTab> {
       builder: (context) => _CreateHabitModal(
         userId: widget.userId,
         habitService: widget.habitService,
+        categories: categories,
+      ),
+    );
+  }
+
+  void _showAddCategoryModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CreateCategoryModal(
+        userId: widget.userId,
+        categoryService: widget.categoryService,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Real habits from Firestore
     final allHabits = widget.habits;
 
-    // Filtered habits for the Active/Category section
     final categoryHabits = _selectedCategoryFilter == null 
-        ? allHabits // Show all in "Active" section if no filter
+        ? allHabits
         : allHabits.where((h) => h.category == _selectedCategoryFilter).toList();
 
-    // Grouping for Daily Tasks
     final morningHabits = allHabits.where((h) => h.routine == 'Morning').toList();
     final afternoonHabits = allHabits.where((h) => h.routine == 'Afternoon').toList();
     final eveningHabits = allHabits.where((h) => h.routine == 'Evening').toList();
     final midnightHabits = allHabits.where((h) => h.routine == 'Midnight').toList();
     final generalHabits = allHabits.where((h) => h.routine == 'General' || h.routine == '').toList();
 
-    return Container(
-      color: const Color(0xFF101C1C),
-      child: SafeArea(
-        child: Stack(
-          children: [
-            CustomScrollView(
+    return StreamBuilder<List<CategoryModel>>(
+      stream: widget.categoryService.getCategoriesStream(widget.userId),
+      builder: (context, catSnapshot) {
+        final categories = catSnapshot.data ?? [];
+
+        return Container(
+          color: const Color(0xFF101C1C),
+          child: SafeArea(
+            child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
                 // Header
@@ -212,37 +236,38 @@ class _CheckInTabState extends State<CheckInTab> {
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
                             children: [
-                              _CategoryFilterItem(
-                                title: 'Fitness', 
-                                icon: Icons.fitness_center, 
-                                color: AppColors.warning,
-                                isSelected: _selectedCategoryFilter == 'Fitness',
-                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Fitness' ? null : 'Fitness'),
+                              // Add Category Button
+                              GestureDetector(
+                                onTap: _showAddCategoryModal,
+                                child: Container(
+                                  width: 105,
+                                  height: 85,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white.withOpacity(0.1), style: BorderStyle.solid),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.add_circle_outline, color: AppColors.warning, size: 28),
+                                      const SizedBox(height: 4),
+                                      Text("New Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 12),
-                              _CategoryFilterItem(
-                                title: 'Productivity', 
-                                icon: Icons.work_outline, 
-                                color: AppColors.info,
-                                isSelected: _selectedCategoryFilter == 'Productivity',
-                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Productivity' ? null : 'Productivity'),
-                              ),
-                              const SizedBox(width: 12),
-                              _CategoryFilterItem(
-                                title: 'Wellness', 
-                                icon: Icons.spa_outlined, 
-                                color: AppColors.primary,
-                                isSelected: _selectedCategoryFilter == 'Wellness',
-                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Wellness' ? null : 'Wellness'),
-                              ),
-                              const SizedBox(width: 12),
-                              _CategoryFilterItem(
-                                title: 'Mindfulness', 
-                                icon: Icons.self_improvement, 
-                                color: Colors.indigoAccent,
-                                isSelected: _selectedCategoryFilter == 'Mindfulness',
-                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Mindfulness' ? null : 'Mindfulness'),
-                              ),
+                              ...categories.map((cat) => Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: _CategoryFilterItem(
+                                  title: cat.name, 
+                                  icon: cat.icon, 
+                                  color: cat.color,
+                                  isSelected: _selectedCategoryFilter == cat.name,
+                                  onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == cat.name ? null : cat.name),
+                                ),
+                              )).toList(),
                             ],
                           ),
                         ),
@@ -267,8 +292,8 @@ class _CheckInTabState extends State<CheckInTab> {
                           _EmptyStateReminder(
                             message: _selectedCategoryFilter == null 
                               ? "No active habits found. Let's create one!" 
-                              : "No habits found in $_selectedCategoryFilter. Try adding a new fitness habit!",
-                            icon: _selectedCategoryFilter == 'Fitness' ? Icons.fitness_center : CupertinoIcons.sparkles,
+                              : "No habits found in $_selectedCategoryFilter. Try adding a new habit!",
+                            icon: CupertinoIcons.sparkles,
                           )
                         else
                           SizedBox(
@@ -280,6 +305,7 @@ class _CheckInTabState extends State<CheckInTab> {
                               separatorBuilder: (context, index) => const SizedBox(width: 12),
                               itemBuilder: (context, index) {
                                 final habit = categoryHabits[index];
+                                final cat = categories.firstWhere((c) => c.name == habit.category, orElse: () => CategoryModel(id: '', name: 'General', iconCode: '58713', colorValue: 0xFFFFC107, userId: ''));
                                 return _CircularHabitCard(
                                   title: habit.name,
                                   value: habit.isDone ? '1' : '0',
@@ -288,7 +314,7 @@ class _CheckInTabState extends State<CheckInTab> {
                                   icon: habit.icon != null && habit.icon!.isNotEmpty
                                     ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') 
                                     : Icons.check,
-                                  color: _getCategoryColor(habit.category),
+                                  color: cat.color,
                                   progress: habit.isDone ? 1.0 : 0.0,
                                 );
                               },
@@ -299,46 +325,46 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 200)),
-              ],
-            ),
-
-            // Add New Habit Button
-            Positioned(
-              bottom: 100,
-              left: 20,
-              right: 20,
-              child: GestureDetector(
-                onTap: _showAddHabitModal,
-                child: Container(
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFC107),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFC107).withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Add New Habit',
-                      style: GoogleFonts.outfit(
-                        color: Colors.black,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                // Add New Habit Button
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 40),
+                    child: GestureDetector(
+                      onTap: () => _showAddHabitModal(categories),
+                      child: Container(
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFC107),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFC107).withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Add New Habit',
+                            style: GoogleFonts.outfit(
+                              color: Colors.black,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -415,11 +441,147 @@ class _CategoryFilterItem extends StatelessWidget {
   }
 }
 
+class _CreateCategoryModal extends StatefulWidget {
+  final String userId;
+  final CategoryService categoryService;
+
+  const _CreateCategoryModal({required this.userId, required this.categoryService});
+
+  @override
+  State<_CreateCategoryModal> createState() => _CreateCategoryModalState();
+}
+
+class _CreateCategoryModalState extends State<_CreateCategoryModal> {
+  final _nameController = TextEditingController();
+  IconData _selectedIcon = Icons.fitness_center;
+  Color _selectedColor = AppColors.warning;
+
+  final List<IconData> _icons = [
+    Icons.fitness_center, Icons.work, Icons.spa, Icons.self_improvement,
+    Icons.book, Icons.water_drop, Icons.restaurant, Icons.nightlight_round,
+    Icons.star, Icons.favorite, Icons.pets, Icons.commute,
+  ];
+
+  final List<Color> _colors = [
+    AppColors.warning, AppColors.info, AppColors.primary, Colors.orange,
+    Colors.pinkAccent, Colors.purpleAccent, Colors.indigoAccent, Colors.teal,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("New Category", style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text("Category Name", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'e.g. Health, Finance...',
+                  hintStyle: const TextStyle(color: Colors.white24),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text("Select Icon", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _icons.map((icon) => GestureDetector(
+                  onTap: () => setState(() => _selectedIcon = icon),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _selectedIcon == icon ? _selectedColor.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _selectedIcon == icon ? _selectedColor : Colors.transparent),
+                    ),
+                    child: Icon(icon, color: _selectedIcon == icon ? _selectedColor : Colors.white70, size: 24),
+                  ),
+                )).toList(),
+              ),
+              const SizedBox(height: 24),
+              Text("Select Color", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _colors.length,
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) => GestureDetector(
+                    onTap: () => setState(() => _selectedColor = _colors[index]),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _colors[index],
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _selectedColor == _colors[index] ? Colors.white : Colors.transparent, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_nameController.text.isNotEmpty) {
+                      await widget.categoryService.addCategory(
+                        widget.userId,
+                        _nameController.text,
+                        '${_selectedIcon.codePoint}',
+                        _selectedColor.value,
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _selectedColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text("Create Category", style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CreateHabitModal extends StatefulWidget {
   final String userId;
   final HabitService habitService;
+  final List<CategoryModel> categories;
 
-  const _CreateHabitModal({required this.userId, required this.habitService});
+  const _CreateHabitModal({required this.userId, required this.habitService, required this.categories});
 
   @override
   State<_CreateHabitModal> createState() => _CreateHabitModalState();
@@ -427,7 +589,7 @@ class _CreateHabitModal extends StatefulWidget {
 
 class _CreateHabitModalState extends State<_CreateHabitModal> {
   final _nameController = TextEditingController();
-  String _selectedCategory = 'Productivity';
+  late String _selectedCategory;
   String _selectedRoutine = 'Morning';
   String _selectedFrequency = 'Daily';
   int _targetGoal = 3;
@@ -437,6 +599,12 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
     Icons.book, Icons.water_drop, Icons.spa, Icons.fitness_center,
     Icons.work, Icons.nightlight_round, Icons.menu_book, Icons.self_improvement
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.categories.isNotEmpty ? widget.categories.first.name : 'General';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -502,23 +670,27 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
               const SizedBox(height: 24),
               Text("Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
               const SizedBox(height: 12),
-              Row(
-                children: ['Fitness', 'Productivity', 'Wellness'].map((cat) => Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = cat),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _selectedCategory == cat ? AppColors.warning : Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text(cat, style: GoogleFonts.outfit(color: _selectedCategory == cat ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: widget.categories.map((cat) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedCategory = cat.name),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _selectedCategory == cat.name ? cat.color : Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(cat.name, style: GoogleFonts.outfit(color: _selectedCategory == cat.name ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
                       ),
                     ),
-                  ),
-                )).toList(),
+                  )).toList(),
+                ),
               ),
               const SizedBox(height: 24),
               Text("Routine", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
