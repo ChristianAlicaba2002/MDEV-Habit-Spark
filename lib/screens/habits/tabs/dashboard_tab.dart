@@ -120,22 +120,7 @@ class DashboardTab extends StatelessWidget {
             ),
           ),
 
-          // Daily Activity Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Daily Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  _DailyActivityGrid(healthService: _healthService, streakService: _streakService, userId: userId),
-                ],
-              ),
-            ),
-          ),
-
-          // Daily Tasks / Routines
+          // Daily Tasks / Routines (Moved to top)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
@@ -158,6 +143,21 @@ class DashboardTab extends StatelessWidget {
                     const SizedBox(height: 12),
                     _RoutineSection(title: 'General Habits', habits: otherHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
                   ],
+                ],
+              ),
+            ),
+          ),
+
+          // Daily Activity Section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Daily Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  _DailyActivityGrid(healthService: _healthService, streakService: _streakService, userId: userId),
                 ],
               ),
             ),
