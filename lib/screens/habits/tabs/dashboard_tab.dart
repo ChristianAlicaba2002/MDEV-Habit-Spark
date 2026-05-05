@@ -248,7 +248,7 @@ class DashboardTab extends StatelessWidget {
             ),
 
             _DashboardSectionHeader(
-              title: "Today's stats",
+              title: "Today's Activity",
               onTap: () {
                 Navigator.push(
                   context,

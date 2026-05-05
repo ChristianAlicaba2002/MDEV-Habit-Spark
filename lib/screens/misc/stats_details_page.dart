@@ -764,21 +764,87 @@ class _StatsDetailsPageState extends State<StatsDetailsPage> {
   Widget _buildSectionHeader(String title) => Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold));
 
   Widget _buildMainChart() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.white.withOpacity(0.1))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Weekly Progress', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16)), const Icon(CupertinoIcons.graph_square, color: Colors.orange, size: 20)]),
-          const SizedBox(height: 24),
-          SizedBox(height: 150, child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [_buildChartBar('Mon', 0.4), _buildChartBar('Tue', 0.7), _buildChartBar('Wed', 0.9), _buildChartBar('Thu', 0.5), _buildChartBar('Fri', 0.8), _buildChartBar('Sat', 0.6), _buildChartBar('Sun', 0.3)])),
-        ],
-      ),
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final todayIndex = DateTime.now().weekday - 1; // 0=Mon, 6=Sun
+
+    return StreamBuilder<Map<int, double>>(
+      stream: _healthService.getWeeklyActivitySummary(),
+      builder: (context, snapshot) {
+        final data = snapshot.data ?? {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Weekly Progress', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16)),
+                  const Icon(CupertinoIcons.graph_square, color: Colors.orange, size: 20),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 150,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(7, (i) {
+                    final normalized = data[i] ?? 0.0;
+                    // Minimum visible height of 4px when there's no data
+                    final barHeight = normalized > 0 ? (100 * normalized).clamp(8.0, 100.0) : 4.0;
+                    final isToday = i == todayIndex;
+                    return _buildChartBar(days[i], barHeight, isToday, normalized > 0);
+                  }),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildChartBar(String day, double height) => Column(mainAxisAlignment: MainAxisAlignment.end, children: [Container(width: 30, height: 100 * height, decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.orange.withOpacity(0.8), Colors.orange.withOpacity(0.2)]), borderRadius: BorderRadius.circular(8))), const SizedBox(height: 8), Text(day, style: const TextStyle(color: Colors.white38, fontSize: 10))]);
+  Widget _buildChartBar(String day, double height, bool isToday, bool hasData) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOut,
+          width: 30,
+          height: height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isToday
+                  ? [Colors.orangeAccent, Colors.orange.withOpacity(0.4)]
+                  : hasData
+                      ? [Colors.orange.withOpacity(0.8), Colors.orange.withOpacity(0.2)]
+                      : [Colors.white.withOpacity(0.1), Colors.white.withOpacity(0.05)],
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: isToday ? Border.all(color: Colors.orangeAccent, width: 1.5) : null,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          day,
+          style: TextStyle(
+            color: isToday ? Colors.orangeAccent : Colors.white38,
+            fontSize: 10,
+            fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildLogButton() {
     return Container(
