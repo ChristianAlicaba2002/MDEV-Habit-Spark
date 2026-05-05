@@ -9,7 +9,8 @@ class Habit {
   final String habitType; // 'checkbox', 'distance', 'time', 'weight'
   final double? targetValue;
   final String? unit;
-  final String routine; // 'Morning', 'Afternoon', 'Evening', 'General'
+  final String routine; // 'Morning', 'Afternoon', 'Evening', 'Midnight'
+  final String category; // 'Fitness', 'Productivity', 'Wellness', etc.
 
   Habit({
     required this.id,
@@ -23,6 +24,7 @@ class Habit {
     this.targetValue,
     this.unit,
     this.routine = 'General',
+    this.category = 'General',
   });
 
   factory Habit.fromMap(Map<String, dynamic> map, String id) {
@@ -40,6 +42,7 @@ class Habit {
       targetValue: map['targetValue']?.toDouble(),
       unit: map['unit'] as String?,
       routine: map['routine'] ?? 'General',
+      category: map['category'] ?? 'General',
     );
   }
 
@@ -55,6 +58,7 @@ class Habit {
       if (targetValue != null) 'targetValue': targetValue,
       if (unit != null) 'unit': unit,
       'routine': routine,
+      'category': category,
     };
   }
 
@@ -70,6 +74,7 @@ class Habit {
     double? targetValue,
     String? unit,
     String? routine,
+    String? category,
   }) {
     return Habit(
       id: id ?? this.id,
@@ -83,6 +88,7 @@ class Habit {
       targetValue: targetValue ?? this.targetValue,
       unit: unit ?? this.unit,
       routine: routine ?? this.routine,
+      category: category ?? this.category,
     );
   }
 }

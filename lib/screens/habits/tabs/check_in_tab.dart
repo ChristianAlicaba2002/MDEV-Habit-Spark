@@ -27,6 +27,17 @@ class CheckInTab extends StatefulWidget {
 
 class _CheckInTabState extends State<CheckInTab> {
   String? _expandedRoutine = 'Morning';
+  String? _selectedCategoryFilter;
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'Fitness': return AppColors.warning;
+      case 'Productivity': return AppColors.info;
+      case 'Wellness': return AppColors.primary;
+      case 'Mindfulness': return Colors.indigoAccent;
+      default: return AppColors.primary;
+    }
+  }
 
   void _showAddHabitModal() {
     showModalBottomSheet(
@@ -42,10 +53,20 @@ class _CheckInTabState extends State<CheckInTab> {
 
   @override
   Widget build(BuildContext context) {
-    final morningHabits = widget.habits.where((h) => h.routine == 'Morning').toList();
-    final afternoonHabits = widget.habits.where((h) => h.routine == 'Afternoon').toList();
-    final eveningHabits = widget.habits.where((h) => h.routine == 'Evening').toList();
-    final midnightHabits = widget.habits.where((h) => h.routine == 'Midnight').toList();
+    // Real habits from Firestore
+    final allHabits = widget.habits;
+
+    // Filtered habits for the Active/Category section
+    final categoryHabits = _selectedCategoryFilter == null 
+        ? allHabits // Show all in "Active" section if no filter
+        : allHabits.where((h) => h.category == _selectedCategoryFilter).toList();
+
+    // Grouping for Daily Tasks
+    final morningHabits = allHabits.where((h) => h.routine == 'Morning').toList();
+    final afternoonHabits = allHabits.where((h) => h.routine == 'Afternoon').toList();
+    final eveningHabits = allHabits.where((h) => h.routine == 'Evening').toList();
+    final midnightHabits = allHabits.where((h) => h.routine == 'Midnight').toList();
+    final generalHabits = allHabits.where((h) => h.routine == 'General' || h.routine == '').toList();
 
     return Container(
       color: const Color(0xFF101C1C),
@@ -91,137 +112,137 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                // Daily Tasks (Expandable Routines)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        if (morningHabits.isNotEmpty) ...[
-                          _ExpandableRoutineCard(
-                            title: 'Morning Routine',
-                            habits: morningHabits,
-                            isExpanded: _expandedRoutine == 'Morning',
-                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Morning' ? null : 'Morning'),
-                            habitService: widget.habitService,
-                            userId: widget.userId,
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        if (afternoonHabits.isNotEmpty) ...[
-                          _ExpandableRoutineCard(
-                            title: 'Afternoon Routine',
-                            habits: afternoonHabits,
-                            isExpanded: _expandedRoutine == 'Afternoon',
-                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Afternoon' ? null : 'Afternoon'),
-                            habitService: widget.habitService,
-                            userId: widget.userId,
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        if (eveningHabits.isNotEmpty) ...[
-                          _ExpandableRoutineCard(
-                            title: 'Evening Routine',
-                            habits: eveningHabits,
-                            isExpanded: _expandedRoutine == 'Evening',
-                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Evening' ? null : 'Evening'),
-                            habitService: widget.habitService,
-                            userId: widget.userId,
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        if (midnightHabits.isNotEmpty) ...[
-                          _ExpandableRoutineCard(
-                            title: 'Midnight Routine',
-                            habits: midnightHabits,
-                            isExpanded: _expandedRoutine == 'Midnight',
-                            onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Midnight' ? null : 'Midnight'),
-                            habitService: widget.habitService,
-                            userId: widget.userId,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-
-                // My Active Habits
+                // Daily Tasks
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('My Active Habits', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 130,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            children: [
-                              _CircularHabitCard(
-                                title: 'Hydration',
-                                value: '4',
-                                total: '8',
-                                unit: 'glasses',
-                                icon: CupertinoIcons.drop_fill,
-                                color: AppColors.primary,
-                                progress: 0.5,
-                              ),
-                              const SizedBox(width: 12),
-                              _CircularHabitCard(
-                                title: 'Reading',
-                                value: '1',
-                                total: '2',
-                                unit: 'chapters',
-                                icon: CupertinoIcons.book_fill,
-                                color: AppColors.warning,
-                                progress: 0.5,
-                              ),
-                              const SizedBox(width: 12),
-                              _CircularHabitCard(
-                                title: 'Meditation',
-                                value: '15m',
-                                total: '',
-                                unit: 'done',
-                                icon: CupertinoIcons.person_fill,
-                                color: AppColors.accent,
-                                progress: 0.75,
-                              ),
-                            ],
-                          ),
-                        ),
+                        Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        if (allHabits.isEmpty)
+                          _EmptyStateReminder(
+                            message: "You don't have any daily tasks yet. Tap the button below to start your journey!",
+                            icon: CupertinoIcons.list_bullet,
+                          )
+                        else ...[
+                          if (morningHabits.isNotEmpty) ...[
+                            _ExpandableRoutineCard(
+                              title: 'Morning Routine',
+                              habits: morningHabits,
+                              isExpanded: _expandedRoutine == 'Morning',
+                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Morning' ? null : 'Morning'),
+                              habitService: widget.habitService,
+                              userId: widget.userId,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (afternoonHabits.isNotEmpty) ...[
+                            _ExpandableRoutineCard(
+                              title: 'Afternoon Routine',
+                              habits: afternoonHabits,
+                              isExpanded: _expandedRoutine == 'Afternoon',
+                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Afternoon' ? null : 'Afternoon'),
+                              habitService: widget.habitService,
+                              userId: widget.userId,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (eveningHabits.isNotEmpty) ...[
+                            _ExpandableRoutineCard(
+                              title: 'Evening Routine',
+                              habits: eveningHabits,
+                              isExpanded: _expandedRoutine == 'Evening',
+                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Evening' ? null : 'Evening'),
+                              habitService: widget.habitService,
+                              userId: widget.userId,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (midnightHabits.isNotEmpty) ...[
+                            _ExpandableRoutineCard(
+                              title: 'Midnight Routine',
+                              habits: midnightHabits,
+                              isExpanded: _expandedRoutine == 'Midnight',
+                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Midnight' ? null : 'Midnight'),
+                              habitService: widget.habitService,
+                              userId: widget.userId,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (generalHabits.isNotEmpty) ...[
+                            _ExpandableRoutineCard(
+                              title: 'General Tasks',
+                              habits: generalHabits,
+                              isExpanded: _expandedRoutine == 'General',
+                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'General' ? null : 'General'),
+                              habitService: widget.habitService,
+                              userId: widget.userId,
+                            ),
+                          ],
+                        ],
                       ],
                     ),
                   ),
                 ),
 
-                // Categories (Horizontal List)
+                // Categories
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Categories', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Categories', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            if (_selectedCategoryFilter != null)
+                              GestureDetector(
+                                onTap: () => setState(() => _selectedCategoryFilter = null),
+                                child: Text('Clear Filter', style: GoogleFonts.outfit(color: AppColors.warning, fontSize: 12, fontWeight: FontWeight.w600)),
+                              ),
+                          ],
+                        ),
                         const SizedBox(height: 12),
                         SizedBox(
                           height: 85,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
-                            children: const [
-                              _CompactCategoryCard(title: 'Fitness', icon: Icons.fitness_center, color: AppColors.warning),
-                              SizedBox(width: 12),
-                              _CompactCategoryCard(title: 'Productivity', icon: Icons.work_outline, color: AppColors.info),
-                              SizedBox(width: 12),
-                              _CompactCategoryCard(title: 'Wellness', icon: Icons.spa_outlined, color: AppColors.primary),
-                              SizedBox(width: 12),
-                              _CompactCategoryCard(title: 'Mindfulness', icon: Icons.self_improvement, color: Colors.indigoAccent),
+                            children: [
+                              _CategoryFilterItem(
+                                title: 'Fitness', 
+                                icon: Icons.fitness_center, 
+                                color: AppColors.warning,
+                                isSelected: _selectedCategoryFilter == 'Fitness',
+                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Fitness' ? null : 'Fitness'),
+                              ),
+                              const SizedBox(width: 12),
+                              _CategoryFilterItem(
+                                title: 'Productivity', 
+                                icon: Icons.work_outline, 
+                                color: AppColors.info,
+                                isSelected: _selectedCategoryFilter == 'Productivity',
+                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Productivity' ? null : 'Productivity'),
+                              ),
+                              const SizedBox(width: 12),
+                              _CategoryFilterItem(
+                                title: 'Wellness', 
+                                icon: Icons.spa_outlined, 
+                                color: AppColors.primary,
+                                isSelected: _selectedCategoryFilter == 'Wellness',
+                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Wellness' ? null : 'Wellness'),
+                              ),
+                              const SizedBox(width: 12),
+                              _CategoryFilterItem(
+                                title: 'Mindfulness', 
+                                icon: Icons.self_improvement, 
+                                color: Colors.indigoAccent,
+                                isSelected: _selectedCategoryFilter == 'Mindfulness',
+                                onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == 'Mindfulness' ? null : 'Mindfulness'),
+                              ),
                             ],
                           ),
                         ),
@@ -230,7 +251,55 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 200)), // Increased padding to avoid button overlap
+                // Active / Filtered Habits
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _selectedCategoryFilter == null ? 'My Active Habits' : '$_selectedCategoryFilter Habits', 
+                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)
+                        ),
+                        const SizedBox(height: 16),
+                        if (categoryHabits.isEmpty)
+                          _EmptyStateReminder(
+                            message: _selectedCategoryFilter == null 
+                              ? "No active habits found. Let's create one!" 
+                              : "No habits found in $_selectedCategoryFilter. Try adding a new fitness habit!",
+                            icon: _selectedCategoryFilter == 'Fitness' ? Icons.fitness_center : CupertinoIcons.sparkles,
+                          )
+                        else
+                          SizedBox(
+                            height: 130,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: categoryHabits.length,
+                              separatorBuilder: (context, index) => const SizedBox(width: 12),
+                              itemBuilder: (context, index) {
+                                final habit = categoryHabits[index];
+                                return _CircularHabitCard(
+                                  title: habit.name,
+                                  value: habit.isDone ? '1' : '0',
+                                  total: '1',
+                                  unit: 'done',
+                                  icon: habit.icon != null && habit.icon!.isNotEmpty
+                                    ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') 
+                                    : Icons.check,
+                                  color: _getCategoryColor(habit.category),
+                                  progress: habit.isDone ? 1.0 : 0.0,
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 200)),
               ],
             ),
 
@@ -266,6 +335,78 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyStateReminder extends StatelessWidget {
+  final String message;
+  final IconData icon;
+
+  const _EmptyStateReminder({required this.message, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.warning.withOpacity(0.3), size: 28),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryFilterItem extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryFilterItem({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 105,
+        height: 85,
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : const Color(0xFF1E2E2E),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? color : Colors.white.withOpacity(0.05)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: isSelected ? color : color.withOpacity(0.7), size: 22),
+            const SizedBox(height: 6),
+            Text(
+              title, 
+              style: GoogleFonts.outfit(
+                color: isSelected ? color : Colors.white, 
+                fontSize: 12, 
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold
+              )
             ),
           ],
         ),
@@ -436,6 +577,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
                         icon: '${_selectedIcon.codePoint}',
                         targetValue: _targetGoal.toDouble(),
                         routine: _selectedRoutine,
+                        category: _selectedCategory,
                       );
                       Navigator.pop(context);
                     }
@@ -731,35 +873,6 @@ class _CircularHabitCard extends StatelessWidget {
               );
             }).toList(),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompactCategoryCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-
-  const _CompactCategoryCard({required this.title, required this.icon, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 105, // Fixed width for horizontal list
-      height: 85,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E2E2E),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color.withOpacity(0.7), size: 22),
-          const SizedBox(height: 6),
-          Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
     );
