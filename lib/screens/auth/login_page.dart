@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/screens/auth/signup_page.dart';
+import 'package:habit_spark/constants/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
@@ -131,7 +132,7 @@ class _LoginPageState extends State<LoginPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF020617),
+      backgroundColor: AppColors.darkBg,
       body: Stack(
         children: [
           // Dynamic Background
@@ -169,7 +170,7 @@ class _LoginPageState extends State<LoginPage>
                 filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                 child: const Center(
                   child: CircularProgressIndicator(
-                    color: Color(0xFF2D8A5B),
+                    color: AppColors.primary,
                     strokeWidth: 3,
                   ),
                 ),
@@ -192,7 +193,7 @@ class _LoginPageState extends State<LoginPage>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                  colors: [AppColors.darkBg, AppColors.darkCard],
                 ),
               ),
             ),
@@ -205,7 +206,7 @@ class _LoginPageState extends State<LoginPage>
                 height: 300,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF2D8A5B).withAlpha(40),
+                  color: AppColors.primary.withAlpha(40),
                 ),
               ),
             ),
@@ -217,7 +218,7 @@ class _LoginPageState extends State<LoginPage>
                 height: 250,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFF1E40AF).withAlpha(30),
+                  color: AppColors.secondary.withAlpha(30),
                 ),
               ),
             ),
@@ -447,7 +448,7 @@ class _LoginPageState extends State<LoginPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2D8A5B), width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
     );
@@ -459,7 +460,7 @@ class _LoginPageState extends State<LoginPage>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         gradient: const LinearGradient(
-          colors: [Color(0xFF2D8A5B), Color(0xFF1E40AF)],
+          colors: [AppColors.primary, AppColors.primaryDark],
         ),
       ),
       child: ElevatedButton(
@@ -520,7 +521,7 @@ class _LoginPageState extends State<LoginPage>
           child: const Text(
             "Create Account",
             style: TextStyle(
-              color: Color(0xFF2D8A5B),
+              color: AppColors.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
