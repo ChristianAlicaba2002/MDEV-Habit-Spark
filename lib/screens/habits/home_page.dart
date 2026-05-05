@@ -131,6 +131,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
                 StatsTab(
                   userId: userId,
+                  userName: firstName,
+                  userInitial: userInitial,
                   habits: habits,
                   streakService: _streakService,
                 ),

@@ -12,12 +12,16 @@ import 'package:habit_spark/constants/app_colors.dart';
 
 class StatsTab extends StatefulWidget {
   final String userId;
+  final String userName;
+  final String userInitial;
   final List<Habit> habits;
   final StreakService streakService;
 
   const StatsTab({
     super.key,
     required this.userId,
+    required this.userName,
+    required this.userInitial,
     required this.habits,
     required this.streakService,
   });
@@ -57,7 +61,8 @@ class _StatsTabState extends State<StatsTab> {
 
   @override
   Widget build(BuildContext context) {
-    const double cardHeight = 220.0; // Increased to 220 to prevent overflow
+    // Increased card height and added flexible grid handling to prevent overflow
+    const double cardHeight = 240.0; 
 
     return StreamBuilder<List<CategoryModel>>(
       stream: _categoryService.getCategoriesStream(widget.userId),
@@ -82,25 +87,28 @@ class _StatsTabState extends State<StatsTab> {
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
-                      // Header
+                      // ── Unified Header (Matches Check-In Tab)
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                          child: Row(
                             children: [
-                              Text(
-                                DateFormat('dd MMM yyyy').format(DateTime.now()),
-                                style: GoogleFonts.outfit(color: Colors.white60, fontSize: 16),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Activity Stats",
-                                style: GoogleFonts.outfit(
-                                  color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Text(
+                                  "My Stats",
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                              ),
+                              _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+                              const SizedBox(width: 12),
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: Colors.white.withOpacity(0.08),
+                                child: Text(widget.userInitial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                               ),
                             ],
                           ),
@@ -110,7 +118,7 @@ class _StatsTabState extends State<StatsTab> {
                       // Time Selector
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
@@ -147,10 +155,10 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // Trends
+                      // Trends Card
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                           child: GestureDetector(
                             onLongPress: () => _showCategoryPicker(categories),
                             child: _DynamicCategoryTrendsCard(
@@ -162,10 +170,10 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // Active Minutes & Consistency Row
+                      // Timer & Consistency Row
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -177,10 +185,10 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // Highest Streak & PRs Row
+                      // Streak & Records Row
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -203,6 +211,42 @@ class _StatsTabState extends State<StatsTab> {
   }
 }
 
+// ── Header Icon Component ──
+class _HeaderIcon extends StatelessWidget {
+  final IconData icon;
+  final bool hasNotification;
+  const _HeaderIcon({required this.icon, this.hasNotification = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          if (hasNotification)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Trends Card ──
 class _DynamicCategoryTrendsCard extends StatelessWidget {
   final String category;
   final List<Habit> habits;
@@ -271,6 +315,7 @@ class _HabitTrendBar extends StatelessWidget {
   }
 }
 
+// ── Timer Card ──
 class _SessionTimerCard extends StatelessWidget {
   final SessionTimerService timerService;
   final double height;
@@ -315,7 +360,7 @@ class _SessionTimerCard extends StatelessWidget {
                 ],
               ),
               const Spacer(),
-              Text("Session: ${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text("Session: ${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
             ],
           ),
         );
@@ -324,6 +369,7 @@ class _SessionTimerCard extends StatelessWidget {
   }
 }
 
+// ── Consistency Card ──
 class _RealHabitConsistencyCard extends StatelessWidget {
   final List<Habit> habits;
   final double height;
@@ -340,20 +386,23 @@ class _RealHabitConsistencyCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("Consistency", style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           if (displayHabits.isEmpty)
             const Expanded(child: Center(child: Text("No habits", style: TextStyle(color: Colors.white24, fontSize: 12))))
           else
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 3,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                physics: const NeverScrollableScrollPhysics(),
-                children: displayHabits.map((h) => _ConsistencyItem(
-                  icon: h.icon != null ? IconData(int.parse(h.icon!), fontFamily: 'MaterialIcons') : Icons.check,
-                  progress: h.isDone ? 1.0 : 0.0,
-                )).toList(),
+              child: Center( // Center the grid to provide more balanced padding
+                child: GridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: displayHabits.map((h) => _ConsistencyItem(
+                    icon: h.icon != null ? IconData(int.parse(h.icon!), fontFamily: 'MaterialIcons') : Icons.check,
+                    progress: h.isDone ? 1.0 : 0.0,
+                  )).toList(),
+                ),
               ),
             ),
         ],
@@ -370,14 +419,14 @@ class _ConsistencyItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Stack(
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 40,
-              height: 40,
+              width: 38, // Slightly reduced to fit better
+              height: 38,
               child: CircularProgressIndicator(
                 value: progress,
                 strokeWidth: 3,
@@ -386,10 +435,10 @@ class _ConsistencyItem extends StatelessWidget {
                 strokeCap: StrokeCap.round,
               ),
             ),
-            Icon(icon, color: Colors.orange.withOpacity(0.8), size: 20),
+            Icon(icon, color: Colors.orange.withOpacity(0.8), size: 18),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           "${(progress * 100).toInt()}%", 
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)
@@ -399,6 +448,7 @@ class _ConsistencyItem extends StatelessWidget {
   }
 }
 
+// ── Streak Card ──
 class _HighestStreakCard extends StatelessWidget {
   final StreakService streakService;
   final String userId;
@@ -425,13 +475,13 @@ class _HighestStreakCard extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 48),
+                    const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 54),
                     const SizedBox(height: 8),
                     Text(
                       "$longestStreak", 
-                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)
+                      style: GoogleFonts.outfit(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold)
                     ),
-                    Text("DAYS", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text("DAYS", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -445,6 +495,7 @@ class _HighestStreakCard extends StatelessWidget {
   }
 }
 
+// ── Records Card ──
 class _RealPersonalRecordsCard extends StatelessWidget {
   final HealthService healthService;
   final double height;
