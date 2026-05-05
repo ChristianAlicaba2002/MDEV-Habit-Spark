@@ -67,15 +67,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _initializeUserData() async {
     final userId = _authService.currentUser?.uid;
     if (userId != null) {
-      // Temporarily wipe all existing habits to clear the screen
-      final habits = await FirebaseFirestore.instance
-          .collection('habits')
-          .where('userId', isEqualTo: userId)
-          .get();
-      for (var doc in habits.docs) {
-        await doc.reference.delete();
-      }
-      
       await _streakService.getUserStreak(userId);
       await _streakService.checkStreakOnLogin(userId);
     }
