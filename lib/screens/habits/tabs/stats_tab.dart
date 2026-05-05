@@ -7,6 +7,7 @@ import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/category_service.dart';
+import 'package:habit_spark/services/session_timer_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 
 class StatsTab extends StatefulWidget {
@@ -30,6 +31,7 @@ class _StatsTabState extends State<StatsTab> {
   String _selectedTrendsCategory = 'Fitness';
   final HealthService _healthService = HealthService();
   final CategoryService _categoryService = CategoryService();
+  final SessionTimerService _timerService = SessionTimerService();
 
   void _showCategoryPicker(List<CategoryModel> categories) {
     showCupertinoModalPopup(
@@ -55,6 +57,8 @@ class _StatsTabState extends State<StatsTab> {
 
   @override
   Widget build(BuildContext context) {
+    const double cardHeight = 200.0; // Increased to prevent overflow
+
     return StreamBuilder<List<CategoryModel>>(
       stream: _categoryService.getCategoriesStream(widget.userId),
       builder: (context, catSnapshot) {
@@ -78,7 +82,7 @@ class _StatsTabState extends State<StatsTab> {
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
                     slivers: [
-                      // ── Header Section
+                      // Header
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -103,7 +107,7 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // ── Time Frame Selector
+                      // Time Selector
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -124,7 +128,6 @@ class _StatsTabState extends State<StatsTab> {
                                       decoration: BoxDecoration(
                                         color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
                                         borderRadius: BorderRadius.circular(16),
-                                        border: isSelected ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
                                       ),
                                       child: Center(
                                         child: Text(
@@ -144,7 +147,7 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // ── Dynamic Category Trends Section
+                      // Trends
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -159,31 +162,31 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // ── Active Minutes & Habit Consistency Row
+                      // Active Minutes & Consistency
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(child: _RealActiveMinutesCard(healthService: _healthService)),
+                              Expanded(child: _SessionTimerCard(timerService: _timerService, height: cardHeight)),
                               const SizedBox(width: 16),
-                              Expanded(child: _RealHabitConsistencyCard(habits: widget.habits)),
+                              Expanded(child: _RealHabitConsistencyCard(habits: widget.habits, height: cardHeight)),
                             ],
                           ),
                         ),
                       ),
 
-                      // ── Heart Rate Recovery & PRs Row
+                      // Recovery & PRs
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 100),
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 120),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Expanded(child: _HeartRateRecoveryCard()),
+                              const Expanded(child: _HeartRateRecoveryCard(height: cardHeight)),
                               const SizedBox(width: 16),
-                              Expanded(child: _RealPersonalRecordsCard(healthService: _healthService)),
+                              Expanded(child: _RealPersonalRecordsCard(healthService: _healthService, height: cardHeight)),
                             ],
                           ),
                         ),
@@ -200,17 +203,14 @@ class _StatsTabState extends State<StatsTab> {
   }
 }
 
-// ── DYNAMIC Category Trends Card ──
 class _DynamicCategoryTrendsCard extends StatelessWidget {
   final String category;
   final List<Habit> habits;
   final List<CategoryModel> categories;
-
   const _DynamicCategoryTrendsCard({required this.category, required this.habits, required this.categories});
 
   @override
   Widget build(BuildContext context) {
-    // Filter habits belonging to the selected category
     final categoryHabits = habits.where((h) => h.category == category).toList();
     final catInfo = categories.firstWhere((c) => c.name == category, orElse: () => CategoryModel(id: '', name: 'General', iconCode: '58713', colorValue: 0xFFFFC107, userId: ''));
 
@@ -228,25 +228,14 @@ class _DynamicCategoryTrendsCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("$category Trends", style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-              Column(
-                children: [
-                  const Icon(CupertinoIcons.chevron_up, color: Colors.white54, size: 16),
-                  Text("Hold to change", style: GoogleFonts.outfit(color: Colors.white24, fontSize: 8)),
-                ],
-              ),
+              const Icon(CupertinoIcons.chevron_up, color: Colors.white54, size: 16),
             ],
           ),
           const SizedBox(height: 20),
           if (categoryHabits.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Center(child: Text("No tasks in $category", style: GoogleFonts.outfit(color: Colors.white24, fontSize: 13))),
-            )
+            Center(child: Padding(padding: const EdgeInsets.all(20), child: Text("No tasks in $category", style: GoogleFonts.outfit(color: Colors.white24, fontSize: 13))))
           else
-            ...categoryHabits.map((habit) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: _HabitTrendBar(habit: habit, color: catInfo.color),
-            )).toList(),
+            ...categoryHabits.map((h) => Padding(padding: const EdgeInsets.only(bottom: 12), child: _HabitTrendBar(habit: h, color: catInfo.color))),
         ],
       ),
     );
@@ -256,153 +245,118 @@ class _DynamicCategoryTrendsCard extends StatelessWidget {
 class _HabitTrendBar extends StatelessWidget {
   final Habit habit;
   final Color color;
-
   const _HabitTrendBar({required this.habit, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    // Logic: If done, show full bar (or we could track history if we had it, but for now using isDone)
     final progress = habit.isDone ? 1.0 : 0.1;
-
     return Row(
       children: [
-        SizedBox(width: 80, child: Text(habit.name, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        SizedBox(width: 70, child: Text(habit.name, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis)),
         Expanded(
-          child: Stack(
-            children: [
-              Container(height: 10, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(5))),
-              FractionallySizedBox(
-                widthFactor: progress, 
-                child: Container(
-                  height: 10, 
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [color, color.withOpacity(0.5)]),
-                    borderRadius: BorderRadius.circular(5),
-                    boxShadow: [
-                      BoxShadow(color: color.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2)),
-                    ],
-                  ),
-                )
-              ),
-            ],
+          child: Container(
+            height: 8,
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(4)),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: progress,
+              child: Container(decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
+            ),
           ),
         ),
-        const SizedBox(width: 12),
-        Text(habit.isDone ? "100%" : "0%", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+        const SizedBox(width: 8),
+        Text(habit.isDone ? "100%" : "0%", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
       ],
     );
   }
 }
 
-// ── REAL Active Minutes Card ──
-class _RealActiveMinutesCard extends StatelessWidget {
-  final HealthService healthService;
-  const _RealActiveMinutesCard({required this.healthService});
+class _SessionTimerCard extends StatelessWidget {
+  final SessionTimerService timerService;
+  final double height;
+  const _SessionTimerCard({required this.timerService, required this.height});
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day);
-    final end = start.add(const Duration(days: 1));
-
-    return StreamBuilder<double>(
-      stream: healthService.getTypeTotalForPeriod('minutes', start, end),
+    return StreamBuilder<int>(
+      stream: timerService.sessionStream,
+      initialData: timerService.currentSeconds,
       builder: (context, snapshot) {
-        final total = snapshot.data ?? 0.0;
-        final progress = (total / 60.0).clamp(0.0, 1.0);
+        final seconds = snapshot.data ?? 0;
+        // Progress based on 24 hours (86400 seconds)
+        final progress = (seconds / 86400).clamp(0.0, 1.0);
+        int h = seconds ~/ 3600;
+        int m = (seconds % 3600) ~/ 60;
+        int s = seconds % 60;
 
         return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
-          ),
+          height: height,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text("Active Minutes", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CircularProgressIndicator(
-                        value: progress,
-                        strokeWidth: 8,
-                        strokeCap: StrokeCap.round,
-                        backgroundColor: Colors.white.withOpacity(0.05),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
-                      ),
-                    ),
-                    Text("${total.toInt()}", style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  ],
-                ),
+              const Spacer(),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 80, 
+                    height: 80, 
+                    child: CircularProgressIndicator(
+                      value: progress, 
+                      strokeWidth: 8, 
+                      backgroundColor: Colors.white.withOpacity(0.05), 
+                      valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                      strokeCap: StrokeCap.round,
+                    )
+                  ),
+                  Text("${h*60 + m}", style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                ],
               ),
-              const SizedBox(height: 12),
-              Center(child: Text("Today's Goal", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10))),
+              const Spacer(),
+              Text("Session: ${h.toString().padLeft(2,'0')}:${m.toString().padLeft(2,'0')}:${s.toString().padLeft(2,'0')}", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.bold)),
             ],
           ),
         );
-      }
+      },
     );
   }
 }
 
-// ── REAL Habit Consistency Card ──
 class _RealHabitConsistencyCard extends StatelessWidget {
   final List<Habit> habits;
-  const _RealHabitConsistencyCard({required this.habits});
+  final double height;
+  const _RealHabitConsistencyCard({required this.habits, required this.height});
 
   @override
   Widget build(BuildContext context) {
     final displayHabits = habits.take(6).toList();
-
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
+      height: height,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text("Habit Consistency", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
-              const SizedBox(width: 4),
-              Row(
-                children: [
-                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-                  const SizedBox(width: 2),
-                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle)),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text("Current Habits", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
+          Text("Consistency", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           if (displayHabits.isEmpty)
-             Center(child: Text("No habits yet", style: GoogleFonts.outfit(color: Colors.white24, fontSize: 10)))
+            const Expanded(child: Center(child: Text("No habits", style: TextStyle(color: Colors.white24, fontSize: 10))))
           else
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 0.85,
-              children: displayHabits.map((h) => _ConsistencyItem(
-                icon: h.icon != null ? IconData(int.parse(h.icon!), fontFamily: 'MaterialIcons') : Icons.check,
-                color: Colors.orange,
-                progress: h.isDone ? 1.0 : 0.0,
-                label: h.name,
-              )).toList(),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 3,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                physics: const NeverScrollableScrollPhysics(),
+                children: displayHabits.map((h) => _ConsistencyItem(
+                  icon: h.icon != null ? IconData(int.parse(h.icon!), fontFamily: 'MaterialIcons') : Icons.check,
+                  progress: h.isDone ? 1.0 : 0.0,
+                  label: h.name,
+                )).toList(),
+              ),
             ),
         ],
       ),
@@ -412,127 +366,93 @@ class _RealHabitConsistencyCard extends StatelessWidget {
 
 class _ConsistencyItem extends StatelessWidget {
   final IconData icon;
-  final Color color;
   final double progress;
   final String label;
-  const _ConsistencyItem({required this.icon, required this.color, required this.progress, required this.label});
+  const _ConsistencyItem({required this.icon, required this.progress, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Stack(
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 30,
-              height: 30,
+              width: 38,
+              height: 38,
               child: CircularProgressIndicator(
                 value: progress,
-                strokeWidth: 2,
+                strokeWidth: 3,
                 backgroundColor: Colors.white.withOpacity(0.05),
-                valueColor: AlwaysStoppedAnimation<Color>(color),
+                valueColor: const AlwaysStoppedAnimation(Colors.orange),
+                strokeCap: StrokeCap.round,
               ),
             ),
-            Icon(icon, color: color.withOpacity(0.8), size: 14),
+            Icon(icon, color: Colors.orange.withOpacity(0.8), size: 18),
           ],
         ),
-        const SizedBox(height: 4),
-        FittedBox(child: Text(label, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 8))),
+        const SizedBox(height: 6),
+        Text(
+          "${(progress * 100).toInt()}%", 
+          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)
+        ),
       ],
     );
   }
 }
 
-// ── Heart Rate Recovery Card ──
 class _HeartRateRecoveryCard extends StatelessWidget {
-  const _HeartRateRecoveryCard();
-
+  final double height;
+  const _HeartRateRecoveryCard({required this.height});
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: height,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Heart Rate Recovery", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 100,
-            width: double.infinity,
-            child: CustomPaint(painter: _RecoveryLinePainter()),
-          ),
-          const SizedBox(height: 12),
-          Center(child: Text("Exercise Intensity", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11))),
+          Text("HR Recovery", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          const Spacer(),
+          SizedBox(height: 100, child: CustomPaint(painter: _SimpleLinePainter(), child: Container())),
         ],
       ),
     );
   }
 }
 
-class _RecoveryLinePainter extends CustomPainter {
+class _SimpleLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.orange.withOpacity(0.8)..style = PaintingStyle.stroke..strokeWidth = 2;
-    final dotPaint = Paint()..color = Colors.orange..style = PaintingStyle.fill;
-    
-    final path = Path();
-    final points = [
-      Offset(0, size.height * 0.2),
-      Offset(size.width * 0.25, size.height * 0.5),
-      Offset(size.width * 0.5, size.height * 0.7),
-      Offset(size.width, size.height * 0.9),
-    ];
-
-    path.moveTo(points[0].dx, points[0].dy);
-    for (var point in points) {
-      path.lineTo(point.dx, point.dy);
-    }
-
-    final gridPaint = Paint()..color = Colors.white.withOpacity(0.05)..strokeWidth = 1;
-    for(int i=0; i<4; i++) {
-      double y = size.height * (i/3);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
+    final paint = Paint()..color = Colors.orange..style = PaintingStyle.stroke..strokeWidth = 2;
+    final path = Path()..moveTo(0, size.height * 0.2)..lineTo(size.width * 0.3, size.height * 0.5)..lineTo(size.width * 0.7, size.height * 0.7)..lineTo(size.width, size.height * 0.9);
     canvas.drawPath(path, paint);
-    for (var point in points) {
-      canvas.drawCircle(point, 3, dotPaint);
-    }
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ── REAL Personal Records Card ──
 class _RealPersonalRecordsCard extends StatelessWidget {
   final HealthService healthService;
-  const _RealPersonalRecordsCard({required this.healthService});
-
+  final double height;
+  const _RealPersonalRecordsCard({required this.healthService, required this.height});
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: height,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(24)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Personal Records", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          _PRStreamItem(label: "Longest Run", type: "running", unit: "km", healthService: healthService),
+          Text("Records", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          const Spacer(),
+          _PRStreamItem(label: "Run", type: "running", unit: "km", healthService: healthService),
           const SizedBox(height: 12),
-          _PRStreamItem(label: "Max Lift", type: "lifting", unit: "kg", healthService: healthService),
+          _PRStreamItem(label: "Lift", type: "lifting", unit: "kg", healthService: healthService),
+          const Spacer(),
         ],
       ),
     );
@@ -544,37 +464,18 @@ class _PRStreamItem extends StatelessWidget {
   final String type;
   final String unit;
   final HealthService healthService;
-
   const _PRStreamItem({required this.label, required this.type, required this.unit, required this.healthService});
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<Map<String, dynamic>>(
       stream: healthService.getActivityMonthlyStats(type),
       builder: (context, snapshot) {
         final total = snapshot.data?['total'] ?? 0.0;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12)),
-            const SizedBox(height: 2),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: "${total.toInt()}", 
-                    style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 15, fontWeight: FontWeight.bold)
-                  ),
-                  TextSpan(
-                    text: " $unit", 
-                    style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      }
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
+          Text("${total.toInt()} $unit", style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+        ]);
+      },
     );
   }
 }
