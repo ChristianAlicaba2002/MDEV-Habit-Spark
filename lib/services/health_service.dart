@@ -70,6 +70,33 @@ class HealthService {
     });
   }
 
+  // READ: Monthly total + real stored unit for dashboard cards
+  Stream<Map<String, dynamic>> getActivityMonthlyStats(String type) {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, 1);
+    final end = DateTime(now.year, now.month + 1, 1);
+
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: type.toLowerCase())
+        .snapshots()
+        .map((snapshot) {
+      double total = 0;
+      String unit = '';
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
+            timestamp.isBefore(end)) {
+          total += (data['value'] ?? 0).toDouble();
+          if (unit.isEmpty) unit = (data['unit'] ?? '').toString();
+        }
+      }
+      return {'total': total, 'unit': unit};
+    });
+  }
+
   // DELETE: Remove a log
   Future<void> deleteLog(String logId) async {
     await _db.collection('health_logs').doc(logId).delete();
