@@ -3,8 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
+import 'package:habit_spark/services/category_service.dart';
+import 'package:habit_spark/constants/app_colors.dart';
 
 class StatsTab extends StatefulWidget {
   final String userId;
@@ -24,153 +27,193 @@ class StatsTab extends StatefulWidget {
 
 class _StatsTabState extends State<StatsTab> {
   String _selectedTimeFrame = 'Week';
+  String _selectedTrendsCategory = 'Fitness';
   final HealthService _healthService = HealthService();
+  final CategoryService _categoryService = CategoryService();
 
-  @override
-  Widget build(BuildContext context) {
-    // Real-time calculation for Consistency based on incoming habits
-    final completedHabits = widget.habits.where((h) => h.isDone).length;
-    final totalHabits = widget.habits.length;
-    final overallConsistency = totalHabits > 0 ? completedHabits / totalHabits : 0.0;
-
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF2C3E3E),
-            Color(0xFF4A6666),
-          ],
-        ),
-      ),
-      child: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // ── Header Section
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            DateFormat('dd MMM yyyy').format(DateTime.now()),
-                            style: GoogleFonts.outfit(color: Colors.white60, fontSize: 16),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Activity Stats",
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // ── Time Frame Selector
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: ['Week', 'Month', 'Year'].map((time) {
-                            bool isSelected = _selectedTimeFrame == time;
-                            return Expanded(
-                              child: GestureDetector(
-                                onTap: () => setState(() => _selectedTimeFrame = time),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: isSelected ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      time,
-                                      style: GoogleFonts.outfit(
-                                        color: isSelected ? Colors.white : Colors.white60,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // ── Workout Trends Section (Connected to HealthService)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                      child: _RealWorkoutTrendsCard(healthService: _healthService),
-                    ),
-                  ),
-
-                  // ── Active Minutes & Habit Consistency Row
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: _RealActiveMinutesCard(healthService: _healthService)),
-                          const SizedBox(width: 16),
-                          Expanded(child: _RealHabitConsistencyCard(habits: widget.habits)),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // ── Heart Rate Recovery & PRs Row
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 100),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Expanded(child: _HeartRateRecoveryCard()),
-                          const SizedBox(width: 16),
-                          Expanded(child: _RealPersonalRecordsCard(healthService: _healthService)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  void _showCategoryPicker(List<CategoryModel> categories) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: Text('Select Trends Category', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold)),
+        message: const Text('Choose which category trends you want to see.'),
+        actions: categories.map((cat) => CupertinoActionSheetAction(
+          onPressed: () {
+            setState(() => _selectedTrendsCategory = cat.name);
+            Navigator.pop(context);
+          },
+          child: Text(cat.name, style: GoogleFonts.outfit(color: cat.color)),
+        )).toList(),
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          isDestructiveAction: true,
+          child: const Text('Cancel'),
         ),
       ),
     );
   }
-}
-
-// ── REAL Workout Trends Card ──
-class _RealWorkoutTrendsCard extends StatelessWidget {
-  final HealthService healthService;
-  const _RealWorkoutTrendsCard({required this.healthService});
 
   @override
   Widget build(BuildContext context) {
+    return StreamBuilder<List<CategoryModel>>(
+      stream: _categoryService.getCategoriesStream(widget.userId),
+      builder: (context, catSnapshot) {
+        final categories = catSnapshot.data ?? [];
+        
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF2C3E3E),
+                Color(0xFF4A6666),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      // ── Header Section
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                DateFormat('dd MMM yyyy').format(DateTime.now()),
+                                style: GoogleFonts.outfit(color: Colors.white60, fontSize: 16),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Activity Stats",
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // ── Time Frame Selector
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: ['Week', 'Month', 'Year'].map((time) {
+                                bool isSelected = _selectedTimeFrame == time;
+                                return Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedTimeFrame = time),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: isSelected ? Border.all(color: Colors.white.withOpacity(0.1)) : null,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          time,
+                                          style: GoogleFonts.outfit(
+                                            color: isSelected ? Colors.white : Colors.white60,
+                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // ── Dynamic Category Trends Section
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                          child: GestureDetector(
+                            onLongPress: () => _showCategoryPicker(categories),
+                            child: _DynamicCategoryTrendsCard(
+                              category: _selectedTrendsCategory,
+                              habits: widget.habits,
+                              categories: categories,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // ── Active Minutes & Habit Consistency Row
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: _RealActiveMinutesCard(healthService: _healthService)),
+                              const SizedBox(width: 16),
+                              Expanded(child: _RealHabitConsistencyCard(habits: widget.habits)),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // ── Heart Rate Recovery & PRs Row
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 100),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Expanded(child: _HeartRateRecoveryCard()),
+                              const SizedBox(width: 16),
+                              Expanded(child: _RealPersonalRecordsCard(healthService: _healthService)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── DYNAMIC Category Trends Card ──
+class _DynamicCategoryTrendsCard extends StatelessWidget {
+  final String category;
+  final List<Habit> habits;
+  final List<CategoryModel> categories;
+
+  const _DynamicCategoryTrendsCard({required this.category, required this.habits, required this.categories});
+
+  @override
+  Widget build(BuildContext context) {
+    // Filter habits belonging to the selected category
+    final categoryHabits = habits.where((h) => h.category == category).toList();
+    final catInfo = categories.firstWhere((c) => c.name == category, orElse: () => CategoryModel(id: '', name: 'General', iconCode: '58713', colorValue: 0xFFFFC107, userId: ''));
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -184,54 +227,69 @@ class _RealWorkoutTrendsCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Workout Trends", style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-              const Icon(CupertinoIcons.chevron_up, color: Colors.white54, size: 16),
+              Text("$category Trends", style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              Column(
+                children: [
+                  const Icon(CupertinoIcons.chevron_up, color: Colors.white54, size: 16),
+                  Text("Hold to change", style: GoogleFonts.outfit(color: Colors.white24, fontSize: 8)),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 20),
-          _TrendStreamBar(label: "Running", healthService: healthService, color: Colors.orange),
-          const SizedBox(height: 16),
-          _TrendStreamBar(label: "Lifting", healthService: healthService, color: const Color(0xFF4DB6AC)),
-          const SizedBox(height: 16),
-          _TrendStreamBar(label: "Yoga", healthService: healthService, color: Colors.brown.withOpacity(0.6)),
+          if (categoryHabits.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: Text("No tasks in $category", style: GoogleFonts.outfit(color: Colors.white24, fontSize: 13))),
+            )
+          else
+            ...categoryHabits.map((habit) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _HabitTrendBar(habit: habit, color: catInfo.color),
+            )).toList(),
         ],
       ),
     );
   }
 }
 
-class _TrendStreamBar extends StatelessWidget {
-  final String label;
-  final HealthService healthService;
+class _HabitTrendBar extends StatelessWidget {
+  final Habit habit;
   final Color color;
 
-  const _TrendStreamBar({required this.label, required this.healthService, required this.color});
+  const _HabitTrendBar({required this.habit, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<Map<String, dynamic>>(
-      stream: healthService.getActivityMonthlyStats(label),
-      builder: (context, snapshot) {
-        final total = snapshot.data?['total'] ?? 0.0;
-        // Normalize against a target (e.g., 100 units per month)
-        final progress = (total / 100.0).clamp(0.0, 1.0);
+    // Logic: If done, show full bar (or we could track history if we had it, but for now using isDone)
+    final progress = habit.isDone ? 1.0 : 0.1;
 
-        return Row(
-          children: [
-            SizedBox(width: 60, child: Text(label, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13))),
-            Expanded(
-              child: Stack(
-                children: [
-                  Container(height: 8, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(4))),
-                  FractionallySizedBox(widthFactor: progress, child: Container(height: 8, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)))),
-                ],
+    return Row(
+      children: [
+        SizedBox(width: 80, child: Text(habit.name, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
+        Expanded(
+          child: Stack(
+            children: [
+              Container(height: 10, decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(5))),
+              FractionallySizedBox(
+                widthFactor: progress, 
+                child: Container(
+                  height: 10, 
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [color, color.withOpacity(0.5)]),
+                    borderRadius: BorderRadius.circular(5),
+                    boxShadow: [
+                      BoxShadow(color: color.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                )
               ),
-            ),
-            const SizedBox(width: 8),
-            Text("${total.toInt()}", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
-          ],
-        );
-      }
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(habit.isDone ? "100%" : "0%", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+      ],
     );
   }
 }
@@ -251,7 +309,7 @@ class _RealActiveMinutesCard extends StatelessWidget {
       stream: healthService.getTypeTotalForPeriod('minutes', start, end),
       builder: (context, snapshot) {
         final total = snapshot.data ?? 0.0;
-        final progress = (total / 60.0).clamp(0.0, 1.0); // Target 60 mins
+        final progress = (total / 60.0).clamp(0.0, 1.0);
 
         return Container(
           padding: const EdgeInsets.all(12),
@@ -294,14 +352,13 @@ class _RealActiveMinutesCard extends StatelessWidget {
   }
 }
 
-// ── REAL Habit Consistency Card (Connected to Habits from Home) ──
+// ── REAL Habit Consistency Card ──
 class _RealHabitConsistencyCard extends StatelessWidget {
   final List<Habit> habits;
   const _RealHabitConsistencyCard({required this.habits});
 
   @override
   Widget build(BuildContext context) {
-    // Show top 6 habits from the real habits list
     final displayHabits = habits.take(6).toList();
 
     return Container(
@@ -314,7 +371,19 @@ class _RealHabitConsistencyCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Habit Consistency", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Expanded(child: Text("Habit Consistency", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
+              const SizedBox(width: 4),
+              Row(
+                children: [
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
+                  const SizedBox(width: 2),
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle)),
+                ],
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
           Text("Current Habits", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10)),
           const SizedBox(height: 12),
@@ -376,7 +445,7 @@ class _ConsistencyItem extends StatelessWidget {
   }
 }
 
-// ── Heart Rate Recovery Card (Static Mock) ──
+// ── Heart Rate Recovery Card ──
 class _HeartRateRecoveryCard extends StatelessWidget {
   const _HeartRateRecoveryCard();
 
@@ -461,7 +530,6 @@ class _RealPersonalRecordsCard extends StatelessWidget {
         children: [
           Text("Personal Records", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          // Fetching specific records
           _PRStreamItem(label: "Longest Run", type: "running", unit: "km", healthService: healthService),
           const SizedBox(height: 12),
           _PRStreamItem(label: "Max Lift", type: "lifting", unit: "kg", healthService: healthService),
