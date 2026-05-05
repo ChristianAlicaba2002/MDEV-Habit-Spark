@@ -26,7 +26,19 @@ class CheckInTab extends StatefulWidget {
 }
 
 class _CheckInTabState extends State<CheckInTab> {
-  String? _expandedRoutine = 'Morning'; // Start with Morning expanded as in reference
+  String? _expandedRoutine = 'Morning';
+
+  void _showAddHabitModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CreateHabitModal(
+        userId: widget.userId,
+        habitService: widget.habitService,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +84,7 @@ class _CheckInTabState extends State<CheckInTab> {
                 // Search Bar
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: _SearchBar(),
                   ),
                 ),
@@ -80,12 +92,12 @@ class _CheckInTabState extends State<CheckInTab> {
                 // Daily Tasks (Expandable Routines)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         _ExpandableRoutineCard(
                           title: 'Morning Routine',
                           habits: morningHabits,
@@ -111,14 +123,14 @@ class _CheckInTabState extends State<CheckInTab> {
                 // My Active Habits
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('My Active Habits', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 16),
                         SizedBox(
-                          height: 145,
+                          height: 130,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -129,7 +141,7 @@ class _CheckInTabState extends State<CheckInTab> {
                                 total: '8',
                                 unit: 'glasses',
                                 icon: CupertinoIcons.drop_fill,
-                                color: Colors.cyanAccent,
+                                color: AppColors.primary,
                                 progress: 0.5,
                               ),
                               const SizedBox(width: 12),
@@ -139,7 +151,7 @@ class _CheckInTabState extends State<CheckInTab> {
                                 total: '2',
                                 unit: 'chapters',
                                 icon: CupertinoIcons.book_fill,
-                                color: Colors.orangeAccent,
+                                color: AppColors.warning,
                                 progress: 0.5,
                               ),
                               const SizedBox(width: 12),
@@ -149,7 +161,7 @@ class _CheckInTabState extends State<CheckInTab> {
                                 total: '',
                                 unit: 'done',
                                 icon: CupertinoIcons.person_fill,
-                                color: Colors.deepPurpleAccent,
+                                color: AppColors.accent,
                                 progress: 0.75,
                               ),
                             ],
@@ -160,17 +172,31 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                // Categories
+                // Categories (Horizontal List)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
-                    child: Row(
-                      children: const [
-                        Expanded(child: _CompactCategoryCard(title: 'Fitness', icon: Icons.fitness_center, color: Colors.orangeAccent)),
-                        SizedBox(width: 12),
-                        Expanded(child: _CompactCategoryCard(title: 'Productivity', icon: Icons.work_outline, color: Colors.blueAccent)),
-                        SizedBox(width: 12),
-                        Expanded(child: _CompactCategoryCard(title: 'Wellness', icon: Icons.spa_outlined, color: Colors.tealAccent)),
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Categories', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 85,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            children: const [
+                              _CompactCategoryCard(title: 'Fitness', icon: Icons.fitness_center, color: AppColors.warning),
+                              SizedBox(width: 12),
+                              _CompactCategoryCard(title: 'Productivity', icon: Icons.work_outline, color: AppColors.info),
+                              SizedBox(width: 12),
+                              _CompactCategoryCard(title: 'Wellness', icon: Icons.spa_outlined, color: AppColors.primary),
+                              SizedBox(width: 12),
+                              _CompactCategoryCard(title: 'Mindfulness', icon: Icons.self_improvement, color: Colors.indigoAccent),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -185,32 +211,188 @@ class _CheckInTabState extends State<CheckInTab> {
               bottom: 110,
               left: 20,
               right: 20,
-              child: Container(
-                height: 56,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFC107),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFC107).withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    'Add New Habit',
-                    style: GoogleFonts.outfit(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              child: GestureDetector(
+                onTap: _showAddHabitModal,
+                child: Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFC107),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFC107).withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Add New Habit',
+                      style: GoogleFonts.outfit(
+                        color: Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CreateHabitModal extends StatefulWidget {
+  final String userId;
+  final HabitService habitService;
+
+  const _CreateHabitModal({required this.userId, required this.habitService});
+
+  @override
+  State<_CreateHabitModal> createState() => _CreateHabitModalState();
+}
+
+class _CreateHabitModalState extends State<_CreateHabitModal> {
+  final _nameController = TextEditingController();
+  String _selectedCategory = 'Productivity';
+  String _selectedFrequency = 'Daily';
+  int _targetGoal = 3;
+  IconData _selectedIcon = Icons.book;
+  
+  final List<IconData> _icons = [
+    Icons.book, Icons.water_drop, Icons.spa, Icons.fitness_center,
+    Icons.work, Icons.nightlight_round, Icons.menu_book, Icons.self_improvement
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Create Custom Habit", style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white54),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text("Habit Name", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _nameController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Write habit name...',
+                  hintStyle: const TextStyle(color: Colors.white24),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text("Icon Selection", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 12),
+              Row(
+                children: _icons.map((icon) => GestureDetector(
+                  onTap: () => setState(() => _selectedIcon = icon),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _selectedIcon == icon ? AppColors.warning.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _selectedIcon == icon ? AppColors.warning : Colors.transparent),
+                    ),
+                    child: Icon(icon, color: _selectedIcon == icon ? AppColors.warning : Colors.white70, size: 20),
+                  ),
+                )).toList(),
+              ),
+              const SizedBox(height: 24),
+              Text("Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 12),
+              Row(
+                children: ['Fitness', 'Productivity', 'Wellness'].map((cat) => Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedCategory = cat),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedCategory == cat ? AppColors.warning : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(cat, style: GoogleFonts.outfit(color: _selectedCategory == cat ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
+                    ),
+                  ),
+                )).toList(),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Goal & Frequency", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+                      const SizedBox(height: 8),
+                      Text("Target: $_targetGoal times / day", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal = _targetGoal > 1 ? _targetGoal - 1 : 1)),
+                      Text("$_targetGoal", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal++)),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_nameController.text.isNotEmpty) {
+                      await widget.habitService.addHabit(
+                        widget.userId,
+                        _nameController.text,
+                        icon: '${_selectedIcon.codePoint}',
+                        targetValue: _targetGoal.toDouble(),
+                        routine: 'Morning',
+                      );
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.warning,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text("Save Habit (CREATE)", style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -293,7 +475,7 @@ class _ExpandableRoutineCard extends StatelessWidget {
       curve: Curves.easeInOut,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -302,31 +484,31 @@ class _ExpandableRoutineCard extends StatelessWidget {
             onTap: onToggle,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
                   Icon(
                     isExpanded ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_right,
                     color: Colors.white70,
-                    size: 18,
+                    size: 14,
                   ),
-                  const SizedBox(width: 12),
-                  Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   Stack(
                     alignment: Alignment.center,
                     children: [
                       SizedBox(
-                        width: 42,
-                        height: 42,
+                        width: 30,
+                        height: 30,
                         child: CircularProgressIndicator(
                           value: progress,
-                          strokeWidth: 4,
+                          strokeWidth: 2.5,
                           backgroundColor: Colors.white.withOpacity(0.05),
                           valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
                         ),
                       ),
-                      Text('$done/$total', style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      Text('$done/$total', style: GoogleFonts.outfit(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -335,7 +517,7 @@ class _ExpandableRoutineCard extends StatelessWidget {
           ),
           if (isExpanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
               child: Column(
                 children: habits.map((habit) => _RoutineHabitItem(
                   habit: habit,
@@ -358,33 +540,33 @@ class _RoutineHabitItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          const SizedBox(width: 30), // Indent
+          const SizedBox(width: 26), // Indent
           GestureDetector(
             onTap: onToggle,
             child: Container(
-              width: 22,
-              height: 22,
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
                 color: habit.isDone ? Colors.orangeAccent : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(5),
                 border: Border.all(
                   color: habit.isDone ? Colors.orangeAccent : Colors.white24,
                   width: 1.5,
                 ),
               ),
-              child: habit.isDone ? const Icon(Icons.check, color: Colors.black, size: 16) : null,
+              child: habit.isDone ? const Icon(Icons.check, color: Colors.black, size: 14) : null,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               habit.name,
               style: GoogleFonts.outfit(
                 color: habit.isDone ? Colors.white54 : Colors.white,
-                fontSize: 16,
+                fontSize: 15,
                 decoration: habit.isDone ? TextDecoration.lineThrough : null,
               ),
             ),
@@ -433,12 +615,13 @@ class _CircularHabitCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: color, size: 16),
+                child: Icon(icon, color: color, size: 22),
               ),
               Stack(
                 alignment: Alignment.center,
@@ -464,7 +647,7 @@ class _CircularHabitCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             title, 
             style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
@@ -508,7 +691,8 @@ class _CompactCategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 90,
+      width: 105, // Fixed width for horizontal list
+      height: 85,
       decoration: BoxDecoration(
         color: const Color(0xFF1E2E2E),
         borderRadius: BorderRadius.circular(20),
@@ -517,8 +701,8 @@ class _CompactCategoryCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color.withOpacity(0.7), size: 24),
-          const SizedBox(height: 8),
+          Icon(icon, color: color.withOpacity(0.7), size: 22),
+          const SizedBox(height: 6),
           Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
         ],
       ),
