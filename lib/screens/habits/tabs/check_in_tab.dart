@@ -9,16 +9,14 @@ class CheckInTab extends StatelessWidget {
   final String userName;
   final String userInitial;
   final HabitService habitService;
-  final VoidCallback onAddHabit;
 
-  const CheckInTab({
+  CheckInTab({
     super.key,
     required this.habits,
     required this.userId,
     required this.userName,
     required this.userInitial,
     required this.habitService,
-    required this.onAddHabit,
   });
 
   @override
@@ -40,17 +38,6 @@ class CheckInTab extends StatelessWidget {
                       color: Colors.white,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: onAddHabit,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.add, color: Colors.white, size: 24),
                     ),
                   ),
                 ],

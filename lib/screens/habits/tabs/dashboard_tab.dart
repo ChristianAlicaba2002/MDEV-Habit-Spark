@@ -13,7 +13,6 @@ class DashboardTab extends StatelessWidget {
   final String userInitial;
   final List<Habit> habits;
   final HabitService habitService;
-  final VoidCallback onAddHabit;
   final HealthService _healthService = HealthService();
   final StreakService _streakService = StreakService();
   final TextEditingController _searchController = TextEditingController();
@@ -25,7 +24,6 @@ class DashboardTab extends StatelessWidget {
     required this.userInitial,
     required this.habits,
     required this.habitService,
-    required this.onAddHabit,
   });
 
   void _confirmDelete(BuildContext context, Habit habit) {
@@ -134,14 +132,6 @@ class DashboardTab extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                      GestureDetector(
-                        onTap: onAddHabit,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
-                          child: const Icon(Icons.add, color: Colors.white, size: 20),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 16),

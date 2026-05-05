@@ -7,7 +7,6 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
-import 'package:habit_spark/screens/habits/create_edit_habit_page.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/user_model.dart';
 import 'package:habit_spark/constants/app_colors.dart';
@@ -82,15 +81,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _showAddHabitDialog() {
-    final userId = _authService.currentUser?.uid;
-    if (userId != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => CreateEditHabitPage(userId: userId)),
-      );
-    }
-  }
 
 
   @override
@@ -137,7 +127,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   userInitial: userInitial,
                   habits: filteredHabits,
                   habitService: _habitService,
-                  onAddHabit: _showAddHabitDialog,
                 ),
                 CheckInTab(
                   habits: habits,
@@ -145,7 +134,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   userName: firstName,
                   userInitial: userInitial,
                   habitService: _habitService,
-                  onAddHabit: _showAddHabitDialog,
                 ),
                 StatsTab(
                   userId: userId,
