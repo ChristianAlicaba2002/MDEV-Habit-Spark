@@ -129,22 +129,56 @@ class DashboardTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+                  Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  _RoutineSection(title: 'Morning Routine', habits: morningHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
-                  const SizedBox(height: 12),
-                  _RoutineSection(title: 'Afternoon Routine', habits: afternoonHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h), initiallyExpanded: true),
-                  const SizedBox(height: 12),
-                  _RoutineSection(title: 'Evening Routine', habits: eveningHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
-                  if (otherHabits.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _RoutineSection(title: 'General Habits', habits: otherHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
-                  ],
+                  if (morningHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'Morning Routine',
+                      habits: morningHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.sun_max_fill,
+                      iconColor: const Color(0xFFD4A574),
+                      iconBgColor: const Color(0xFF6B5344),
+                    ),
+                  if (morningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (afternoonHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'Afternoon Routine',
+                      habits: afternoonHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.sun_max,
+                      iconColor: const Color(0xFFFFD700),
+                      iconBgColor: const Color(0xFF8B7500),
+                      initiallyExpanded: true,
+                    ),
+                  if (afternoonHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (eveningHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'Evening Routine',
+                      habits: eveningHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.moon_stars_fill,
+                      iconColor: const Color(0xFF9B7EBD),
+                      iconBgColor: const Color(0xFF4A3F5C),
+                    ),
+                  if (eveningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (otherHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'General Habits',
+                      habits: otherHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.arrow_2_circlepath,
+                      iconColor: const Color(0xFF7FD8BE),
+                      iconBgColor: const Color(0xFF3F6B5C),
+                    ),
                 ],
               ),
             ),
@@ -537,6 +571,129 @@ class _HabitCheckItem extends StatelessWidget {
             icon: const Icon(CupertinoIcons.trash, color: Colors.white24, size: 16),
             onPressed: onDelete,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoutineCardWithIcon extends StatefulWidget {
+  final String title;
+  final List<Habit> habits;
+  final String userId;
+  final HabitService habitService;
+  final Function(Habit) onConfirmDelete;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBgColor;
+  final bool initiallyExpanded;
+
+  const _RoutineCardWithIcon({
+    required this.title,
+    required this.habits,
+    required this.userId,
+    required this.habitService,
+    required this.onConfirmDelete,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBgColor,
+    this.initiallyExpanded = false,
+  });
+
+  @override
+  State<_RoutineCardWithIcon> createState() => _RoutineCardWithIconState();
+}
+
+class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final completedCount = widget.habits.where((h) => h.isDone).length;
+    final totalCount = widget.habits.length;
+    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Icon with background
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: widget.iconBgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(widget.icon, color: widget.iconColor, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  // Title and completion
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(widget.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 4,
+                            backgroundColor: Colors.white.withOpacity(0.1),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text('${(progress * 100).toStringAsFixed(0)}% completed', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Completion count and chevron
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('$completedCount/$totalCount', style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                      Icon(_isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, color: Colors.white, size: 18),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isExpanded && widget.habits.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                children: widget.habits.map((habit) => _HabitCheckItem(
+                  habit: habit,
+                  userId: widget.userId,
+                  habitService: widget.habitService,
+                  onDelete: () => widget.onConfirmDelete(habit),
+                )).toList(),
+              ),
+            ),
+          if (_isExpanded && widget.habits.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text('No tasks in this routine', style: TextStyle(color: Colors.white38, fontSize: 12)),
+            ),
         ],
       ),
     );
