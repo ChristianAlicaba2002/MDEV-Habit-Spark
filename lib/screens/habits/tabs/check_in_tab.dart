@@ -90,6 +90,8 @@ class _CheckInTabState extends State<CheckInTab> {
     final midnightHabits = allHabits.where((h) => h.routine == 'Midnight').toList();
     final generalHabits = allHabits.where((h) => h.routine == 'General' || h.routine == '').toList();
 
+    final healthService = HealthService();
+
     return StreamBuilder<List<CategoryModel>>(
       stream: widget.categoryService.getCategoriesStream(widget.userId),
       builder: (context, catSnapshot) {
@@ -140,14 +142,6 @@ class _CheckInTabState extends State<CheckInTab> {
                         ),
                       ],
                     ),
-                  ),
-                ),
-
-                // Search Bar
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: _SearchBar(),
                   ),
                 ),
 
@@ -291,7 +285,7 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                // Active / Filtered Habits
+                // My Activity Habits - Display actual activities
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
@@ -299,42 +293,43 @@ class _CheckInTabState extends State<CheckInTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _selectedCategoryFilter == null ? 'My Active Habits' : '$_selectedCategoryFilter Habits', 
+                          'My Activity Habits', 
                           style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)
                         ),
                         const SizedBox(height: 16),
-                        if (categoryHabits.isEmpty)
-                          _EmptyStateReminder(
-                            message: _selectedCategoryFilter == null 
-                              ? "No active habits found. Let's create one!" 
-                              : "No habits found in $_selectedCategoryFilter. Try adding a new habit!",
-                            icon: CupertinoIcons.sparkles,
-                          )
-                        else
-                          SizedBox(
-                            height: 130,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: categoryHabits.length,
-                              separatorBuilder: (context, index) => const SizedBox(width: 12),
-                              itemBuilder: (context, index) {
-                                final habit = categoryHabits[index];
-                                final cat = categories.firstWhere((c) => c.name == habit.category, orElse: () => CategoryModel(id: '', name: 'General', iconCode: '58713', colorValue: 0xFFFFC107, userId: ''));
-                                return _CircularHabitCard(
-                                  title: habit.name,
-                                  value: habit.isDone ? '1' : '0',
-                                  total: '1',
-                                  unit: 'done',
-                                  icon: habit.icon != null && habit.icon!.isNotEmpty
-                                    ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') 
-                                    : Icons.check,
-                                  color: cat.color,
-                                  progress: habit.isDone ? 1.0 : 0.0,
-                                );
-                              },
-                            ),
-                          ),
+                        StreamBuilder<List<Map<String, String>>>(
+                          stream: healthService.getAllActivityTypes(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return _EmptyStateReminder(
+                                message: "No activities logged yet. Start tracking your activities!",
+                                icon: CupertinoIcons.sparkles,
+                              );
+                            }
+
+                            final activities = snapshot.data!;
+                            return Column(
+                              children: List.generate(
+                                activities.length,
+                                (index) {
+                                  final activity = activities[index];
+                                  final activityType = activity['type'] ?? '';
+                                  final unit = activity['unit'] ?? '';
+                                  
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _ActivityDataCard(
+                                      title: activityType.toUpperCase(),
+                                      unit: unit,
+                                      healthService: healthService,
+                                      userId: widget.userId,
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -1071,29 +1066,6 @@ class _HeaderIcon extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-          prefixIcon: Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.3)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
-    );
-  }
-}
-
 class _ExpandableRoutineCard extends StatelessWidget {
   final String title;
   final List<Habit> habits;
@@ -1216,6 +1188,284 @@ class _RoutineHabitItem extends StatelessWidget {
                 fontSize: 15,
                 decoration: habit.isDone ? TextDecoration.lineThrough : null,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityDataCard extends StatelessWidget {
+  final String title;
+  final String unit;
+  final HealthService healthService;
+  final String userId;
+
+  const _ActivityDataCard({
+    required this.title,
+    required this.unit,
+    required this.healthService,
+    required this.userId,
+  });
+
+  Color _getActivityColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'gym': return Colors.redAccent;
+      case 'drinking': return Colors.cyanAccent;
+      case 'biking': return Colors.greenAccent;
+      case 'running': return Colors.orangeAccent;
+      case 'yoga': return Colors.pinkAccent;
+      case 'swimming': return Colors.blueAccent;
+      case 'walking': return Colors.tealAccent;
+      default: return Colors.purpleAccent;
+    }
+  }
+
+  IconData _getActivityIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'gym': return Icons.fitness_center;
+      case 'drinking': return Icons.local_drink;
+      case 'biking': return Icons.directions_bike;
+      case 'running': return Icons.directions_run;
+      case 'yoga': return Icons.self_improvement;
+      case 'swimming': return Icons.pool;
+      case 'walking': return Icons.directions_walk;
+      default: return Icons.sports;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getActivityColor(title);
+    final icon = _getActivityIcon(title);
+
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: healthService.getActivityMonthlyStats(title.toLowerCase()),
+      builder: (context, snapshot) {
+        final total = snapshot.data?['total'] ?? 0.0;
+        final storedUnit = snapshot.data?['unit'] ?? unit;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2E2E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: color, size: 32),
+              ),
+              const SizedBox(width: 16),
+              // Activity Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Unit: $storedUnit',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: color.withOpacity(0.5)),
+                      ),
+                      child: Text(
+                        'Total: ${total.toStringAsFixed(1)} $storedUnit',
+                        style: GoogleFonts.outfit(
+                          color: color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Action Icon
+              Icon(
+                CupertinoIcons.chevron_right,
+                color: Colors.white.withOpacity(0.3),
+                size: 20,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ActivityCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String total;
+  final String unit;
+  final IconData icon;
+  final Color color;
+  final double progress;
+
+  const _ActivityCard({
+    required this.title,
+    required this.value,
+    required this.total,
+    required this.unit,
+    required this.icon,
+    required this.color,
+    required this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          // Icon and Progress Circle
+          Column(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 3,
+                      backgroundColor: Colors.white.withOpacity(0.05),
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          total.isNotEmpty ? '$value/$total' : value,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          unit,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white38,
+                            fontSize: 8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          // Activity Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                // Weekly Activity Dots
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].asMap().entries.map((entry) {
+                    bool done = entry.key < 4;
+                    return Column(
+                      children: [
+                        Text(
+                          entry.value,
+                          style: const TextStyle(
+                            color: Colors.white24,
+                            fontSize: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: done ? const Color(0xFF4ECDC4) : Colors.white.withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: progress > 0 ? Colors.greenAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: progress > 0 ? Colors.greenAccent : Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                  child: Text(
+                    progress > 0 ? 'Completed' : 'Pending',
+                    style: GoogleFonts.outfit(
+                      color: progress > 0 ? Colors.greenAccent : Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
