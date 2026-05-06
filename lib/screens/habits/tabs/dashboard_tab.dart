@@ -207,23 +207,8 @@ class DashboardTab extends StatelessWidget {
               child: _WeeklyPerformance(healthService: _healthService, userId: userId),
             ),
           ),
-
           // Recent Activities
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Recent Activities', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  const _RecentActivityItem(title: 'Morning Run', detail: '5.2 km, PR Pace', icon: Icons.directions_run, iconColor: Colors.tealAccent),
-                  const SizedBox(height: 12),
-                  const _RecentActivityItem(title: 'Heavy Push Day', detail: '85 kg bench', icon: Icons.fitness_center, iconColor: Colors.orangeAccent),
-                ],
-              ),
-            ),
-          ),
+          // Removed - using Weekly Performance chart instead
 
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
@@ -319,7 +304,7 @@ class _DailyActivityGrid extends StatelessWidget {
               child: AspectRatio(
                 aspectRatio: 1,
                 child: _ActivityCardNew(
-                  icon: CupertinoIcons.cloud_drizzle,
+                  icon: LucideIcons.zap,
                   iconColor: Colors.tealAccent,
                   iconBgColor: Colors.tealAccent.withOpacity(0.2),
                   title: 'Distance Run',
@@ -866,32 +851,105 @@ class _WeeklyPerformance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final weekData = [0.3, 1.0, 0.4, 0.2, 0.6, 0.3, 0.1]; // Mon to Sun
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
     return Column(
       children: [
         Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
-              bool isTue = day == 'Tue';
-              return Column(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.12),
+                Colors.white.withOpacity(0.06),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Chart bars
+              SizedBox(
+                height: 150,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List.generate(7, (index) {
+                    final height = weekData[index];
+                    final isTuesday = index == 1;
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          width: 28,
+                          height: 120 * height,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: isTuesday
+                                  ? [Colors.greenAccent, Colors.greenAccent.withOpacity(0.6)]
+                                  : [Colors.tealAccent.withOpacity(0.8), Colors.tealAccent.withOpacity(0.3)],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          days[index],
+                          style: GoogleFonts.outfit(
+                            color: isTuesday ? Colors.greenAccent : Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Stats
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: isTue ? Colors.orangeAccent : Colors.tealAccent.withOpacity(0.4),
-                      shape: BoxShape.circle,
-                    ),
+                  Column(
+                    children: [
+                      Text('Avg', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text('0.47', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text('Peak', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text('Tue', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text('Total', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Text('3.3', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
                   ),
                 ],
-              );
-            }).toList(),
+              ),
+            ],
           ),
         ),
       ],
