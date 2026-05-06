@@ -616,10 +616,36 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
   final _activityNameController = TextEditingController();
   String _selectedActivityUnit = 'km';
   double _activityTargetValue = 1.0;
+  IconData _selectedActivityIcon = Icons.directions_run;
   
   final List<IconData> _icons = [
     Icons.book, Icons.water_drop, Icons.spa, Icons.fitness_center,
     Icons.work, Icons.nightlight_round, Icons.menu_book, Icons.self_improvement
+  ];
+
+  final List<IconData> _activityIcons = [
+    Icons.directions_run,
+    Icons.directions_bike,
+    Icons.pool,
+    Icons.sports_soccer,
+    Icons.sports_basketball,
+    Icons.sports_tennis,
+    Icons.sports_volleyball,
+    Icons.sports_gymnastics,
+    Icons.sports_kabaddi,
+    Icons.sports_mma,
+    Icons.sports_cricket,
+    Icons.sports_golf,
+    Icons.sports_hockey,
+    Icons.sports_martial_arts,
+    Icons.sports_motorsports,
+    Icons.sports_rugby,
+    Icons.sports_score,
+    Icons.fitness_center,
+    Icons.directions_walk,
+    Icons.sports_bar,
+    Icons.snowboarding,
+    Icons.skateboarding,
   ];
 
   final List<String> _units = ['km', 'kcal', 'sessions', 'minutes', 'hours', 'reps', 'sets', 'lbs'];
@@ -674,15 +700,16 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    color: AppColors.warning,
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  labelColor: Colors.black,
-                  unselectedLabelColor: Colors.white70,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white54,
+                  dividerColor: Colors.transparent,
                   tabs: [
                     Tab(
                       child: Text(
-                        'Habit',
+                        'Task',
                         style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -874,6 +901,28 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
             ),
           ),
           const SizedBox(height: 24),
+          Text("Activity Icon", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: _activityIcons.map((icon) => GestureDetector(
+                onTap: () => setState(() => _selectedActivityIcon = icon),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _selectedActivityIcon == icon ? AppColors.warning.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _selectedActivityIcon == icon ? AppColors.warning : Colors.transparent),
+                  ),
+                  child: Icon(icon, color: _selectedActivityIcon == icon ? AppColors.warning : Colors.white70, size: 18),
+                ),
+              )).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
           Text("Unit of Measurement", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -937,6 +986,9 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                     type: _activityNameController.text,
                     value: _activityTargetValue,
                     unit: _selectedActivityUnit,
+                    metadata: {
+                      'icon': '${_selectedActivityIcon.codePoint}',
+                    },
                   );
                   Navigator.pop(context);
                 }
