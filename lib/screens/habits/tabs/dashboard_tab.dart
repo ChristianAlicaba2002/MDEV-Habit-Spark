@@ -300,10 +300,6 @@ class _DailyActivityGrid extends StatelessWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final todayEnd = today.add(const Duration(days: 1));
-    
-    // Last week same period
-    final lastWeekStart = today.subtract(const Duration(days: 7));
-    final lastWeekEnd = lastWeekStart.add(const Duration(days: 1));
 
     return Column(
       children: [
@@ -344,31 +340,33 @@ class _DailyActivityGrid extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Workouts Card
+            // Completed Tasks Card
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
                 child: StreamBuilder<List<HealthLog>>(
                   stream: healthService.getDailyLogs(today),
                   builder: (context, snapshot) {
-                    int workoutCount = 0;
-                    String workoutTrend = '↑ 0%';
+                    int completedCount = 0;
+                    String completedTrend = '↑ 0%';
                     Color trendColor = Colors.greenAccent;
 
                     if (snapshot.hasData) {
-                      // Count unique workout sessions (could be based on type or count)
-                      workoutCount = snapshot.data!.length;
+                      // Count completed tasks/habits for today
+                      completedCount = snapshot.data!
+                          .where((log) => log.type.toLowerCase() == 'completed tasks')
+                          .length;
                     }
 
                     return _ActivityCardNew(
-                      icon: CupertinoIcons.bolt_fill,
-                      iconColor: Colors.purpleAccent,
-                      iconBgColor: Colors.purpleAccent.withOpacity(0.2),
-                      title: 'Workouts',
-                      value: workoutCount.toString(),
-                      unit: 'sessions',
+                      icon: CupertinoIcons.checkmark_circle_fill,
+                      iconColor: Colors.greenAccent,
+                      iconBgColor: Colors.greenAccent.withOpacity(0.2),
+                      title: 'Completed Tasks',
+                      value: completedCount.toString(),
+                      unit: 'tasks',
                       subtitle: 'vs last week',
-                      trend: workoutTrend,
+                      trend: completedTrend,
                       trendColor: trendColor,
                       visual: const _MiniBarChart(),
                     );
@@ -924,108 +922,145 @@ class _WeeklyPerformance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final weekData = [0.3, 1.0, 0.4, 0.2, 0.6, 0.3, 0.1]; // Mon to Sun
     final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    return Column(
-      children: [
-        Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(0.12),
-                Colors.white.withOpacity(0.06),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Chart bars
-              SizedBox(
-                height: 150,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: List.generate(7, (index) {
-                    final height = weekData[index];
-                    final isTuesday = index == 1;
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 120 * height,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: isTuesday
-                                  ? [Colors.greenAccent, Colors.greenAccent.withOpacity(0.6)]
-                                  : [Colors.tealAccent.withOpacity(0.8), Colors.tealAccent.withOpacity(0.3)],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          days[index],
-                          style: GoogleFonts.outfit(
-                            color: isTuesday ? Colors.greenAccent : Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
+    return StreamBuilder<Map<int, double>>(
+      stream: healthService.getWeeklyActivitySummary(),
+      builder: (context, snapshot) {
+        Map<int, double> weekData = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+        String peakDay = 'Mon';
+        double avgValue = 0;
+        double totalValue = 0;
+
+        if (snapshot.hasData) {
+          weekData = snapshot.data!;
+          
+          // Calculate peak day
+          int peakIndex = 0;
+          double maxValue = 0;
+          weekData.forEach((index, value) {
+            if (value > maxValue) {
+              maxValue = value;
+              peakIndex = index;
+            }
+          });
+          peakDay = days[peakIndex];
+          
+          // Calculate average and total
+          final values = weekData.values.toList();
+          totalValue = values.fold(0, (sum, val) => sum + val);
+          avgValue = values.isNotEmpty ? totalValue / values.length : 0;
+        }
+
+        return Column(
+          children: [
+            Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.12),
+                    Colors.white.withOpacity(0.06),
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Stats
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: Column(
                 children: [
-                  Column(
-                    children: [
-                      Text('Avg', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text('0.47', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    ],
+                  // Chart bars
+                  SizedBox(
+                    height: 150,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: List.generate(7, (index) {
+                        final height = weekData[index] ?? 0;
+                        final isPeakDay = days[index] == peakDay;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              width: 28,
+                              height: 120 * height,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: isPeakDay
+                                      ? [Colors.greenAccent, Colors.greenAccent.withOpacity(0.6)]
+                                      : [Colors.tealAccent.withOpacity(0.8), Colors.tealAccent.withOpacity(0.3)],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              days[index],
+                              style: GoogleFonts.outfit(
+                                color: isPeakDay ? Colors.greenAccent : Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
                   ),
-                  Column(
+                  const SizedBox(height: 16),
+                  // Stats - Labels on the left
+                  Row(
                     children: [
-                      Text('Peak', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text('Tue', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      Text('Total', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text('3.3', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Avg', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(avgValue.toStringAsFixed(2), style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Peak', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(peakDay, style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Total', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(totalValue.toStringAsFixed(2), style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
