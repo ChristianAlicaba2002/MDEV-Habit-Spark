@@ -95,7 +95,7 @@ class DashboardTab extends StatelessWidget {
                         "$userName's Activity",
                         style: GoogleFonts.outfit(
                           color: Colors.white,
-                          fontSize: 26,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1400,6 +1400,7 @@ class _WeeklyPerformance extends StatelessWidget {
         }
 
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
