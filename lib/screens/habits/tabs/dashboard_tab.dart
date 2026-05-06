@@ -738,6 +738,17 @@ class _ActivityCardWithModify extends StatelessWidget {
     }
   }
 
+  String _getCategoryForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return 'Consistency';
+      case 'completed tasks':
+        return 'Productivity';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -768,6 +779,7 @@ class _ActivityCardWithModify extends StatelessWidget {
                       final data = snapshot.data as Map<String, dynamic>;
                       value = (data['currentStreak'] ?? 0).toString();
                       unit = 'days';
+                      category = _getCategoryForActivity(activityType);
                     } else if (activityType.toLowerCase() == 'completed tasks') {
                       final logs = snapshot.data as List<HealthLog>;
                       value = logs
@@ -775,22 +787,17 @@ class _ActivityCardWithModify extends StatelessWidget {
                           .length
                           .toString();
                       unit = 'tasks';
-                      // Get category from first log if available
-                      if (logs.isNotEmpty && logs.first.metadata != null) {
-                        category = logs.first.metadata!['category'] ?? '';
-                      }
+                      category = _getCategoryForActivity(activityType);
                     } else {
                       final data = snapshot.data as Map<String, dynamic>;
                       value = (data['total'] as double).toStringAsFixed(1);
                       unit = data['unit'] ?? '';
-                      // Get category from metadata if available
-                      if (data['metadata'] != null && data['metadata'] is Map) {
-                        category = data['metadata']['category'] ?? '';
-                      }
+                      // Get category from the data map
+                      category = data['category'] ?? '';
                     }
                   }
 
-                  // Capitalize the title
+                  // Capitalize the title (first letter uppercase, rest lowercase)
                   final capitalizedTitle = title.isEmpty 
                       ? title 
                       : title[0].toUpperCase() + title.substring(1).toLowerCase();
