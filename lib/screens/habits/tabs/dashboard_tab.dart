@@ -9,6 +9,7 @@ import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'dart:ui';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardTab extends StatelessWidget {
   final String userId;
@@ -324,6 +325,26 @@ class _DailyActivityGridState extends State<_DailyActivityGrid> with TickerProvi
       duration: const Duration(milliseconds: 100),
       vsync: this,
     );
+    _loadSavedActivities();
+  }
+
+  Future<void> _loadSavedActivities() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      for (int i = 0; i < 4; i++) {
+        final saved = prefs.getString('activity_position_$i');
+        if (saved != null) {
+          displayedActivities[i] = saved;
+        }
+      }
+    });
+  }
+
+  Future<void> _saveActivities() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (int i = 0; i < 4; i++) {
+      await prefs.setString('activity_position_$i', displayedActivities[i]!);
+    }
   }
 
   @override
@@ -403,6 +424,7 @@ class _DailyActivityGridState extends State<_DailyActivityGrid> with TickerProvi
                           displayedActivities[position] = activityType;
                           selectedCardPosition = null;
                         });
+                        _saveActivities();
                         Navigator.pop(context);
                       },
                       child: Container(
@@ -739,6 +761,7 @@ class _ActivityCardWithModify extends StatelessWidget {
                   String value = '0';
                   String unit = '';
                   String title = activityType;
+                  String category = '';
 
                   if (snapshot.hasData) {
                     if (activityType.toLowerCase() == 'day streak') {
@@ -752,21 +775,34 @@ class _ActivityCardWithModify extends StatelessWidget {
                           .length
                           .toString();
                       unit = 'tasks';
+                      // Get category from first log if available
+                      if (logs.isNotEmpty && logs.first.metadata != null) {
+                        category = logs.first.metadata!['category'] ?? '';
+                      }
                     } else {
                       final data = snapshot.data as Map<String, dynamic>;
                       value = (data['total'] as double).toStringAsFixed(1);
                       unit = data['unit'] ?? '';
+                      // Get category from metadata if available
+                      if (data['metadata'] != null && data['metadata'] is Map) {
+                        category = data['metadata']['category'] ?? '';
+                      }
                     }
                   }
+
+                  // Capitalize the title
+                  final capitalizedTitle = title.isEmpty 
+                      ? title 
+                      : title[0].toUpperCase() + title.substring(1).toLowerCase();
 
                   return _ActivityCardNew(
                     icon: _getIconForActivity(activityType),
                     iconColor: color,
                     iconBgColor: color.withOpacity(0.2),
-                    title: title,
+                    title: capitalizedTitle,
                     value: value,
                     unit: unit,
-                    subtitle: 'vs last week',
+                    subtitle: category.isNotEmpty ? category : capitalizedTitle,
                     trend: '↑ 0%',
                     trendColor: Colors.greenAccent,
                     visual: _getVisualForActivity(activityType),
