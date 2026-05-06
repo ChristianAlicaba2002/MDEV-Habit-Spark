@@ -8,20 +8,20 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import 'package:habit_spark/screens/habits/recent_activity_page.dart';
 
-class DashboardTab extends StatelessWidget {
+class DashboardTab extends StatefulWidget {
   final String userId;
   final String userName;
   final String userInitial;
   final List<Habit> habits;
   final HabitService habitService;
-  final HealthService _healthService = HealthService();
-  final StreakService _streakService = StreakService();
-  final TextEditingController _searchController = TextEditingController();
 
-  DashboardTab({
+  const DashboardTab({
     super.key,
     required this.userId,
     required this.userName,
@@ -29,6 +29,21 @@ class DashboardTab extends StatelessWidget {
     required this.habits,
     required this.habitService,
   });
+
+  @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
+  final HealthService _healthService = HealthService();
+  final StreakService _streakService = StreakService();
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _isRefreshing = false);
+  }
 
   void _confirmDelete(BuildContext context, Habit habit) {
     showDialog(
@@ -51,7 +66,7 @@ class DashboardTab extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              habitService.deleteHabit(habit.id);
+              widget.habitService.deleteHabit(habit.id);
               Navigator.pop(ctx);
             },
             child: Text('Delete', style: GoogleFonts.outfit(color: AppColors.secondaryLight, fontWeight: FontWeight.bold)),
@@ -63,6 +78,7 @@ class DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final habits = widget.habits;
     // Group habits by routine
     final morningHabits = habits.where((h) => h.routine == 'Morning').toList();
     final afternoonHabits = habits.where((h) => h.routine == 'Afternoon').toList();
@@ -81,11 +97,17 @@ class DashboardTab extends StatelessWidget {
         ),
       ),
       child: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Header
-            SliverToBoxAdapter(
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          color: AppColors.warning,
+          backgroundColor: const Color(0xFF1E2E2E),
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            slivers: _isRefreshing 
+              ? [const SliverDashboardSkeleton()]
+              : [
+              // Header
+              SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Row(
@@ -93,10 +115,10 @@ class DashboardTab extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        "$userName's Activity",
+                        "${widget.userName}'s Activity",
                         style: GoogleFonts.outfit(
                           color: Colors.white,
-                          fontSize: 26,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -105,7 +127,7 @@ class DashboardTab extends StatelessWidget {
                     const SizedBox(width: 12),
                     _HeaderIcon(
                       child: Text(
-                        userInitial,
+                        widget.userInitial,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -117,14 +139,6 @@ class DashboardTab extends StatelessWidget {
                 ),
               ),
             ),
-
-          // Search Bar
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: _SearchBar(controller: _searchController),
-            ),
-          ),
 
           // Daily Tasks / Routines (Moved to top)
           SliverToBoxAdapter(
@@ -139,8 +153,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'Morning Routine',
                       habits: morningHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max_fill,
                       iconColor: const Color(0xFFD4A574),
@@ -151,8 +165,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'Afternoon Routine',
                       habits: afternoonHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max,
                       iconColor: const Color(0xFFFFD700),
@@ -164,8 +178,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'Evening Routine',
                       habits: eveningHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.moon_stars_fill,
                       iconColor: const Color(0xFF9B7EBD),
@@ -176,8 +190,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'General Habits',
                       habits: otherHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.arrow_2_circlepath,
                       iconColor: const Color(0xFF7FD8BE),
@@ -197,7 +211,7 @@ class DashboardTab extends StatelessWidget {
                 children: [
                   Text('Daily Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  _DailyActivityGrid(healthService: _healthService, streakService: _streakService, userId: userId),
+                  _DailyActivityGrid(healthService: _healthService, streakService: _streakService, userId: widget.userId),
                 ],
               ),
             ),
@@ -207,14 +221,21 @@ class DashboardTab extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
-              child: _WeeklyPerformance(healthService: _healthService, userId: userId),
+              child: _WeeklyPerformance(healthService: _healthService, userId: widget.userId),
             ),
           ),
-          // Recent Activities
-          // Removed - using Weekly Performance chart instead
+
+          // Recent Activity Section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: _RecentActivitySection(healthService: _healthService),
+            ),
+          ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
+      ),
       ),
       ),
     );
@@ -258,33 +279,6 @@ class _HeaderIcon extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatelessWidget {
-  final TextEditingController controller;
-  const _SearchBar({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        controller: controller,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-          prefixIcon: Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.4)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        ),
       ),
     );
   }
@@ -738,6 +732,17 @@ class _ActivityCardWithModify extends StatelessWidget {
     }
   }
 
+  String _getCategoryForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return 'Consistency';
+      case 'completed tasks':
+        return 'Productivity';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -755,57 +760,60 @@ class _ActivityCardWithModify extends StatelessWidget {
           child: Stack(
             children: [
               // Main card
-              StreamBuilder<dynamic>(
-                stream: _getStreamForActivity(activityType),
-                builder: (context, snapshot) {
-                  String value = '0';
-                  String unit = '';
-                  String title = activityType;
-                  String category = '';
+              StreamBuilder<bool>(
+                stream: healthService.getGoalDoneStream(activityType),
+                builder: (context, goalSnapshot) {
+                  final bool isDone = goalSnapshot.data ?? false;
 
-                  if (snapshot.hasData) {
-                    if (activityType.toLowerCase() == 'day streak') {
-                      final data = snapshot.data as Map<String, dynamic>;
-                      value = (data['currentStreak'] ?? 0).toString();
-                      unit = 'days';
-                    } else if (activityType.toLowerCase() == 'completed tasks') {
-                      final logs = snapshot.data as List<HealthLog>;
-                      value = logs
-                          .where((log) => log.type.toLowerCase() == 'completed tasks')
-                          .length
-                          .toString();
-                      unit = 'tasks';
-                      // Get category from first log if available
-                      if (logs.isNotEmpty && logs.first.metadata != null) {
-                        category = logs.first.metadata!['category'] ?? '';
+                  return StreamBuilder<dynamic>(
+                    stream: _getStreamForActivity(activityType),
+                    builder: (context, snapshot) {
+                      String value = '0';
+                      String unit = '';
+                      String title = activityType;
+                      String category = '';
+
+                      if (snapshot.hasData) {
+                        if (activityType.toLowerCase() == 'day streak') {
+                          final data = snapshot.data as Map<String, dynamic>;
+                          value = (data['currentStreak'] ?? 0).toString();
+                          unit = 'days';
+                          category = _getCategoryForActivity(activityType);
+                        } else if (activityType.toLowerCase() == 'completed tasks') {
+                          final logs = snapshot.data as List<HealthLog>;
+                          value = logs
+                              .where((log) => log.type.toLowerCase() == 'completed tasks')
+                              .length
+                              .toString();
+                          unit = 'tasks';
+                          category = _getCategoryForActivity(activityType);
+                        } else {
+                          final data = snapshot.data as Map<String, dynamic>;
+                          value = (data['total'] as double).toStringAsFixed(1);
+                          unit = data['unit'] ?? '';
+                          category = data['category'] ?? '';
+                        }
                       }
-                    } else {
-                      final data = snapshot.data as Map<String, dynamic>;
-                      value = (data['total'] as double).toStringAsFixed(1);
-                      unit = data['unit'] ?? '';
-                      // Get category from metadata if available
-                      if (data['metadata'] != null && data['metadata'] is Map) {
-                        category = data['metadata']['category'] ?? '';
-                      }
-                    }
-                  }
 
-                  // Capitalize the title
-                  final capitalizedTitle = title.isEmpty 
-                      ? title 
-                      : title[0].toUpperCase() + title.substring(1).toLowerCase();
+                      final capitalizedTitle = title.isEmpty 
+                          ? title 
+                          : title[0].toUpperCase() + title.substring(1).toLowerCase();
 
-                  return _ActivityCardNew(
-                    icon: _getIconForActivity(activityType),
-                    iconColor: color,
-                    iconBgColor: color.withOpacity(0.2),
-                    title: capitalizedTitle,
-                    value: value,
-                    unit: unit,
-                    subtitle: category.isNotEmpty ? category : capitalizedTitle,
-                    trend: '↑ 0%',
-                    trendColor: Colors.greenAccent,
-                    visual: _getVisualForActivity(activityType),
+                      return _ActivityCardNew(
+                        icon: _getIconForActivity(activityType),
+                        iconColor: color,
+                        iconBgColor: color.withOpacity(0.2),
+                        title: capitalizedTitle,
+                        value: value,
+                        unit: unit,
+                        subtitle: category.isNotEmpty ? category : capitalizedTitle,
+                        trend: '↑ 0%',
+                        trendColor: Colors.greenAccent,
+                        visual: _getVisualForActivity(activityType),
+                        isDone: isDone,
+                        onDoubleTap: isModifyMode ? null : () => healthService.toggleGoalDone(activityType, !isDone),
+                      );
+                    },
                   );
                 },
               ),
@@ -998,10 +1006,9 @@ class _ActivityCardWrapper extends StatelessWidget {
   }
 }
 
-class _ActivityCardNew extends StatelessWidget {
+class _ActivityCardNew extends StatefulWidget {
   final IconData icon;
   final Color iconColor;
-
   final Color iconBgColor;
   final String title;
   final String value;
@@ -1010,6 +1017,8 @@ class _ActivityCardNew extends StatelessWidget {
   final String trend;
   final Color trendColor;
   final Widget visual;
+  final bool isDone;
+  final VoidCallback? onDoubleTap;
 
   const _ActivityCardNew({
     required this.icon,
@@ -1022,106 +1031,320 @@ class _ActivityCardNew extends StatelessWidget {
     required this.trend,
     required this.trendColor,
     required this.visual,
+    this.isDone = false,
+    this.onDoubleTap,
   });
 
   @override
+  State<_ActivityCardNew> createState() => _ActivityCardNewState();
+}
+
+class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _floatAnimation;
+  late bool _isDoneOptimistic;
+  bool _showActionOverlay = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDoneOptimistic = widget.isDone;
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.04).chain(CurveTween(curve: Curves.easeOutCubic)), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.04, end: 1.0).chain(CurveTween(curve: Curves.easeInOutCubic)), weight: 60),
+    ]).animate(_pulseController);
+
+    _floatAnimation = Tween<double>(begin: 0.0, end: -4.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    if (_isDoneOptimistic) {
+      _pulseController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(_ActivityCardNew oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isDone != oldWidget.isDone) {
+      setState(() {
+        _isDoneOptimistic = widget.isDone;
+        _showActionOverlay = false; // Hide overlay when actual state updates
+      });
+      if (_isDoneOptimistic) {
+        _pulseController.forward();
+      } else {
+        _pulseController.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  void _handleDoubleTap() {
+    if (widget.onDoubleTap == null) return;
+    
+    setState(() {
+      _showActionOverlay = !_showActionOverlay;
+    });
+  }
+
+  void _confirmAction() {
+    setState(() {
+      _isDoneOptimistic = !_isDoneOptimistic;
+      _showActionOverlay = false;
+    });
+
+    if (_isDoneOptimistic) {
+      _pulseController.forward(from: 0.0);
+    } else {
+      _pulseController.reverse();
+    }
+
+    if (widget.onDoubleTap != null) {
+      widget.onDoubleTap!();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withOpacity(0.12),
-              Colors.white.withOpacity(0.06),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+    return GestureDetector(
+      onDoubleTap: _handleDoubleTap,
+      child: AnimatedBuilder(
+        animation: _pulseController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _isDoneOptimistic ? _floatAnimation.value : 0),
+            child: Transform.scale(
+              scale: _isDoneOptimistic ? _scaleAnimation.value : 1.0,
+              child: child,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Icon, Title, Trend
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutQuart,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: iconBgColor,
-                    borderRadius: BorderRadius.circular(10),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _isDoneOptimistic ? widget.iconColor.withOpacity(0.25) : Colors.white.withOpacity(0.12),
+                        _isDoneOptimistic ? widget.iconColor.withOpacity(0.1) : Colors.white.withOpacity(0.06),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: _isDoneOptimistic ? widget.iconColor.withOpacity(0.7) : Colors.white.withOpacity(0.1),
+                      width: _isDoneOptimistic ? 2.0 : 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: iconColor.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        color: _isDoneOptimistic ? widget.iconColor.withOpacity(0.4) : Colors.black.withOpacity(0.3),
+                        blurRadius: _isDoneOptimistic ? 35 : 20,
+                        spreadRadius: _isDoneOptimistic ? 4 : 0,
+                        offset: Offset(0, _isDoneOptimistic ? 15 : 8),
                       ),
                     ],
                   ),
-                  child: Icon(icon, color: iconColor, size: 20),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.3)),
-                      const SizedBox(height: 3),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      // Header: Icon, Title, Trend
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: widget.iconBgColor,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: widget.iconColor.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(widget.icon, color: widget.iconColor, size: 20),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(widget.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.3)),
+                                const SizedBox(height: 3),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: widget.trendColor.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Text(widget.trend, style: GoogleFonts.outfit(color: widget.trendColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Value and Visual
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(widget.value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: -1)),
+                                const SizedBox(height: 1),
+                                Text(widget.unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 1),
+                                Text(widget.subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w400)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          SizedBox(
+                            width: 35,
+                            height: 35,
+                            child: widget.visual,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (_isDoneOptimistic)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 600),
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      curve: Curves.easeOutBack,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.greenAccent.withOpacity(0.6),
+                                  blurRadius: 15,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(CupertinoIcons.checkmark, color: Colors.black, size: 12),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                
+                // Action Overlay (Confirmation)
+                if (_showActionOverlay)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _showActionOverlay = false),
+                      child: Container(
                         decoration: BoxDecoration(
-                          color: trendColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(5),
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(28),
                         ),
-                        child: Text(trend, style: GoogleFonts.outfit(color: trendColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  GestureDetector(
+                                    onTap: _confirmAction,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: _isDoneOptimistic ? Colors.redAccent : Colors.greenAccent,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: (_isDoneOptimistic ? Colors.redAccent : Colors.greenAccent).withOpacity(0.4),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _isGoalReached() ? CupertinoIcons.refresh : CupertinoIcons.checkmark_alt,
+                                            color: Colors.black,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _isDoneOptimistic ? 'Undo' : 'Mark as Done',
+                                            style: GoogleFonts.outfit(
+                                              color: Colors.black,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Double tap to cancel',
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white38,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
               ],
             ),
-            const SizedBox(height: 10),
-            // Value and Visual
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: -1)),
-                      const SizedBox(height: 1),
-                      Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 1),
-                      Text(subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w400)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 6),
-                SizedBox(
-                  width: 35,
-                  height: 35,
-                  child: visual,
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  bool _isGoalReached() => _isDoneOptimistic;
 }
 
 class _RoutineSection extends StatefulWidget {
@@ -1312,28 +1535,29 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
         children: [
           GestureDetector(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   // Icon with background
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: widget.iconBgColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(widget.icon, color: widget.iconColor, size: 28),
+                    child: Icon(widget.icon, color: widget.iconColor, size: 24),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   // Title and completion
                   Expanded(
                     child: Column(
@@ -1351,7 +1575,7 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text('${(progress * 100).toStringAsFixed(0)}% completed', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text('${(progress * 100).toStringAsFixed(0)}% completed', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.w500)),
                       ],
                     ),
                   ),
@@ -1361,7 +1585,7 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text('$completedCount/$totalCount', style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                      Icon(_isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, color: Colors.white, size: 18),
+                      Icon(_isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, color: Colors.white38, size: 16),
                     ],
                   ),
                 ],
@@ -1429,6 +1653,7 @@ class _WeeklyPerformance extends StatelessWidget {
         }
 
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
@@ -1649,4 +1874,192 @@ class _WavePainter extends CustomPainter {
   }
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _RecentActivitySection extends StatelessWidget {
+  final HealthService healthService;
+  const _RecentActivitySection({required this.healthService});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Activity',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RecentActivityPage(healthService: healthService),
+                ),
+              ),
+              child: Text(
+                'View All',
+                style: GoogleFonts.outfit(
+                  color: AppColors.warning,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        StreamBuilder<List<HealthLog>>(
+          stream: healthService.getRecentLogsStream(limit: 3),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: AppColors.warning));
+            }
+            final logs = snapshot.data ?? [];
+            if (logs.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(CupertinoIcons.square_list, color: Colors.white24, size: 40),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No recent activities found',
+                      style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Column(
+              children: logs.map((log) => _ActivityLogItem(log: log)).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _ActivityLogItem extends StatelessWidget {
+  final HealthLog log;
+  const _ActivityLogItem({required this.log});
+
+  IconData _getIcon() {
+    final type = log.type.toLowerCase();
+    if (type.contains('steps')) return LucideIcons.footprints;
+    if (type.contains('calor')) return LucideIcons.flame;
+    if (type.contains('dist')) return LucideIcons.map_pin;
+    if (type.contains('workout')) return LucideIcons.dumbbell;
+    if (type.contains('sleep')) return LucideIcons.moon;
+    if (type.contains('drink') || type.contains('water')) return LucideIcons.droplets;
+    return LucideIcons.activity;
+  }
+
+  Color _getColor() {
+    final type = log.type.toLowerCase();
+    if (type.contains('steps')) return Colors.orangeAccent;
+    if (type.contains('calor')) return Colors.redAccent;
+    if (type.contains('dist')) return Colors.blueAccent;
+    if (type.contains('workout')) return Colors.greenAccent;
+    if (type.contains('sleep')) return Colors.purpleAccent;
+    if (type.contains('drink') || type.contains('water')) return Colors.cyanAccent;
+    return AppColors.warning;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isGoalCompletion = log.metadata?['isGoalCompletion'] == true;
+    final color = _getColor();
+    final timeStr = DateFormat('h:mm a').format(log.timestamp);
+    final dateStr = DateFormat('MMM d').format(log.timestamp);
+    final isToday = DateTime.now().day == log.timestamp.day && 
+                   DateTime.now().month == log.timestamp.month;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isGoalCompletion ? LucideIcons.circle_check : _getIcon(), 
+              color: isGoalCompletion ? Colors.greenAccent : color, 
+              size: 22
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isGoalCompletion ? 'GOAL COMPLETED' : log.type.toUpperCase(),
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isGoalCompletion ? 'Target ${log.type} reached' : '${log.value.toStringAsFixed(1)} ${log.unit}',
+                  style: GoogleFonts.outfit(
+                    color: isGoalCompletion ? Colors.greenAccent : color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                isToday ? 'Today' : dateStr,
+                style: GoogleFonts.outfit(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                timeStr,
+                style: GoogleFonts.outfit(
+                  color: Colors.white38,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

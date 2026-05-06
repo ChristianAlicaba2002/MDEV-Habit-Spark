@@ -6,6 +6,7 @@ class CategoryModel {
   final String iconCode;
   final int colorValue;
   final String userId;
+  final int position;
 
   CategoryModel({
     required this.id,
@@ -13,15 +14,17 @@ class CategoryModel {
     required this.iconCode,
     required this.colorValue,
     required this.userId,
+    this.position = 0,
   });
 
   factory CategoryModel.fromMap(Map<String, dynamic> map, String id) {
     return CategoryModel(
       id: id,
       name: map['name'] ?? '',
-      iconCode: map['iconCode'] ?? '58713', // Default fitness icon
+      iconCode: map['iconCode'] ?? '58713',
       colorValue: map['colorValue'] ?? 0xFFFFC107,
       userId: map['userId'] ?? '',
+      position: map['position'] ?? 0,
     );
   }
 
@@ -31,6 +34,7 @@ class CategoryModel {
       'iconCode': iconCode,
       'colorValue': colorValue,
       'userId': userId,
+      'position': position,
     };
   }
 

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
 
 class CheckInTab extends StatefulWidget {
   final List<Habit> habits;
@@ -33,6 +35,14 @@ class CheckInTab extends StatefulWidget {
 class _CheckInTabState extends State<CheckInTab> {
   String? _expandedRoutine = 'Morning';
   String? _selectedCategoryFilter;
+  bool _expandedActivities = false;
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _isRefreshing = false);
+  }
 
   @override
   void initState() {
@@ -76,6 +86,216 @@ class _CheckInTabState extends State<CheckInTab> {
     );
   }
 
+  void _showEditCategoryModal(CategoryModel category) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CreateCategoryModal(
+        userId: widget.userId,
+        categoryService: widget.categoryService,
+        category: category,
+        onDelete: () => _showDeleteCategoryDialog(category),
+      ),
+    );
+  }
+
+  void _showDeleteCategoryDialog(CategoryModel category) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Delete Category', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text(
+          'Are you sure you want to delete "${category.name}"? All habits in this category will be updated to "General".',
+          style: GoogleFonts.outfit(),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.blue)),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await widget.categoryService.deleteCategory(category.id);
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting category: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text('Delete', style: GoogleFonts.outfit(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCategoryDetailModal(CategoryModel category, List<Habit> allHabits) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CategoryDetailModal(
+        category: category,
+        habits: allHabits.where((h) => h.category == category.name).toList(),
+        habitService: widget.habitService,
+        userId: widget.userId,
+      ),
+    );
+  }
+
+  void _showRenameActivityDialog(String activityType, HealthService healthService) {
+    final controller = TextEditingController(text: activityType);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2E2E),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Rename Activity',
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'This will update the name across all your logs.',
+                style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  hintText: 'Activity name',
+                  hintStyle: GoogleFonts.outfit(color: Colors.white24),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white.withOpacity(0.15)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 15)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final newName = controller.text.trim();
+                          if (newName.isNotEmpty && newName.toLowerCase() != activityType.toLowerCase()) {
+                            Navigator.pop(context);
+                            try {
+                              await healthService.renameActivityType(activityType, newName);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Activity renamed to "$newName"'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                        child: Text('Save', style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteActivityDialog(String activityType, HealthService healthService) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Delete Activity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text(
+          'Are you sure you want to delete "$activityType"? All logged data for this activity will be permanently removed.',
+          style: GoogleFonts.outfit(),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.blue)),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await healthService.deleteActivityType(activityType);
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: Text('Delete', style: GoogleFonts.outfit(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allHabits = widget.habits;
@@ -89,6 +309,8 @@ class _CheckInTabState extends State<CheckInTab> {
     final eveningHabits = allHabits.where((h) => h.routine == 'Evening').toList();
     final midnightHabits = allHabits.where((h) => h.routine == 'Midnight').toList();
     final generalHabits = allHabits.where((h) => h.routine == 'General' || h.routine == '').toList();
+
+    final healthService = HealthService();
 
     return StreamBuilder<List<CategoryModel>>(
       stream: widget.categoryService.getCategoriesStream(widget.userId),
@@ -107,11 +329,17 @@ class _CheckInTabState extends State<CheckInTab> {
         ),
       ),
           child: SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Header
-                SliverToBoxAdapter(
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: AppColors.warning,
+              backgroundColor: const Color(0xFF1E2E2E),
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                slivers: _isRefreshing 
+                  ? [const SliverCheckInSkeleton()]
+                  : [
+                  // Header
+                  SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                     child: Row(
@@ -143,18 +371,10 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                // Search Bar
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: _SearchBar(),
-                  ),
-                ),
-
                 // Daily Tasks
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -175,7 +395,7 @@ class _CheckInTabState extends State<CheckInTab> {
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                           ],
                           if (afternoonHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
@@ -186,7 +406,7 @@ class _CheckInTabState extends State<CheckInTab> {
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                           ],
                           if (eveningHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
@@ -226,7 +446,28 @@ class _CheckInTabState extends State<CheckInTab> {
                   ),
                 ),
 
-                // Categories
+                // Categories Section
+                SliverToBoxAdapter(
+                  child: _CategoriesSection(
+                    categories: categories,
+                    allHabits: allHabits,
+                    selectedFilter: _selectedCategoryFilter,
+                    onFilterChanged: (filter) => setState(() => _selectedCategoryFilter = filter),
+                    onAddCategory: _showAddCategoryModal,
+                    onEditCategory: _showEditCategoryModal,
+                    onDeleteCategory: _showDeleteCategoryDialog,
+                    onCategoryTap: (cat) => _showCategoryDetailModal(cat, allHabits),
+                    onReorder: (oldIndex, newIndex) {
+                      if (newIndex > oldIndex) newIndex -= 1;
+                      final List<CategoryModel> items = List.from(categories);
+                      final CategoryModel item = items.removeAt(oldIndex);
+                      items.insert(newIndex, item);
+                      widget.categoryService.reorderCategories(items);
+                    },
+                  ),
+                ),
+
+                // My Activity Habits - Display actual activities
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
@@ -236,105 +477,81 @@ class _CheckInTabState extends State<CheckInTab> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Categories', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                            if (_selectedCategoryFilter != null)
-                              GestureDetector(
-                                onTap: () => setState(() => _selectedCategoryFilter = null),
-                                child: Text('Clear Filter', style: GoogleFonts.outfit(color: AppColors.warning, fontSize: 12, fontWeight: FontWeight.w600)),
+                            Text(
+                              'My Activity Habits', 
+                              style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)
+                            ),
+                            GestureDetector(
+                              onTap: () => setState(() => _expandedActivities = !_expandedActivities),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _expandedActivities ? 'Collapse' : 'Expand',
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      _expandedActivities ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                                      color: Colors.white70,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
                               ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 85,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            children: [
-                              // Add Category Button
-                              GestureDetector(
-                                onTap: _showAddCategoryModal,
-                                child: Container(
-                                  width: 105,
-                                  height: 85,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white.withOpacity(0.1), style: BorderStyle.solid),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.add_circle_outline, color: AppColors.warning, size: 28),
-                                      const SizedBox(height: 4),
-                                      Text("New Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              ...categories.map((cat) => Padding(
-                                padding: const EdgeInsets.only(right: 12),
-                                child: _CategoryFilterItem(
-                                  title: cat.name, 
-                                  icon: cat.icon, 
-                                  color: cat.color,
-                                  isSelected: _selectedCategoryFilter == cat.name,
-                                  onTap: () => setState(() => _selectedCategoryFilter = _selectedCategoryFilter == cat.name ? null : cat.name),
-                                ),
-                              )).toList(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Active / Filtered Habits
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _selectedCategoryFilter == null ? 'My Active Habits' : '$_selectedCategoryFilter Habits', 
-                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)
-                        ),
                         const SizedBox(height: 16),
-                        if (categoryHabits.isEmpty)
-                          _EmptyStateReminder(
-                            message: _selectedCategoryFilter == null 
-                              ? "No active habits found. Let's create one!" 
-                              : "No habits found in $_selectedCategoryFilter. Try adding a new habit!",
-                            icon: CupertinoIcons.sparkles,
-                          )
-                        else
-                          SizedBox(
-                            height: 130,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: categoryHabits.length,
-                              separatorBuilder: (context, index) => const SizedBox(width: 12),
-                              itemBuilder: (context, index) {
-                                final habit = categoryHabits[index];
-                                final cat = categories.firstWhere((c) => c.name == habit.category, orElse: () => CategoryModel(id: '', name: 'General', iconCode: '58713', colorValue: 0xFFFFC107, userId: ''));
-                                return _CircularHabitCard(
-                                  title: habit.name,
-                                  value: habit.isDone ? '1' : '0',
-                                  total: '1',
-                                  unit: 'done',
-                                  icon: habit.icon != null && habit.icon!.isNotEmpty
-                                    ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') 
-                                    : Icons.check,
-                                  color: cat.color,
-                                  progress: habit.isDone ? 1.0 : 0.0,
-                                );
-                              },
-                            ),
-                          ),
+                        StreamBuilder<List<Map<String, String>>>(
+                          stream: healthService.getAllActivityTypes(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return _EmptyStateReminder(
+                                message: "No activities logged yet. Start tracking your activities!",
+                                icon: CupertinoIcons.sparkles,
+                              );
+                            }
+
+                            final activities = snapshot.data!;
+                            final displayCount = _expandedActivities ? activities.length : 3;
+                            final displayActivities = activities.take(displayCount).toList();
+                            
+                            return Column(
+                              children: List.generate(
+                                displayActivities.length,
+                                (index) {
+                                  final activity = displayActivities[index];
+                                  final activityType = activity['type'] ?? '';
+                                  final unit = activity['unit'] ?? '';
+                                  
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _CompactActivityCard(
+                                      title: activityType.toUpperCase(),
+                                      unit: unit,
+                                      healthService: healthService,
+                                      userId: widget.userId,
+                                      onEdit: () => _showRenameActivityDialog(activityType, healthService),
+                                      onDelete: () => _showDeleteActivityDialog(activityType, healthService),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -378,8 +595,579 @@ class _CheckInTabState extends State<CheckInTab> {
               ],
             ),
           ),
+          ),
         );
       },
+    );
+  }
+}
+
+class _CategoriesSection extends StatelessWidget {
+  final List<CategoryModel> categories;
+  final List<Habit> allHabits;
+  final String? selectedFilter;
+  final Function(String?) onFilterChanged;
+  final VoidCallback onAddCategory;
+  final Function(CategoryModel) onEditCategory;
+  final Function(CategoryModel) onDeleteCategory;
+  final Function(CategoryModel) onCategoryTap;
+  final ReorderCallback onReorder;
+
+  const _CategoriesSection({
+    required this.categories,
+    required this.allHabits,
+    required this.selectedFilter,
+    required this.onFilterChanged,
+    required this.onAddCategory,
+    required this.onEditCategory,
+    required this.onDeleteCategory,
+    required this.onCategoryTap,
+    required this.onReorder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title only
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Categories',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 20, // Standardized secondary title size
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Organize your life, your way.',
+                style: GoogleFonts.outfit(
+                  color: Colors.white60,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          // Categories grid
+          SizedBox(
+            height: 195, // Reduced to make cards look more square
+            child: ReorderableListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(right: 20),
+              proxyDecorator: (child, index, animation) => Material(
+                color: Colors.transparent,
+                child: child,
+              ),
+              itemCount: categories.length + 1,
+              onReorder: (oldIndex, newIndex) {
+                // Prevent reordering the 'Create' button (it's always the last item)
+                if (oldIndex >= categories.length || newIndex > categories.length) return;
+                
+                onReorder(oldIndex, newIndex);
+              },
+              itemBuilder: (context, index) {
+                if (index == categories.length) {
+                  return Padding(
+                    key: const ValueKey('create_button'),
+                    padding: const EdgeInsets.only(left: 4),
+                    child: ReorderableDelayedDragStartListener(
+                      index: index,
+                      enabled: false, // Disable dragging for create button
+                      child: _CreateCategoryCard(onTap: onAddCategory),
+                    ),
+                  );
+                }
+
+                final cat = categories[index];
+                return Padding(
+                  key: ValueKey(cat.id),
+                  padding: const EdgeInsets.only(right: 12),
+                  child: _CategoryCard(
+                    category: cat,
+                    habitCount: allHabits.where((h) => h.category == cat.name).length,
+                    isSelected: selectedFilter == cat.name,
+                    onTap: () => onCategoryTap(cat),
+                    onEdit: () => onEditCategory(cat),
+                    onDelete: () => onDeleteCategory(cat),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Tip section - Refined
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D1B1B).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.05),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.lightbulb_fill,
+                  color: Colors.cyanAccent.withOpacity(0.8),
+                  size: 16,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Tip: Long press a category to reorder or customize it.',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white54,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CreateCategoryCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _CreateCategoryCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 130,
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: 20,
+            dash: 6,
+            gap: 4,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.teal.withOpacity(0.1),
+                  border: Border.all(
+                    color: Colors.teal.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  CupertinoIcons.plus,
+                  color: Color(0xFF4ECDC4),
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Create',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'New Category',
+                style: GoogleFonts.outfit(
+                  color: Colors.white54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final CategoryModel category;
+  final int habitCount;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _CategoryCard({
+    required this.category,
+    required this.habitCount,
+    required this.isSelected,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  String _getCategoryDescription(String name) {
+    switch (name) {
+      case 'Fitness': return 'Move your body';
+      case 'Productivity': return 'Stay focused';
+      case 'Wellness': return 'Feel better';
+      case 'Mindfulness': return 'Be present';
+      default: return 'Stay on track';
+    }
+  }
+
+  String _getCategoryStats(String name, int count) {
+    if (name == 'Fitness') {
+      return '$count ${count == 1 ? 'workout' : 'workouts'}';
+    }
+    return '$count ${count == 1 ? 'task' : 'tasks'}';
+  }
+
+  IconData _getCategoryStatsIcon(String name) {
+    // Using basic Lucide icons to ensure compatibility
+    switch (name) {
+      case 'Fitness': return LucideIcons.flame;
+      case 'Productivity': return LucideIcons.check;
+      case 'Mindfulness': return LucideIcons.leaf;
+      default: return LucideIcons.check;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Color accentColor = category.color;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 165,
+        height: 165,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: isSelected ? accentColor : accentColor.withOpacity(0.2),
+              width: 1.5,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accentColor.withOpacity(0.15),
+                accentColor.withOpacity(0.05),
+                Colors.black.withOpacity(0.2),
+              ],
+            ),
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: accentColor.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              children: [
+                // Background glow
+                Positioned(
+                  top: -20,
+                  right: -20,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withOpacity(0.15),
+                          blurRadius: 30,
+                          spreadRadius: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Top row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onTap: onEdit,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                CupertinoIcons.ellipsis,
+                                color: Colors.white.withOpacity(0.4),
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Glassmorphic Icon Container
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              accentColor.withOpacity(0.5),
+                              accentColor.withOpacity(0.2),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accentColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          category.icon,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Name & Subtitle
+                      Text(
+                        category.name,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 16, // Slightly smaller for square
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      // Stats Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(
+                            color: accentColor.withOpacity(0.3),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _getCategoryStatsIcon(category.name),
+                              color: accentColor,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                _getCategoryStats(category.name, habitCount),
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+  final double dash;
+  final double borderRadius;
+
+  _DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.5,
+    this.gap = 5.0,
+    this.dash = 5.0,
+    this.borderRadius = 16.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth, size.height - strokeWidth),
+        Radius.circular(borderRadius),
+      ));
+
+    final dashPath = Path();
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        dashPath.addPath(
+          metric.extractPath(distance, distance + dash),
+          Offset.zero,
+        );
+        distance += dash + gap;
+      }
+    }
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _AddCategoryButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _AddCategoryButton({required this.onTap});
+
+  @override
+  State<_AddCategoryButton> createState() => _AddCategoryButtonState();
+}
+
+class _AddCategoryButtonState extends State<_AddCategoryButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          width: 110,
+          height: 110,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.warning.withOpacity(0.15),
+                AppColors.warning.withOpacity(0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.warning.withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.warning.withOpacity(0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: AppColors.warning,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "New",
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                "Category",
+                style: GoogleFonts.outfit(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -409,48 +1197,233 @@ class _EmptyStateReminder extends StatelessWidget {
   }
 }
 
-class _CategoryFilterItem extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final bool isSelected;
-  final VoidCallback onTap;
+class _CategoryDetailModal extends StatelessWidget {
+  final CategoryModel category;
+  final List<Habit> habits;
+  final HabitService habitService;
+  final String userId;
 
-  const _CategoryFilterItem({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.isSelected,
-    required this.onTap,
+  const _CategoryDetailModal({
+    required this.category,
+    required this.habits,
+    required this.habitService,
+    required this.userId,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 105,
-        height: 85,
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : const Color(0xFF1E2E2E),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? color : Colors.white.withOpacity(0.05)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: isSelected ? color : color.withOpacity(0.7), size: 22),
-            const SizedBox(height: 6),
-            Text(
-              title, 
-              style: GoogleFonts.outfit(
-                color: isSelected ? color : Colors.white, 
-                fontSize: 12, 
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold
-              )
+    final int completedCount = habits.where((h) => h.isDone).length;
+    final double progress = habits.isEmpty ? 0 : completedCount / habits.length;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
             ),
-          ],
-        ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: category.color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: category.color.withOpacity(0.2)),
+                          ),
+                          child: Icon(category.icon, color: category.color, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              category.name,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${habits.length} habits',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white54,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white54),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.white.withOpacity(0.05),
+                    valueColor: AlwaysStoppedAnimation<Color>(category.color),
+                    minHeight: 8,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Category Completion',
+                      style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+                    ),
+                    Text(
+                      '${(progress * 100).toInt()}%',
+                      style: GoogleFonts.outfit(
+                        color: category.color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Habits List
+          Expanded(
+            child: habits.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(LucideIcons.sparkles, color: Colors.white24, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No habits in this category yet',
+                          style: GoogleFonts.outfit(color: Colors.white38),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: habits.length,
+                    itemBuilder: (context, index) {
+                      final habit = habits[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _HabitListItem(
+                          habit: habit,
+                          categoryColor: category.color,
+                          onToggle: () {
+                            habitService.toggleHabit(habit.id, habit.isDone, userId);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HabitListItem extends StatelessWidget {
+  final Habit habit;
+  final Color categoryColor;
+  final VoidCallback onToggle;
+
+  const _HabitListItem({
+    required this.habit,
+    required this.categoryColor,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: categoryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              habit.icon != null ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') : Icons.check_circle_outline,
+              color: categoryColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  habit.name,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    decoration: habit.isDone ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                Text(
+                  habit.routine,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white38,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onToggle,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: habit.isDone ? categoryColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: habit.isDone ? categoryColor : Colors.white24,
+                  width: 2,
+                ),
+              ),
+              child: habit.isDone
+                  ? const Icon(Icons.check, color: Colors.black, size: 18)
+                  : null,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -459,8 +1432,15 @@ class _CategoryFilterItem extends StatelessWidget {
 class _CreateCategoryModal extends StatefulWidget {
   final String userId;
   final CategoryService categoryService;
+  final CategoryModel? category;
+  final VoidCallback? onDelete;
 
-  const _CreateCategoryModal({required this.userId, required this.categoryService});
+  const _CreateCategoryModal({
+    required this.userId,
+    required this.categoryService,
+    this.category,
+    this.onDelete,
+  });
 
   @override
   State<_CreateCategoryModal> createState() => _CreateCategoryModalState();
@@ -468,8 +1448,8 @@ class _CreateCategoryModal extends StatefulWidget {
 
 class _CreateCategoryModalState extends State<_CreateCategoryModal> {
   final _nameController = TextEditingController();
-  IconData _selectedIcon = Icons.fitness_center;
-  Color _selectedColor = AppColors.warning;
+  late IconData _selectedIcon;
+  late Color _selectedColor;
 
   final List<IconData> _icons = [
     Icons.fitness_center, Icons.work, Icons.spa, Icons.self_improvement,
@@ -483,7 +1463,22 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.category != null) {
+      _nameController.text = widget.category!.name;
+      _selectedIcon = widget.category!.icon;
+      _selectedColor = widget.category!.color;
+    } else {
+      _selectedIcon = Icons.fitness_center;
+      _selectedColor = AppColors.warning;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool isEditing = widget.category != null;
+
     return Container(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       decoration: const BoxDecoration(
@@ -500,7 +1495,10 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("New Category", style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(
+                    isEditing ? "Edit Category" : "New Category",
+                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
                 ],
               ),
@@ -561,27 +1559,67 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
                 ),
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_nameController.text.isNotEmpty) {
-                      await widget.categoryService.addCategory(
-                        widget.userId,
-                        _nameController.text,
-                        '${_selectedIcon.codePoint}',
-                        _selectedColor.value,
-                      );
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _selectedColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (_nameController.text.isNotEmpty) {
+                          if (isEditing) {
+                            await widget.categoryService.updateCategory(
+                              widget.category!.id,
+                              _nameController.text,
+                              '${_selectedIcon.codePoint}',
+                              _selectedColor.value,
+                            );
+                          } else {
+                            await widget.categoryService.addCategory(
+                              widget.userId,
+                              _nameController.text,
+                              '${_selectedIcon.codePoint}',
+                              _selectedColor.value,
+                            );
+                          }
+                          Navigator.pop(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _selectedColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        isEditing ? "Update Category" : "Create Category",
+                        style: GoogleFonts.outfit(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
-                  child: Text("Create Category", style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
+                  if (isEditing) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close edit modal
+                          if (widget.onDelete != null) {
+                            widget.onDelete!();
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.redAccent.withOpacity(0.5)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: Text(
+                          "Delete Category",
+                          style: GoogleFonts.outfit(color: Colors.redAccent, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
@@ -1071,29 +2109,6 @@ class _HeaderIcon extends StatelessWidget {
   }
 }
 
-class _SearchBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-          prefixIcon: Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.3)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
-    );
-  }
-}
-
 class _ExpandableRoutineCard extends StatelessWidget {
   final String title;
   final List<Habit> habits;
@@ -1111,11 +2126,38 @@ class _ExpandableRoutineCard extends StatelessWidget {
     required this.userId,
   });
 
+  Color _getRoutineColor(String title) {
+    if (title.contains('Morning')) return const Color(0xFFD4A574);
+    if (title.contains('Afternoon')) return const Color(0xFFFFD700);
+    if (title.contains('Evening')) return const Color(0xFF9B7EBD);
+    if (title.contains('Midnight')) return const Color(0xFF6366F1);
+    return const Color(0xFF7FD8BE);
+  }
+
+  Color _getRoutineBgColor(String title) {
+    if (title.contains('Morning')) return const Color(0xFF6B5344);
+    if (title.contains('Afternoon')) return const Color(0xFF8B7500);
+    if (title.contains('Evening')) return const Color(0xFF4A3F5C);
+    if (title.contains('Midnight')) return const Color(0xFF6366F1).withOpacity(0.2);
+    return const Color(0xFF3F6B5C);
+  }
+
+  IconData _getRoutineIcon(String title) {
+    if (title.contains('Morning')) return CupertinoIcons.sun_max_fill;
+    if (title.contains('Afternoon')) return CupertinoIcons.sun_max;
+    if (title.contains('Evening')) return CupertinoIcons.moon_stars_fill;
+    if (title.contains('Midnight')) return CupertinoIcons.moon_stars;
+    return CupertinoIcons.arrow_2_circlepath;
+  }
+
   @override
   Widget build(BuildContext context) {
     final done = habits.where((h) => h.isDone).length;
     final total = habits.length;
     final progress = total > 0 ? done / total : 0.0;
+    final routineColor = _getRoutineColor(title);
+    final routineBgColor = _getRoutineBgColor(title);
+    final routineIcon = _getRoutineIcon(title);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -1131,31 +2173,73 @@ class _ExpandableRoutineCard extends StatelessWidget {
             onTap: onToggle,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.all(12), // Reduced padding
               child: Row(
                 children: [
-                  Icon(
-                    isExpanded ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_right,
-                    color: Colors.white70,
-                    size: 14,
+                  // Left Icon
+                  Container(
+                    width: 44, // Reduced from 48
+                    height: 44, // Reduced from 48
+                    decoration: BoxDecoration(
+                      color: routineBgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(routineIcon, color: routineColor, size: 24),
                   ),
-                  const SizedBox(width: 8),
-                  Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  Stack(
-                    alignment: Alignment.center,
+                  const SizedBox(width: 12),
+                  // Middle: Title and Progress
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600, // Matching Dashboard weight
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 4,
+                            backgroundColor: Colors.white.withOpacity(0.1),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${(progress * 100).toInt()}% completed',
+                          style: GoogleFonts.outfit(
+                            color: Colors.greenAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Right: Count and Chevron
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 2.5,
-                          backgroundColor: Colors.white.withOpacity(0.05),
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+                      Text(
+                        '$done/$total',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text('$done/$total', style: GoogleFonts.outfit(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                      Icon(
+                        isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                        color: Colors.white38,
+                        size: 16,
+                      ),
                     ],
                   ),
                 ],
@@ -1164,7 +2248,7 @@ class _ExpandableRoutineCard extends StatelessWidget {
           ),
           if (isExpanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Column(
                 children: habits.map((habit) => _RoutineHabitItem(
                   habit: habit,
@@ -1216,6 +2300,540 @@ class _RoutineHabitItem extends StatelessWidget {
                 fontSize: 15,
                 decoration: habit.isDone ? TextDecoration.lineThrough : null,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactActivityCard extends StatelessWidget {
+  final String title;
+  final String unit;
+  final HealthService healthService;
+  final String userId;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  const _CompactActivityCard({
+    required this.title,
+    required this.unit,
+    required this.healthService,
+    required this.userId,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  Color _getActivityColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'gym': return Colors.redAccent;
+      case 'drinking': return Colors.cyanAccent;
+      case 'biking': return Colors.greenAccent;
+      case 'running': return Colors.orangeAccent;
+      case 'yoga': return Colors.pinkAccent;
+      case 'swimming': return Colors.blueAccent;
+      case 'walking': return Colors.tealAccent;
+      default: return Colors.purpleAccent;
+    }
+  }
+
+  IconData _getActivityIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'gym': return Icons.fitness_center;
+      case 'drinking': return Icons.local_drink;
+      case 'biking': return Icons.directions_bike;
+      case 'running': return Icons.directions_run;
+      case 'yoga': return Icons.self_improvement;
+      case 'swimming': return Icons.pool;
+      case 'walking': return Icons.directions_walk;
+      default: return Icons.sports;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getActivityColor(title);
+    final icon = _getActivityIcon(title);
+
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: healthService.getActivityMonthlyStats(title.toLowerCase()),
+      builder: (context, snapshot) {
+        final total = snapshot.data?['total'] ?? 0.0;
+        final storedUnit = snapshot.data?['unit'] ?? unit;
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2E2E),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Row(
+            children: [
+              // Icon - Compact
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 12),
+              // Activity Details - Compact
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          'Unit: $storedUnit',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: color.withOpacity(0.5)),
+                          ),
+                          child: Text(
+                            '${total.toStringAsFixed(1)} $storedUnit',
+                            style: GoogleFonts.outfit(
+                              color: color,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // 3-dot menu
+              if (onEdit != null || onDelete != null)
+                GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => _ActivityActionSheet(
+                        activityName: title,
+                        color: color,
+                        icon: icon,
+                        onEdit: onEdit,
+                        onDelete: onDelete,
+                      ),
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      CupertinoIcons.ellipsis_vertical,
+                      color: Colors.white.withOpacity(0.4),
+                      size: 18,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Bottom sheet for activity edit/delete actions
+class _ActivityActionSheet extends StatelessWidget {
+  final String activityName;
+  final Color color;
+  final IconData icon;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  const _ActivityActionSheet({
+    required this.activityName,
+    required this.color,
+    required this.icon,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  activityName,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(color: Colors.white.withOpacity(0.05), height: 1),
+          // Edit option
+          if (onEdit != null)
+            ListTile(
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(CupertinoIcons.pencil, color: Colors.blueAccent, size: 18),
+              ),
+              title: Text('Rename Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 15)),
+              subtitle: Text('Change the activity name', style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                onEdit!();
+              },
+            ),
+          // Delete option
+          if (onDelete != null)
+            ListTile(
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 18),
+              ),
+              title: Text('Delete Activity', style: GoogleFonts.outfit(color: Colors.redAccent, fontSize: 15)),
+              subtitle: Text('Remove all logs for this activity', style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                onDelete!();
+              },
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _ActivityDataCard extends StatelessWidget {
+  final String title;
+  final String unit;
+  final HealthService healthService;
+  final String userId;
+
+  const _ActivityDataCard({
+    required this.title,
+    required this.unit,
+    required this.healthService,
+    required this.userId,
+  });
+
+  Color _getActivityColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'gym': return Colors.redAccent;
+      case 'drinking': return Colors.cyanAccent;
+      case 'biking': return Colors.greenAccent;
+      case 'running': return Colors.orangeAccent;
+      case 'yoga': return Colors.pinkAccent;
+      case 'swimming': return Colors.blueAccent;
+      case 'walking': return Colors.tealAccent;
+      default: return Colors.purpleAccent;
+    }
+  }
+
+  IconData _getActivityIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'gym': return Icons.fitness_center;
+      case 'drinking': return Icons.local_drink;
+      case 'biking': return Icons.directions_bike;
+      case 'running': return Icons.directions_run;
+      case 'yoga': return Icons.self_improvement;
+      case 'swimming': return Icons.pool;
+      case 'walking': return Icons.directions_walk;
+      default: return Icons.sports;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getActivityColor(title);
+    final icon = _getActivityIcon(title);
+
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: healthService.getActivityMonthlyStats(title.toLowerCase()),
+      builder: (context, snapshot) {
+        final total = snapshot.data?['total'] ?? 0.0;
+        final storedUnit = snapshot.data?['unit'] ?? unit;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2E2E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: color, size: 32),
+              ),
+              const SizedBox(width: 16),
+              // Activity Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Unit: $storedUnit',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: color.withOpacity(0.5)),
+                      ),
+                      child: Text(
+                        'Total: ${total.toStringAsFixed(1)} $storedUnit',
+                        style: GoogleFonts.outfit(
+                          color: color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Action Icon
+              Icon(
+                CupertinoIcons.chevron_right,
+                color: Colors.white.withOpacity(0.3),
+                size: 20,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ActivityCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String total;
+  final String unit;
+  final IconData icon;
+  final Color color;
+  final double progress;
+
+  const _ActivityCard({
+    required this.title,
+    required this.value,
+    required this.total,
+    required this.unit,
+    required this.icon,
+    required this.color,
+    required this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          // Icon and Progress Circle
+          Column(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 50,
+                height: 50,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 3,
+                      backgroundColor: Colors.white.withOpacity(0.05),
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          total.isNotEmpty ? '$value/$total' : value,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          unit,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white38,
+                            fontSize: 8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          // Activity Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                // Weekly Activity Dots
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].asMap().entries.map((entry) {
+                    bool done = entry.key < 4;
+                    return Column(
+                      children: [
+                        Text(
+                          entry.value,
+                          style: const TextStyle(
+                            color: Colors.white24,
+                            fontSize: 10,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: done ? const Color(0xFF4ECDC4) : Colors.white.withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: progress > 0 ? Colors.greenAccent.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: progress > 0 ? Colors.greenAccent : Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                  child: Text(
+                    progress > 0 ? 'Completed' : 'Pending',
+                    style: GoogleFonts.outfit(
+                      color: progress > 0 ? Colors.greenAccent : Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

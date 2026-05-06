@@ -13,6 +13,8 @@ import 'package:habit_spark/widgets/stats/timer_card.dart';
 import 'package:habit_spark/widgets/stats/consistency_card.dart';
 import 'package:habit_spark/widgets/stats/streak_card.dart';
 import 'package:habit_spark/widgets/stats/records_card.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
+import 'package:habit_spark/constants/app_colors.dart';
 
 class StatsTab extends StatefulWidget {
   final String userId;
@@ -40,6 +42,13 @@ class _StatsTabState extends State<StatsTab> {
   final HealthService _healthService = HealthService();
   final CategoryService _categoryService = CategoryService();
   final SessionTimerService _timerService = SessionTimerService();
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _isRefreshing = false);
+  }
 
   void _showCategoryPicker(List<CategoryModel> categories) {
     showModalBottomSheet(
@@ -112,11 +121,17 @@ class _StatsTabState extends State<StatsTab> {
             child: Column(
               children: [
                 Expanded(
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      // Header
-                      SliverToBoxAdapter(
+                  child: RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: AppColors.warning,
+                    backgroundColor: const Color(0xFF1E2E2E),
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      slivers: _isRefreshing 
+                        ? [const SliverStatsSkeleton()]
+                        : [
+                        // Header
+                        SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                           child: StatsHeader(
@@ -203,6 +218,7 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ],
