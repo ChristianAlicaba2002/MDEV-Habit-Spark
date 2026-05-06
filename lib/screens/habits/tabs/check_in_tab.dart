@@ -444,7 +444,7 @@ class _CategoriesSection extends StatelessWidget {
           const SizedBox(height: 20),
           // Categories grid
           SizedBox(
-            height: 200,
+            height: 240,
             child: ListView(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
@@ -594,113 +594,131 @@ class _CategoryCard extends StatelessWidget {
     }
   }
 
+  String _getCategoryStats(String name) {
+    switch (name) {
+      case 'Fitness':
+        return '3 workouts';
+      case 'Productivity':
+        return '5 tasks today';
+      case 'Wellness':
+        return '2 sessions today';
+      case 'Mindfulness':
+        return '2 sessions today';
+      default:
+        return '5 tasks today';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 130,
+        width: 150,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: category.color.withOpacity(0.4),
+            color: category.color.withOpacity(0.5),
             width: 2,
           ),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              category.color.withOpacity(0.15),
-              category.color.withOpacity(0.05),
+              category.color.withOpacity(0.12),
+              category.color.withOpacity(0.04),
             ],
           ),
         ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Top row with menu icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Top row with icon and menu
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: category.color.withOpacity(0.25),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          category.icon,
-                          color: category.color,
-                          size: 20,
-                        ),
-                      ),
-                      Icon(
-                        CupertinoIcons.ellipsis,
-                        color: Colors.white.withOpacity(0.5),
-                        size: 16,
-                      ),
-                    ],
+                  Icon(
+                    CupertinoIcons.ellipsis,
+                    color: Colors.white.withOpacity(0.4),
+                    size: 18,
                   ),
-                  const Spacer(),
-                  // Category name
+                ],
+              ),
+              // Centered icon
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: category.color.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  category.icon,
+                  color: category.color,
+                  size: 28,
+                ),
+              ),
+              // Category name and description at bottom
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
                   Text(
                     category.name,
                     style: GoogleFonts.outfit(
                       color: Colors.white,
-                      fontSize: 13,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 2),
-                  // Description
+                  const SizedBox(height: 3),
                   Text(
                     _getCategoryDescription(category.name),
                     style: GoogleFonts.outfit(
                       color: Colors.white70,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Stats badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: category.color.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: category.color.withOpacity(0.4),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          CupertinoIcons.checkmark_circle_fill,
-                          color: category.color,
-                          size: 12,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '5 tasks',
-                          style: GoogleFonts.outfit(
-                            color: category.color,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
-            ),
-          ],
+              // Stats badge at bottom
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: category.color.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: category.color.withOpacity(0.5),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      CupertinoIcons.checkmark_circle_fill,
+                      color: category.color,
+                      size: 13,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      _getCategoryStats(category.name),
+                      style: GoogleFonts.outfit(
+                        color: category.color,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
