@@ -87,6 +87,53 @@ class _CheckInTabState extends State<CheckInTab> {
         userId: widget.userId,
         categoryService: widget.categoryService,
         category: category,
+        onDelete: () => _showDeleteCategoryDialog(category),
+      ),
+    );
+  }
+
+  void _showDeleteCategoryDialog(CategoryModel category) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Delete Category', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text(
+          'Are you sure you want to delete "${category.name}"? All habits in this category will be updated to "General".',
+          style: GoogleFonts.outfit(),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.blue)),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await widget.categoryService.deleteCategory(category.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Category deleted successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting category: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: Text('Delete', style: GoogleFonts.outfit(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
@@ -177,7 +224,7 @@ class _CheckInTabState extends State<CheckInTab> {
                 // Daily Tasks
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -258,6 +305,7 @@ class _CheckInTabState extends State<CheckInTab> {
                     onFilterChanged: (filter) => setState(() => _selectedCategoryFilter = filter),
                     onAddCategory: _showAddCategoryModal,
                     onEditCategory: _showEditCategoryModal,
+                    onDeleteCategory: _showDeleteCategoryDialog,
                     onCategoryTap: (cat) => _showCategoryDetailModal(cat, allHabits),
                     onReorder: (oldIndex, newIndex) {
                       if (newIndex > oldIndex) newIndex -= 1;
@@ -408,6 +456,7 @@ class _CategoriesSection extends StatelessWidget {
   final Function(String?) onFilterChanged;
   final VoidCallback onAddCategory;
   final Function(CategoryModel) onEditCategory;
+  final Function(CategoryModel) onDeleteCategory;
   final Function(CategoryModel) onCategoryTap;
   final ReorderCallback onReorder;
 
@@ -418,6 +467,7 @@ class _CategoriesSection extends StatelessWidget {
     required this.onFilterChanged,
     required this.onAddCategory,
     required this.onEditCategory,
+    required this.onDeleteCategory,
     required this.onCategoryTap,
     required this.onReorder,
   });
@@ -437,9 +487,8 @@ class _CategoriesSection extends StatelessWidget {
                 'Categories',
                 style: GoogleFonts.outfit(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: 20, // Standardized secondary title size
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 4),
@@ -456,7 +505,7 @@ class _CategoriesSection extends StatelessWidget {
           const SizedBox(height: 20),
           // Categories grid
           SizedBox(
-            height: 215,
+            height: 235, // Increased from 215 to prevent overflow
             child: ReorderableListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(right: 20),
@@ -494,6 +543,7 @@ class _CategoriesSection extends StatelessWidget {
                     isSelected: selectedFilter == cat.name,
                     onTap: () => onCategoryTap(cat),
                     onEdit: () => onEditCategory(cat),
+                    onDelete: () => onDeleteCategory(cat),
                   ),
                 );
               },
@@ -607,6 +657,7 @@ class _CategoryCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _CategoryCard({
     required this.category,
@@ -614,6 +665,7 @@ class _CategoryCard extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.onEdit,
+    required this.onDelete,
   });
 
   String _getCategoryDescription(String name) {
@@ -651,9 +703,10 @@ class _CategoryCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 155,
+        width: 170, // Increased width to match height for square look
+        height: 170, // Explicitly set height to be square
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected ? accentColor : accentColor.withOpacity(0.2),
             width: 1.5,
@@ -710,10 +763,14 @@ class _CategoryCard extends StatelessWidget {
                       children: [
                         GestureDetector(
                           onTap: onEdit,
-                          child: Icon(
-                            CupertinoIcons.ellipsis,
-                            color: Colors.white.withOpacity(0.4),
-                            size: 22, // Slightly larger for better tap target
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              CupertinoIcons.ellipsis,
+                              color: Colors.white.withOpacity(0.4),
+                              size: 22,
+                            ),
                           ),
                         ),
                       ],
@@ -1230,11 +1287,13 @@ class _CreateCategoryModal extends StatefulWidget {
   final String userId;
   final CategoryService categoryService;
   final CategoryModel? category;
+  final VoidCallback? onDelete;
 
   const _CreateCategoryModal({
     required this.userId,
     required this.categoryService,
     this.category,
+    this.onDelete,
   });
 
   @override
@@ -1354,39 +1413,67 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
                 ),
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_nameController.text.isNotEmpty) {
-                      if (isEditing) {
-                        await widget.categoryService.updateCategory(
-                          widget.category!.id,
-                          _nameController.text,
-                          '${_selectedIcon.codePoint}',
-                          _selectedColor.value,
-                        );
-                      } else {
-                        await widget.categoryService.addCategory(
-                          widget.userId,
-                          _nameController.text,
-                          '${_selectedIcon.codePoint}',
-                          _selectedColor.value,
-                        );
-                      }
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _selectedColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (_nameController.text.isNotEmpty) {
+                          if (isEditing) {
+                            await widget.categoryService.updateCategory(
+                              widget.category!.id,
+                              _nameController.text,
+                              '${_selectedIcon.codePoint}',
+                              _selectedColor.value,
+                            );
+                          } else {
+                            await widget.categoryService.addCategory(
+                              widget.userId,
+                              _nameController.text,
+                              '${_selectedIcon.codePoint}',
+                              _selectedColor.value,
+                            );
+                          }
+                          Navigator.pop(context);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _selectedColor,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        isEditing ? "Update Category" : "Create Category",
+                        style: GoogleFonts.outfit(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    isEditing ? "Update Category" : "Create Category",
-                    style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                  if (isEditing) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close edit modal
+                          if (widget.onDelete != null) {
+                            widget.onDelete!();
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.redAccent.withOpacity(0.5)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: Text(
+                          "Delete Category",
+                          style: GoogleFonts.outfit(color: Colors.redAccent, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),
