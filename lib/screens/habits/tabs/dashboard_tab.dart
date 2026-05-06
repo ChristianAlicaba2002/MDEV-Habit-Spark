@@ -12,6 +12,7 @@ import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:habit_spark/screens/habits/recent_activity_page.dart';
 
 class DashboardTab extends StatefulWidget {
   final String userId;
@@ -1810,19 +1811,27 @@ class _RecentActivitySection extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Text(
-              'View All',
-              style: GoogleFonts.outfit(
-                color: AppColors.warning,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RecentActivityPage(healthService: healthService),
+                ),
+              ),
+              child: Text(
+                'View All',
+                style: GoogleFonts.outfit(
+                  color: AppColors.warning,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
         StreamBuilder<List<HealthLog>>(
-          stream: healthService.getRecentLogsStream(),
+          stream: healthService.getRecentLogsStream(limit: 3),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator(color: AppColors.warning));
@@ -1888,6 +1897,7 @@ class _ActivityLogItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isGoalCompletion = log.metadata?['isGoalCompletion'] == true;
     final color = _getColor();
     final timeStr = DateFormat('h:mm a').format(log.timestamp);
     final dateStr = DateFormat('MMM d').format(log.timestamp);
@@ -1911,7 +1921,11 @@ class _ActivityLogItem extends StatelessWidget {
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(_getIcon(), color: color, size: 22),
+            child: Icon(
+              isGoalCompletion ? LucideIcons.circle_check : _getIcon(), 
+              color: isGoalCompletion ? Colors.greenAccent : color, 
+              size: 22
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -1919,7 +1933,7 @@ class _ActivityLogItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  log.type.toUpperCase(),
+                  isGoalCompletion ? 'GOAL COMPLETED' : log.type.toUpperCase(),
                   style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontSize: 14,
@@ -1929,9 +1943,9 @@ class _ActivityLogItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${log.value.toStringAsFixed(1)} ${log.unit}',
+                  isGoalCompletion ? 'Target ${log.type} reached' : '${log.value.toStringAsFixed(1)} ${log.unit}',
                   style: GoogleFonts.outfit(
-                    color: color,
+                    color: isGoalCompletion ? Colors.greenAccent : color,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),

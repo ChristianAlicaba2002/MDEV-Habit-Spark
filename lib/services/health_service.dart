@@ -293,15 +293,18 @@ class HealthService {
         .map((snapshot) => snapshot.exists);
   }
 
-  // READ: Get recent activity logs (Latest 5)
-  Stream<List<HealthLog>> getRecentLogsStream() {
+  // READ: Get recent activity logs
+  Stream<List<HealthLog>> getRecentLogsStream({int limit = 3}) {
     return _db
         .collection('health_logs')
         .where('userId', isEqualTo: _userId)
-        .orderBy('timestamp', descending: true)
-        .limit(5)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => HealthLog.fromFirestore(doc)).toList());
+        .map((snapshot) {
+      final logs = snapshot.docs.map((doc) => HealthLog.fromFirestore(doc)).toList();
+      // Sort locally to avoid index requirement
+      logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return logs.take(limit).toList();
+    });
   }
 
   // GOAL COMPLETION: Toggle a "done" status for an activity today
@@ -312,14 +315,31 @@ class HealthService {
     final docId = "${_userId}_${type.toLowerCase()}_$dateId";
 
     if (isDone) {
+      // 1. Mark as done for visual tracking
       await _db.collection('goal_completions').doc(docId).set({
         'userId': _userId,
         'type': type.toLowerCase(),
         'date': dateId,
         'timestamp': FieldValue.serverTimestamp(),
       });
+
+      // 2. Add to health_logs so it appears in Recent Activity
+      await logActivity(
+        type: type.toLowerCase(),
+        value: 1.0,
+        unit: 'goal reached',
+        timestamp: now,
+        metadata: {
+          'isGoalCompletion': true,
+          'activityName': type,
+        },
+      );
     } else {
       await _db.collection('goal_completions').doc(docId).delete();
+      
+      // Optional: Remove the log if toggled off? 
+      // Usually logging systems are additive, but we could find the latest log for this type today and delete it.
+      // For now, let's keep it simple and just log the completion.
     }
   }
 
