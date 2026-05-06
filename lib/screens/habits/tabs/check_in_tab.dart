@@ -505,7 +505,7 @@ class _CategoriesSection extends StatelessWidget {
           const SizedBox(height: 20),
           // Categories grid
           SizedBox(
-            height: 235, // Increased from 215 to prevent overflow
+            height: 195, // Reduced to make cards look more square
             child: ReorderableListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.only(right: 20),
@@ -701,170 +701,163 @@ class _CategoryCard extends StatelessWidget {
     
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 170, // Increased width to match height for square look
-        height: 170, // Explicitly set height to be square
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isSelected ? accentColor : accentColor.withOpacity(0.2),
-            width: 1.5,
-          ),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              accentColor.withOpacity(0.15),
-              accentColor.withOpacity(0.05),
-              Colors.black.withOpacity(0.2),
+      child: SizedBox(
+        width: 165,
+        height: 165,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: isSelected ? accentColor : accentColor.withOpacity(0.2),
+              width: 1.5,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accentColor.withOpacity(0.15),
+                accentColor.withOpacity(0.05),
+                Colors.black.withOpacity(0.2),
+              ],
+            ),
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: accentColor.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
             ],
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: accentColor.withOpacity(0.2),
-                blurRadius: 15,
-                spreadRadius: 2,
-              ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: Stack(
-            children: [
-              // Background glow
-              Positioned(
-                top: -20,
-                right: -20,
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentColor.withOpacity(0.15),
-                        blurRadius: 30,
-                        spreadRadius: 10,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Top row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        GestureDetector(
-                          onTap: onEdit,
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              CupertinoIcons.ellipsis,
-                              color: Colors.white.withOpacity(0.4),
-                              size: 22,
-                            ),
-                          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              children: [
+                // Background glow
+                Positioned(
+                  top: -20,
+                  right: -20,
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withOpacity(0.15),
+                          blurRadius: 30,
+                          spreadRadius: 10,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    // Glassmorphic Icon Container
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            accentColor.withOpacity(0.5),
-                            accentColor.withOpacity(0.2),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accentColor.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        category.icon,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
-                    const Spacer(),
-                    // Name & Subtitle
-                    Text(
-                      category.name,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _getCategoryDescription(category.name),
-                      style: GoogleFonts.outfit(
-                        color: Colors.white60,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const Spacer(),
-                    // Stats Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(100),
-                        border: Border.all(
-                          color: accentColor.withOpacity(0.3),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Top row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Icon(
-                            _getCategoryStatsIcon(category.name),
-                            color: accentColor,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              _getCategoryStats(category.name, habitCount),
-                              style: GoogleFonts.outfit(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                          GestureDetector(
+                            onTap: onEdit,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(
+                                CupertinoIcons.ellipsis,
+                                color: Colors.white.withOpacity(0.4),
+                                size: 22,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      // Glassmorphic Icon Container
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              accentColor.withOpacity(0.5),
+                              accentColor.withOpacity(0.2),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accentColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          category.icon,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Name & Subtitle
+                      Text(
+                        category.name,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 16, // Slightly smaller for square
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      // Stats Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(
+                            color: accentColor.withOpacity(0.3),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _getCategoryStatsIcon(category.name),
+                              color: accentColor,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                _getCategoryStats(category.name, habitCount),
+                                style: GoogleFonts.outfit(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
