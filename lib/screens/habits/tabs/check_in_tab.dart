@@ -617,6 +617,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
   String _selectedActivityUnit = 'km';
   double _activityTargetValue = 1.0;
   IconData _selectedActivityIcon = Icons.directions_run;
+  late String _selectedActivityCategory;
   
   final List<IconData> _icons = [
     Icons.book, Icons.water_drop, Icons.spa, Icons.fitness_center,
@@ -655,6 +656,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _selectedCategory = widget.categories.isNotEmpty ? widget.categories.first.name : 'General';
+    _selectedActivityCategory = widget.categories.isNotEmpty ? widget.categories.first.name : 'General';
   }
 
   @override
@@ -771,14 +773,14 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
               children: _icons.map((icon) => GestureDetector(
                 onTap: () => setState(() => _selectedIcon = icon),
                 child: Container(
-                  margin: const EdgeInsets.only(right: 12),
-                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: _selectedIcon == icon ? AppColors.warning.withOpacity(0.2) : Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: _selectedIcon == icon ? AppColors.warning : Colors.transparent),
                   ),
-                  child: Icon(icon, color: _selectedIcon == icon ? AppColors.warning : Colors.white70, size: 20),
+                  child: Icon(icon, color: _selectedIcon == icon ? AppColors.warning : Colors.white70, size: 18),
                 ),
               )).toList(),
             ),
@@ -923,6 +925,31 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
             ),
           ),
           const SizedBox(height: 24),
+          Text("Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: widget.categories.map((cat) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedActivityCategory = cat.name),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedActivityCategory == cat.name ? cat.color : Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(cat.name, style: GoogleFonts.outfit(color: _selectedActivityCategory == cat.name ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
+                ),
+              )).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
           Text("Unit of Measurement", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -988,6 +1015,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                     unit: _selectedActivityUnit,
                     metadata: {
                       'icon': '${_selectedActivityIcon.codePoint}',
+                      'category': _selectedActivityCategory,
                     },
                   );
                   Navigator.pop(context);
