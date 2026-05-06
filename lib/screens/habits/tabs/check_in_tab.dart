@@ -5,6 +5,7 @@ import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/category_service.dart';
+import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 
 class CheckInTab extends StatefulWidget {
@@ -601,23 +602,41 @@ class _CreateHabitModal extends StatefulWidget {
   State<_CreateHabitModal> createState() => _CreateHabitModalState();
 }
 
-class _CreateHabitModalState extends State<_CreateHabitModal> {
-  final _nameController = TextEditingController();
+class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  
+  // Habit form fields
+  final _habitNameController = TextEditingController();
   late String _selectedCategory;
   String _selectedRoutine = 'Morning';
-  String _selectedFrequency = 'Daily';
   int _targetGoal = 3;
   IconData _selectedIcon = Icons.book;
+  
+  // Activity form fields
+  final _activityNameController = TextEditingController();
+  String _selectedActivityUnit = 'km';
+  double _activityTargetValue = 1.0;
   
   final List<IconData> _icons = [
     Icons.book, Icons.water_drop, Icons.spa, Icons.fitness_center,
     Icons.work, Icons.nightlight_round, Icons.menu_book, Icons.self_improvement
   ];
 
+  final List<String> _units = ['km', 'kcal', 'sessions', 'minutes', 'hours', 'reps', 'sets', 'lbs'];
+
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _selectedCategory = widget.categories.isNotEmpty ? widget.categories.first.name : 'General';
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _habitNameController.dispose();
+    _activityNameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -638,7 +657,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Create Custom Habit", style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text("Create New", style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white54),
                     onPressed: () => Navigator.pop(context),
@@ -646,138 +665,290 @@ class _CreateHabitModalState extends State<_CreateHabitModal> {
                 ],
               ),
               const SizedBox(height: 20),
-              Text("Habit Name", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Write habit name...',
-                  hintStyle: const TextStyle(color: Colors.white24),
-                  filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              // Tab Bar
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: AppColors.warning,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.white70,
+                  tabs: [
+                    Tab(
+                      child: Text(
+                        'Habit',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Tab(
+                      child: Text(
+                        'Activity',
+                        style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
-              Text("Icon Selection", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
-              const SizedBox(height: 12),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: _icons.map((icon) => GestureDetector(
-                    onTap: () => setState(() => _selectedIcon = icon),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _selectedIcon == icon ? AppColors.warning.withOpacity(0.2) : Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _selectedIcon == icon ? AppColors.warning : Colors.transparent),
-                      ),
-                      child: Icon(icon, color: _selectedIcon == icon ? AppColors.warning : Colors.white70, size: 20),
-                    ),
-                  )).toList(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text("Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
-              const SizedBox(height: 12),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: widget.categories.map((cat) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedCategory = cat.name),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _selectedCategory == cat.name ? cat.color : Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(cat.name, style: GoogleFonts.outfit(color: _selectedCategory == cat.name ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
-                        ),
-                      ),
-                    ),
-                  )).toList(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text("Routine", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: ['Morning', 'Afternoon', 'Evening', 'Midnight'].map((rout) => SizedBox(
-                  width: (MediaQuery.of(context).size.width - 64) / 2, // 2 items per row
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedRoutine = rout),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _selectedRoutine == rout ? AppColors.warning : Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text(rout, style: GoogleFonts.outfit(color: _selectedRoutine == rout ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
-                      ),
-                    ),
-                  ),
-                )).toList(),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Goal & Frequency", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
-                      const SizedBox(height: 8),
-                      Text("Target: $_targetGoal times / day", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal = _targetGoal > 1 ? _targetGoal - 1 : 1)),
-                      Text("$_targetGoal", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal++)),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
+              // Tab Views
               SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_nameController.text.isNotEmpty) {
-                      await widget.habitService.addHabit(
-                        widget.userId,
-                        _nameController.text,
-                        icon: '${_selectedIcon.codePoint}',
-                        targetValue: _targetGoal.toDouble(),
-                        routine: _selectedRoutine,
-                        category: _selectedCategory,
-                      );
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.warning,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: Text("Save Habit (CREATE)", style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                height: 500,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Habit Tab
+                    _buildHabitForm(),
+                    // Activity Tab
+                    _buildActivityForm(),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHabitForm() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Habit Name", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _habitNameController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Write habit name...',
+              hintStyle: const TextStyle(color: Colors.white24),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.05),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text("Icon Selection", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: _icons.map((icon) => GestureDetector(
+                onTap: () => setState(() => _selectedIcon = icon),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _selectedIcon == icon ? AppColors.warning.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _selectedIcon == icon ? AppColors.warning : Colors.transparent),
+                  ),
+                  child: Icon(icon, color: _selectedIcon == icon ? AppColors.warning : Colors.white70, size: 20),
+                ),
+              )).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text("Category", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: widget.categories.map((cat) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = cat.name),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedCategory == cat.name ? cat.color : Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(cat.name, style: GoogleFonts.outfit(color: _selectedCategory == cat.name ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
+                ),
+              )).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text("Routine", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: ['Morning', 'Afternoon', 'Evening', 'Midnight'].map((rout) => SizedBox(
+              width: (MediaQuery.of(context).size.width - 64) / 2,
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedRoutine = rout),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _selectedRoutine == rout ? AppColors.warning : Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(rout, style: GoogleFonts.outfit(color: _selectedRoutine == rout ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                  ),
+                ),
+              ),
+            )).toList(),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Goal & Frequency", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  Text("Target: $_targetGoal times / day", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
+                ],
+              ),
+              Row(
+                children: [
+                  IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal = _targetGoal > 1 ? _targetGoal - 1 : 1)),
+                  Text("$_targetGoal", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal++)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () async {
+                if (_habitNameController.text.isNotEmpty) {
+                  await widget.habitService.addHabit(
+                    widget.userId,
+                    _habitNameController.text,
+                    icon: '${_selectedIcon.codePoint}',
+                    targetValue: _targetGoal.toDouble(),
+                    routine: _selectedRoutine,
+                    category: _selectedCategory,
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: Text("Create Habit", style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityForm() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Activity Name", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _activityNameController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'e.g., Running, Swimming, Cycling...',
+              hintStyle: const TextStyle(color: Colors.white24),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.05),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text("Unit of Measurement", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: _units.map((unit) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedActivityUnit = unit),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _selectedActivityUnit == unit ? AppColors.warning : Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(unit, style: GoogleFonts.outfit(color: _selectedActivityUnit == unit ? Colors.black : Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ),
+                  ),
+                ),
+              )).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Target Value", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  Text("${_activityTargetValue.toStringAsFixed(1)} $_selectedActivityUnit", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
+                ],
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning),
+                    onPressed: () => setState(() => _activityTargetValue = _activityTargetValue > 0.1 ? _activityTargetValue - 0.1 : 0.1),
+                  ),
+                  Text("${_activityTargetValue.toStringAsFixed(1)}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline, color: AppColors.warning),
+                    onPressed: () => setState(() => _activityTargetValue += 0.1),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () async {
+                if (_activityNameController.text.isNotEmpty) {
+                  final healthService = HealthService();
+                  await healthService.logActivity(
+                    type: _activityNameController.text,
+                    value: _activityTargetValue,
+                    unit: _selectedActivityUnit,
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: Text("Create Activity", style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
       ),
     );
   }
