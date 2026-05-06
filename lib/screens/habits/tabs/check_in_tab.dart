@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/habit_service.dart';
@@ -394,7 +395,7 @@ class _CategoriesSection extends StatelessWidget {
                     'Categories',
                     style: GoogleFonts.outfit(
                       color: Colors.white,
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
                     ),
@@ -403,36 +404,36 @@ class _CategoriesSection extends StatelessWidget {
                   Text(
                     'Organize your life, your way.',
                     style: GoogleFonts.outfit(
-                      color: Colors.white70,
-                      fontSize: 14,
+                      color: Colors.white60,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withOpacity(0.1),
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       CupertinoIcons.pencil,
                       color: Colors.white70,
-                      size: 16,
+                      size: 14,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Edit',
                       style: GoogleFonts.outfit(
                         color: Colors.white70,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -444,7 +445,7 @@ class _CategoriesSection extends StatelessWidget {
           const SizedBox(height: 20),
           // Categories grid
           SizedBox(
-            height: 240,
+            height: 215, // Reduced from 240
             child: ListView(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
@@ -467,31 +468,31 @@ class _CategoriesSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Tip section
+          // Tip section - Refined
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFF0D1B1B).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: Colors.teal.withOpacity(0.2),
+                color: Colors.white.withOpacity(0.05),
               ),
             ),
             child: Row(
               children: [
                 Icon(
                   CupertinoIcons.lightbulb_fill,
-                  color: Colors.teal,
+                  color: Colors.cyanAccent.withOpacity(0.8),
                   size: 16,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Tip: Long press a category to reorder or customize it.',
                     style: GoogleFonts.outfit(
-                      color: Colors.teal.withOpacity(0.9),
+                      color: Colors.white54,
                       fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),
@@ -513,55 +514,55 @@ class _CreateCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SizedBox(
         width: 130,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
             color: Colors.white.withOpacity(0.2),
-            width: 2,
-            strokeAlign: BorderSide.strokeAlignOutside,
+            borderRadius: 20,
+            dash: 6,
+            gap: 4,
           ),
-          color: Colors.transparent,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.teal.withOpacity(0.5),
-                  width: 2,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.teal.withOpacity(0.1),
+                  border: Border.all(
+                    color: Colors.teal.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  CupertinoIcons.plus,
+                  color: Color(0xFF4ECDC4),
+                  size: 26,
                 ),
               ),
-              child: Icon(
-                CupertinoIcons.plus,
-                color: Colors.teal,
-                size: 24,
+              const SizedBox(height: 16),
+              Text(
+                'Create',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Create',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 4),
+              Text(
+                'New Category',
+                style: GoogleFonts.outfit(
+                  color: Colors.white54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'New Category',
-              style: GoogleFonts.outfit(
-                color: Colors.white70,
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -581,137 +582,190 @@ class _CategoryCard extends StatelessWidget {
 
   String _getCategoryDescription(String name) {
     switch (name) {
-      case 'Fitness':
-        return 'Move your body';
-      case 'Productivity':
-        return 'Stay focused';
-      case 'Wellness':
-        return 'Feel better';
-      case 'Mindfulness':
-        return 'Be present';
-      default:
-        return 'Stay on track';
+      case 'Fitness': return 'Move your body';
+      case 'Productivity': return 'Stay focused';
+      case 'Wellness': return 'Feel better';
+      case 'Mindfulness': return 'Be present';
+      default: return 'Stay on track';
     }
   }
 
   String _getCategoryStats(String name) {
     switch (name) {
-      case 'Fitness':
-        return '3 workouts';
-      case 'Productivity':
-        return '5 tasks today';
-      case 'Wellness':
-        return '2 sessions today';
-      case 'Mindfulness':
-        return '2 sessions today';
-      default:
-        return '5 tasks today';
+      case 'Fitness': return '3 workouts';
+      case 'Productivity': return '5 tasks today';
+      case 'Wellness': return '2 sessions today';
+      case 'Mindfulness': return '2 sessions today';
+      default: return '5 tasks today';
+    }
+  }
+
+  IconData _getCategoryStatsIcon(String name) {
+    // Using basic Lucide icons to ensure compatibility
+    switch (name) {
+      case 'Fitness': return LucideIcons.flame;
+      case 'Productivity': return LucideIcons.check;
+      case 'Mindfulness': return LucideIcons.leaf;
+      default: return LucideIcons.check;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final Color accentColor = category.color;
+    
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 150,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 155,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: category.color.withOpacity(0.5),
-            width: 2,
+            color: isSelected ? accentColor : accentColor.withOpacity(0.2),
+            width: 1.5,
           ),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              category.color.withOpacity(0.12),
-              category.color.withOpacity(0.04),
+              accentColor.withOpacity(0.15),
+              accentColor.withOpacity(0.05),
+              Colors.black.withOpacity(0.2),
             ],
           ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: accentColor.withOpacity(0.2),
+                blurRadius: 15,
+                spreadRadius: 2,
+              ),
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Stack(
             children: [
-              // Top row with menu icon
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(
-                    CupertinoIcons.ellipsis,
-                    color: Colors.white.withOpacity(0.4),
-                    size: 18,
-                  ),
-                ],
-              ),
-              // Centered icon
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: category.color.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  category.icon,
-                  color: category.color,
-                  size: 28,
-                ),
-              ),
-              // Category name and description at bottom
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    category.name,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    _getCategoryDescription(category.name),
-                    style: GoogleFonts.outfit(
-                      color: Colors.white70,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-              // Stats badge at bottom
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: category.color.withOpacity(0.25),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: category.color.withOpacity(0.5),
+              // Background glow
+              Positioned(
+                top: -20,
+                right: -20,
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withOpacity(0.15),
+                        blurRadius: 30,
+                        spreadRadius: 10,
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(
-                      CupertinoIcons.checkmark_circle_fill,
-                      color: category.color,
-                      size: 13,
+                    // Top row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(
+                          CupertinoIcons.ellipsis,
+                          color: Colors.white.withOpacity(0.4),
+                          size: 18,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(height: 4),
+                    // Glassmorphic Icon Container
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            accentColor.withOpacity(0.5),
+                            accentColor.withOpacity(0.2),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accentColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        category.icon,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Name & Subtitle
                     Text(
-                      _getCategoryStats(category.name),
+                      category.name,
                       style: GoogleFonts.outfit(
-                        color: category.color,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _getCategoryDescription(category.name),
+                      style: GoogleFonts.outfit(
+                        color: Colors.white60,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const Spacer(),
+                    // Stats Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(100),
+                        border: Border.all(
+                          color: accentColor.withOpacity(0.3),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _getCategoryStatsIcon(category.name),
+                            color: accentColor,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              _getCategoryStats(category.name),
+                              style: GoogleFonts.outfit(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -723,6 +777,52 @@ class _CategoryCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+  final double dash;
+  final double borderRadius;
+
+  _DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.5,
+    this.gap = 5.0,
+    this.dash = 5.0,
+    this.borderRadius = 16.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth, size.height - strokeWidth),
+        Radius.circular(borderRadius),
+      ));
+
+    final dashPath = Path();
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        dashPath.addPath(
+          metric.extractPath(distance, distance + dash),
+          Offset.zero,
+        );
+        distance += dash + gap;
+      }
+    }
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _AddCategoryButton extends StatefulWidget {
