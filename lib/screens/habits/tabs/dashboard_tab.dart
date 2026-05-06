@@ -8,6 +8,7 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'dart:ui';
 
 class DashboardTab extends StatelessWidget {
   final String userId;
@@ -299,7 +300,7 @@ class _DailyActivityGrid extends StatefulWidget {
   State<_DailyActivityGrid> createState() => _DailyActivityGridState();
 }
 
-class _DailyActivityGridState extends State<_DailyActivityGrid> {
+class _DailyActivityGridState extends State<_DailyActivityGrid> with TickerProviderStateMixin {
   // Track which activity is displayed in each position
   late Map<int, String> displayedActivities;
   
@@ -311,13 +312,54 @@ class _DailyActivityGridState extends State<_DailyActivityGrid> {
     3: 'calories burned',
   };
 
+  bool isModifyMode = false;
+  int? selectedCardPosition; // Track which card is being modified
+  late AnimationController _shakeController;
+
   @override
   void initState() {
     super.initState();
     displayedActivities = Map.from(defaultActivities);
+    _shakeController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    super.dispose();
+  }
+
+  void _startShakeAnimation() {
+    _shakeController.forward().then((_) {
+      _shakeController.reverse().then((_) {
+        if (isModifyMode) {
+          _startShakeAnimation();
+        }
+      });
+    });
+  }
+
+  void _toggleModifyMode() {
+    setState(() {
+      if (isModifyMode) {
+        isModifyMode = false;
+        selectedCardPosition = null;
+        _shakeController.stop();
+      } else {
+        isModifyMode = true;
+        _startShakeAnimation();
+      }
+    });
   }
 
   void _showActivitySelector(BuildContext context, int position) {
+    setState(() {
+      selectedCardPosition = position;
+    });
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E2E2E),
@@ -359,6 +401,7 @@ class _DailyActivityGridState extends State<_DailyActivityGrid> {
                       onTap: () {
                         setState(() {
                           displayedActivities[position] = activityType;
+                          selectedCardPosition = null;
                         });
                         Navigator.pop(context);
                       },
@@ -416,7 +459,12 @@ class _DailyActivityGridState extends State<_DailyActivityGrid> {
                   width: double.infinity,
                   child: CupertinoButton(
                     color: Colors.white.withOpacity(0.1),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      setState(() {
+                        selectedCardPosition = null;
+                      });
+                      Navigator.pop(context);
+                    },
                     child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70)),
                   ),
                 ),
@@ -425,84 +473,106 @@ class _DailyActivityGridState extends State<_DailyActivityGrid> {
           );
         },
       ),
-    );
+    ).then((_) {
+      setState(() {
+        selectedCardPosition = null;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            // Position 0 - Top Left
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: _ActivityCardWrapper(
-                  position: 0,
-                  activityType: displayedActivities[0]!,
-                  healthService: widget.healthService,
-                  streakService: widget.streakService,
-                  userId: widget.userId,
-                  onLongPress: () => _showActivitySelector(context, 0),
-                ),
+    return GestureDetector(
+      onLongPress: _toggleModifyMode,
+      onTap: isModifyMode ? _toggleModifyMode : null,
+      child: Column(
+        children: [
+          // Activity Grid
+          Column(
+            children: [
+              Row(
+                children: [
+                  // Position 0 - Top Left
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 0,
+                        activityType: displayedActivities[0]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 0,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Position 1 - Top Right
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 1,
+                        activityType: displayedActivities[1]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 1,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 1),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            // Position 1 - Top Right
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: _ActivityCardWrapper(
-                  position: 1,
-                  activityType: displayedActivities[1]!,
-                  healthService: widget.healthService,
-                  streakService: widget.streakService,
-                  userId: widget.userId,
-                  onLongPress: () => _showActivitySelector(context, 1),
-                ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  // Position 2 - Bottom Left
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 2,
+                        activityType: displayedActivities[2]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 2,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Position 3 - Bottom Right
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 3,
+                        activityType: displayedActivities[3]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 3,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 3),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            // Position 2 - Bottom Left
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: _ActivityCardWrapper(
-                  position: 2,
-                  activityType: displayedActivities[2]!,
-                  healthService: widget.healthService,
-                  streakService: widget.streakService,
-                  userId: widget.userId,
-                  onLongPress: () => _showActivitySelector(context, 2),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Position 3 - Bottom Right
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: _ActivityCardWrapper(
-                  position: 3,
-                  activityType: displayedActivities[3]!,
-                  healthService: widget.healthService,
-                  streakService: widget.streakService,
-                  userId: widget.userId,
-                  onLongPress: () => _showActivitySelector(context, 3),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -577,7 +647,196 @@ class _ActivityCard extends StatelessWidget {
   }
 }
 
-// Wrapper widget that handles long-press and displays the appropriate activity
+// Wrapper widget that handles modify mode with shake and blur effects
+class _ActivityCardWithModify extends StatelessWidget {
+  final int position;
+  final String activityType;
+  final HealthService healthService;
+  final StreakService streakService;
+  final String userId;
+  final bool isModifyMode;
+  final bool isSelected;
+  final AnimationController shakeController;
+  final VoidCallback onModifyPressed;
+
+  const _ActivityCardWithModify({
+    required this.position,
+    required this.activityType,
+    required this.healthService,
+    required this.streakService,
+    required this.userId,
+    required this.isModifyMode,
+    required this.isSelected,
+    required this.shakeController,
+    required this.onModifyPressed,
+  });
+
+  IconData _getIconForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return LucideIcons.zap;
+      case 'completed tasks':
+        return CupertinoIcons.checkmark_circle_fill;
+      case 'day streak':
+        return CupertinoIcons.flame_fill;
+      case 'calories burned':
+        return CupertinoIcons.flame;
+      default:
+        return CupertinoIcons.chart_bar;
+    }
+  }
+
+  Color _getColorForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return Colors.tealAccent;
+      case 'completed tasks':
+        return Colors.greenAccent;
+      case 'day streak':
+        return Colors.orangeAccent;
+      case 'calories burned':
+        return Colors.tealAccent;
+      default:
+        return Colors.blueAccent;
+    }
+  }
+
+  Widget _getVisualForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return const _SpeedometerVisual();
+      case 'completed tasks':
+        return const _MiniBarChart();
+      case 'day streak':
+        return const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50);
+      case 'calories burned':
+        return const _WaveVisual();
+      default:
+        return const Icon(CupertinoIcons.chart_bar, color: Colors.white, size: 40);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final color = _getColorForActivity(activityType);
+
+    return AnimatedBuilder(
+      animation: shakeController,
+      builder: (context, child) {
+        // iOS-style shake: small offset that alternates
+        final shakeOffset = isModifyMode ? (shakeController.value - 0.5) * 3 : 0.0;
+
+        return Transform.translate(
+          offset: Offset(shakeOffset, shakeOffset * 0.3),
+          child: Stack(
+            children: [
+              // Main card
+              StreamBuilder<dynamic>(
+                stream: _getStreamForActivity(activityType),
+                builder: (context, snapshot) {
+                  String value = '0';
+                  String unit = '';
+                  String title = activityType;
+
+                  if (snapshot.hasData) {
+                    if (activityType.toLowerCase() == 'day streak') {
+                      final data = snapshot.data as Map<String, dynamic>;
+                      value = (data['currentStreak'] ?? 0).toString();
+                      unit = 'days';
+                    } else if (activityType.toLowerCase() == 'completed tasks') {
+                      final logs = snapshot.data as List<HealthLog>;
+                      value = logs
+                          .where((log) => log.type.toLowerCase() == 'completed tasks')
+                          .length
+                          .toString();
+                      unit = 'tasks';
+                    } else {
+                      final data = snapshot.data as Map<String, dynamic>;
+                      value = (data['total'] as double).toStringAsFixed(1);
+                      unit = data['unit'] ?? '';
+                    }
+                  }
+
+                  return _ActivityCardNew(
+                    icon: _getIconForActivity(activityType),
+                    iconColor: color,
+                    iconBgColor: color.withOpacity(0.2),
+                    title: title,
+                    value: value,
+                    unit: unit,
+                    subtitle: 'vs last week',
+                    trend: '↑ 0%',
+                    trendColor: Colors.greenAccent,
+                    visual: _getVisualForActivity(activityType),
+                  );
+                },
+              ),
+              // Blur overlay when card is selected for modification
+              if (isModifyMode && isSelected)
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.3),
+                      ),
+                    ),
+                  ),
+                ),
+              // Modify button - centered on card
+              if (isModifyMode)
+                Positioned.fill(
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: onModifyPressed,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orangeAccent.withOpacity(0.6),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Modify',
+                          style: GoogleFonts.outfit(
+                            color: Colors.black,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Stream<dynamic> _getStreamForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return streakService.getStreakStream(userId);
+      case 'completed tasks':
+        return healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      default:
+        return healthService.getActivityMonthlyStats(type);
+    }
+  }
+}
+
+// Old wrapper widget that handles long-press and displays the appropriate activity
 class _ActivityCardWrapper extends StatelessWidget {
   final int position;
   final String activityType;
