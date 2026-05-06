@@ -30,7 +30,41 @@ class HealthService {
     );
   }
 
-  // READ: Get logs for a specific day
+  // READ: Get category for an activity type
+  Future<String> getActivityCategory(String type) async {
+    final snapshot = await _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: type.toLowerCase())
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      final data = snapshot.docs.first.data();
+      if (data['metadata'] != null && data['metadata'] is Map) {
+        return data['metadata']['category'] ?? '';
+      }
+    }
+    return '';
+  }
+
+  // READ: Get category stream for an activity type
+  Stream<String> getActivityCategoryStream(String type) {
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .where('type', isEqualTo: type.toLowerCase())
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        if (data['metadata'] != null && data['metadata'] is Map) {
+          return data['metadata']['category'] ?? '';
+        }
+      }
+      return '';
+    });
+  }
   Stream<List<HealthLog>> getDailyLogs(DateTime date) {
     DateTime start = DateTime(date.year, date.month, date.day);
     DateTime end = start.add(const Duration(days: 1));
