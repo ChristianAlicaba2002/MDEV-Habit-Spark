@@ -1042,10 +1042,12 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
   late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _floatAnimation;
+  late bool _isDoneOptimistic;
 
   @override
   void initState() {
     super.initState();
+    _isDoneOptimistic = widget.isDone;
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -1059,15 +1061,24 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
     _floatAnimation = Tween<double>(begin: 0.0, end: -4.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    if (_isDoneOptimistic) {
+      _pulseController.value = 1.0;
+    }
   }
 
   @override
   void didUpdateWidget(_ActivityCardNew oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isDone && !oldWidget.isDone) {
-      _pulseController.forward(from: 0.0);
-    } else if (!widget.isDone && oldWidget.isDone) {
-      _pulseController.reverse();
+    if (widget.isDone != oldWidget.isDone) {
+      setState(() {
+        _isDoneOptimistic = widget.isDone;
+      });
+      if (_isDoneOptimistic) {
+        _pulseController.forward();
+      } else {
+        _pulseController.reverse();
+      }
     }
   }
 
@@ -1077,23 +1088,39 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
     super.dispose();
   }
 
+  void _handleDoubleTap() {
+    if (widget.onDoubleTap == null) return;
+    
+    setState(() {
+      _isDoneOptimistic = !_isDoneOptimistic;
+    });
+
+    if (_isDoneOptimistic) {
+      _pulseController.forward(from: 0.0);
+    } else {
+      _pulseController.reverse();
+    }
+
+    widget.onDoubleTap!();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onDoubleTap: widget.onDoubleTap,
+      onDoubleTap: _handleDoubleTap,
       child: AnimatedBuilder(
         animation: _pulseController,
         builder: (context, child) {
           return Transform.translate(
-            offset: Offset(0, widget.isDone ? _floatAnimation.value : 0),
+            offset: Offset(0, _isDoneOptimistic ? _floatAnimation.value : 0),
             child: Transform.scale(
-              scale: widget.isDone ? _scaleAnimation.value : 1.0,
+              scale: _isDoneOptimistic ? _scaleAnimation.value : 1.0,
               child: child,
             ),
           );
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 600),
+          duration: const Duration(milliseconds: 400),
           curve: Curves.easeOutQuart,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(28),
@@ -1106,21 +1133,21 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        widget.isDone ? widget.iconColor.withOpacity(0.25) : Colors.white.withOpacity(0.12),
-                        widget.isDone ? widget.iconColor.withOpacity(0.1) : Colors.white.withOpacity(0.06),
+                        _isDoneOptimistic ? widget.iconColor.withOpacity(0.25) : Colors.white.withOpacity(0.12),
+                        _isDoneOptimistic ? widget.iconColor.withOpacity(0.1) : Colors.white.withOpacity(0.06),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: widget.isDone ? widget.iconColor.withOpacity(0.7) : Colors.white.withOpacity(0.1),
-                      width: widget.isDone ? 2.0 : 1,
+                      color: _isDoneOptimistic ? widget.iconColor.withOpacity(0.7) : Colors.white.withOpacity(0.1),
+                      width: _isDoneOptimistic ? 2.0 : 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: widget.isDone ? widget.iconColor.withOpacity(0.4) : Colors.black.withOpacity(0.3),
-                        blurRadius: widget.isDone ? 35 : 20,
-                        spreadRadius: widget.isDone ? 4 : 0,
-                        offset: Offset(0, widget.isDone ? 15 : 8),
+                        color: _isDoneOptimistic ? widget.iconColor.withOpacity(0.4) : Colors.black.withOpacity(0.3),
+                        blurRadius: _isDoneOptimistic ? 35 : 20,
+                        spreadRadius: _isDoneOptimistic ? 4 : 0,
+                        offset: Offset(0, _isDoneOptimistic ? 15 : 8),
                       ),
                     ],
                   ),
@@ -1195,12 +1222,12 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
                     ],
                   ),
                 ),
-                if (widget.isDone)
+                if (_isDoneOptimistic)
                   Positioned(
                     top: 8,
                     right: 8,
                     child: TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 800),
+                      duration: const Duration(milliseconds: 600),
                       tween: Tween(begin: 0.0, end: 1.0),
                       curve: Curves.easeOutBack,
                       builder: (context, value, child) {
