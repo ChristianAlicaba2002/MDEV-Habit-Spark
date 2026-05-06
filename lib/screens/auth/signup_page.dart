@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/screens/habits/home_page.dart';
@@ -17,7 +18,7 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
@@ -35,6 +36,7 @@ class _SignUpPageState extends State<SignUpPage>
   int _currentStep = 0;
 
   late AnimationController _animController;
+  late AnimationController _bgAnimController;
   late Animation<double> _fadeAnimation;
 
   @override
@@ -42,10 +44,17 @@ class _SignUpPageState extends State<SignUpPage>
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 800),
     );
-    _fadeAnimation =
-        Tween<double>(begin: 0.0, end: 1.0).animate(_animController);
+    
+    _bgAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat(reverse: true);
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+    );
     _animController.forward();
   }
 
@@ -53,6 +62,7 @@ class _SignUpPageState extends State<SignUpPage>
   void didChangeDependencies() {
     super.didChangeDependencies();
     precacheImage(const AssetImage('assets/images/google_icon.png'), context);
+    precacheImage(const AssetImage('assets/images/habitspark_logo.png'), context);
   }
 
   String hashPassword(String password) {
@@ -72,6 +82,7 @@ class _SignUpPageState extends State<SignUpPage>
     _addressController.dispose();
     _birthDateController.dispose();
     _animController.dispose();
+    _bgAnimController.dispose();
     super.dispose();
   }
 
@@ -85,8 +96,8 @@ class _SignUpPageState extends State<SignUpPage>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF4ECDC4),
-              onPrimary: Color(0xFF0F172A),
+              primary: Color(0xFF2D8A5B),
+              onPrimary: Colors.white,
               surface: Color(0xFF1E293B),
               onSurface: Colors.white,
             ),
@@ -158,7 +169,25 @@ class _SignUpPageState extends State<SignUpPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())));
+            SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final userCredential = await _authService.signInWithGoogle();
+      if (mounted && userCredential != null) {
+        // Handled by StreamBuilder
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Google sign-in failed: $e'), backgroundColor: Colors.redAccent));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -169,43 +198,42 @@ class _SignUpPageState extends State<SignUpPage>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        contentPadding: const EdgeInsets.all(32),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4ECDC4).withAlpha(40),
-                shape: BoxShape.circle,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1E293B).withAlpha(230),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+          contentPadding: const EdgeInsets.all(32),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2D8A5B).withAlpha(40),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_rounded,
+                    color: Color(0xFF2D8A5B), size: 48),
               ),
-              child: const Icon(Icons.check_rounded,
-                  color: Color(0xFF4ECDC4), size: 40),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Welcome Aboard!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              const SizedBox(height: 24),
+              Text(
+                'Welcome Aboard!',
+                style: GoogleFonts.outfit(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Your account has been created successfully.',
-              textAlign: TextAlign.center,
-              style:
-                  TextStyle(color: Colors.white.withAlpha(160), fontSize: 14),
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
+              const SizedBox(height: 12),
+              Text(
+                'Your account has been created successfully. Ready to start?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: Colors.white70, fontSize: 15),
+              ),
+              const SizedBox(height: 32),
+              _buildModernButton(
+                label: 'Start Journey',
                 onPressed: () async {
                   Navigator.of(context).pop();
                   final userId = _authService.currentUser?.uid;
@@ -234,17 +262,9 @@ class _SignUpPageState extends State<SignUpPage>
                     }
                   }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4ECDC4),
-                  foregroundColor: const Color(0xFF0F172A),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Start Journey',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -253,206 +273,196 @@ class _SignUpPageState extends State<SignUpPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: RepaintBoundary(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-            ),
-          ),
-          child: SafeArea(
-            child: AbsorbPointer(
-              absorbing: _isLoading,
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                  child: RepaintBoundary(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildHeader(),
-                          const SizedBox(height: 48),
-                          _buildFormalSignupCard(),
-                          const SizedBox(height: 32),
-                          _buildSignInRow(),
-                        ],
-                      ),
-                    ),
+      backgroundColor: const Color(0xFF020617),
+      body: Stack(
+        children: [
+          _buildAnimatedBackground(),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 32),
+                      _buildGlassSignupCard(),
+                      const SizedBox(height: 24),
+                      _buildSignInRow(),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-        ),
+          if (_isLoading)
+            Container(
+              color: Colors.black54,
+              child: const Center(
+                child: CircularProgressIndicator(color: Color(0xFF2D8A5B)),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      children: [
-        // Logo without circle
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildAnimatedBackground() {
+    return AnimatedBuilder(
+      animation: _bgAnimController,
+      builder: (context, child) {
+        return Stack(
           children: [
-            const Icon(
-              Icons.local_fire_department_rounded,
-              size: 40,
-              color: Color(0xFF4ECDC4), // Brand Teal
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'HabitSpark',
-              style: GoogleFonts.poppins(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: -0.5,
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF0F172A), Color(0xFF020617)],
+                ),
               ),
             ),
+            Positioned(
+              top: -50 + (100 * _bgAnimController.value),
+              left: -50,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF2D8A5B).withAlpha(30),
+                ),
+              ),
+            ),
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+              child: Container(color: Colors.transparent),
+            ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHeader() {
+    return Hero(
+      tag: 'logo',
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('assets/images/habitspark_logo.png', height: 48),
+          const SizedBox(width: 12),
+          Text(
+            'HabitSpark',
+            style: GoogleFonts.outfit(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassSignupCard() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha(20),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Colors.white.withAlpha(30)),
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildStepIndicatorRow(),
+                const SizedBox(height: 32),
+                _buildStepContent(),
+                const SizedBox(height: 36),
+                _buildContinueButton(),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.white24)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text('OR', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                    ),
+                    Expanded(child: Divider(color: Colors.white24)),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                _buildGoogleButton(),
+              ],
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildStepIndicatorRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildStepCircle(0, 'Info'),
-        _buildStepLine(0),
-        _buildStepCircle(1, 'Profile'),
-        _buildStepLine(1),
-        _buildStepCircle(2, 'Account'),
-      ],
+      children: List.generate(3, (index) {
+        return Row(
+          children: [
+            _buildStepCircle(index),
+            if (index < 2) _buildStepLine(index),
+          ],
+        );
+      }),
     );
   }
 
-  Widget _buildStepCircle(int step, String label) {
+  Widget _buildStepCircle(int step) {
     final isActive = _currentStep == step;
     final isCompleted = _currentStep > step;
-
-    return Column(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive || isCompleted
-                ? const Color(0xFF4ECDC4)
-                : Colors.white.withAlpha(20),
-            border: Border.all(
-              color: isActive ? Colors.white : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: Center(
-            child: isCompleted
-                ? const Icon(Icons.check, color: Color(0xFF0F172A), size: 24)
-                : Text(
-                    '${step + 1}',
-                    style: TextStyle(
-                      color: isActive
-                          ? const Color(0xFF0F172A)
-                          : Colors.white.withAlpha(120),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? Colors.white : Colors.white.withAlpha(100),
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStepLine(int afterStep) {
-    final isCompleted = _currentStep > afterStep;
-    return Container(
-      width: 40,
-      height: 2,
-      margin: const EdgeInsets.only(bottom: 16, left: 4, right: 4),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
-        color:
-            isCompleted ? const Color(0xFF4ECDC4) : Colors.white.withAlpha(20),
-        borderRadius: BorderRadius.circular(1),
+        shape: BoxShape.circle,
+        color: isCompleted ? const Color(0xFF2D8A5B) : (isActive ? Colors.white : Colors.white10),
       ),
-    );
-  }
-
-  Widget _buildFormalSignupCard() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withAlpha(180),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(30), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(80),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-          ),
-        ],
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildStepIndicatorRow(),
-            const SizedBox(height: 32),
-            _buildStepContent(),
-            const SizedBox(height: 36),
-            _buildContinueButton(),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(child: Divider(color: Colors.white.withAlpha(30))),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('OR CONTINUE WITH',
-                      style: TextStyle(
-                          color: Colors.white.withAlpha(80),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2)),
+      child: Center(
+        child: isCompleted
+            ? const Icon(Icons.check, size: 18, color: Colors.white)
+            : Text(
+                '${step + 1}',
+                style: TextStyle(
+                  color: isActive ? Colors.black : Colors.white38,
+                  fontWeight: FontWeight.bold,
                 ),
-                Expanded(child: Divider(color: Colors.white.withAlpha(30))),
-              ],
-            ),
-            const SizedBox(height: 28),
-            _buildGoogleButton(),
-          ],
-        ),
+              ),
       ),
+    );
+  }
+
+  Widget _buildStepLine(int index) {
+    return Container(
+      width: 30,
+      height: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      color: _currentStep > index ? const Color(0xFF2D8A5B) : Colors.white10,
     );
   }
 
   Widget _buildStepContent() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      child: _currentStep == 0
-          ? _buildStep1()
-          : _currentStep == 1
-              ? _buildStep2()
-              : _buildStep3(),
+      child: _currentStep == 0 ? _buildStep1() : _currentStep == 1 ? _buildStep2() : _buildStep3(),
     );
   }
 
@@ -460,20 +470,9 @@ class _SignUpPageState extends State<SignUpPage>
     return Column(
       key: const ValueKey(0),
       children: [
-        _buildTextField(
-            controller: _firstNameController,
-            label: 'First Name',
-            icon: Icons.person_outline),
-        const SizedBox(height: 20),
-        _buildTextField(
-            controller: _middleNameController,
-            label: 'Middle Name (Optional)',
-            icon: Icons.person_outline),
-        const SizedBox(height: 20),
-        _buildTextField(
-            controller: _lastNameController,
-            label: 'Last Name',
-            icon: Icons.person_outline),
+        _buildTextField(controller: _firstNameController, label: 'First Name', icon: Icons.person_outline),
+        const SizedBox(height: 16),
+        _buildTextField(controller: _lastNameController, label: 'Last Name', icon: Icons.person_outline),
       ],
     );
   }
@@ -485,17 +484,12 @@ class _SignUpPageState extends State<SignUpPage>
         _buildTextField(
           controller: _birthDateController,
           label: 'Birth Date',
-          icon: Icons.calendar_today_rounded,
+          icon: Icons.calendar_today_outlined,
           readOnly: true,
           onTap: _selectBirthDate,
         ),
-        const SizedBox(height: 20),
-        _buildTextField(
-            controller: _addressController,
-            label: 'Address',
-            icon: Icons.location_on_outlined),
-        const SizedBox(height: 20),
-        _buildDropdown(),
+        const SizedBox(height: 16),
+        _buildTextField(controller: _addressController, label: 'Address', icon: Icons.location_on_outlined),
       ],
     );
   }
@@ -504,44 +498,16 @@ class _SignUpPageState extends State<SignUpPage>
     return Column(
       key: const ValueKey(2),
       children: [
-        _buildTextField(
-          controller: _emailController,
-          label: 'Email',
-          icon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 20),
+        _buildTextField(controller: _emailController, label: 'Email', icon: Icons.mail_outline, keyboardType: TextInputType.emailAddress),
+        const SizedBox(height: 16),
         _buildTextField(
           controller: _passwordController,
           label: 'Password',
           icon: Icons.lock_outline,
           obscureText: _obscurePassword,
           suffixIcon: IconButton(
-            icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: Colors.white.withAlpha(100),
-                size: 22),
-            onPressed: () =>
-                setState(() => _obscurePassword = !_obscurePassword),
-          ),
-        ),
-        const SizedBox(height: 20),
-        _buildTextField(
-          controller: _confirmPasswordController,
-          label: 'Confirm Password',
-          icon: Icons.lock_reset_rounded,
-          obscureText: _obscureConfirmPassword,
-          suffixIcon: IconButton(
-            icon: Icon(
-                _obscureConfirmPassword
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-                color: Colors.white.withAlpha(100),
-                size: 22),
-            onPressed: () => setState(
-                () => _obscureConfirmPassword = !_obscureConfirmPassword),
+            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.white38, size: 20),
+            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
       ],
@@ -564,110 +530,61 @@ class _SignUpPageState extends State<SignUpPage>
       onTap: onTap,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
-      cursorColor: const Color(0xFF4ECDC4),
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 15),
-        prefixIcon: Icon(icon, color: Colors.white.withAlpha(100), size: 22),
+        labelStyle: const TextStyle(color: Colors.white38),
+        prefixIcon: Icon(icon, color: Colors.white38, size: 20),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: Colors.white.withAlpha(10),
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white.withAlpha(20))),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF4ECDC4))),
-        contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF2D8A5B))),
       ),
-    );
-  }
-
-  Widget _buildDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedGender,
-      dropdownColor: const Color(0xFF1E293B),
-      style: const TextStyle(color: Colors.white, fontSize: 16),
-      decoration: InputDecoration(
-        labelText: 'Gender',
-        labelStyle: TextStyle(color: Colors.white.withAlpha(140), fontSize: 15),
-        prefixIcon: Icon(Icons.person_pin_rounded,
-            color: Colors.white.withAlpha(100), size: 22),
-        filled: true,
-        fillColor: Colors.white.withAlpha(10),
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.white.withAlpha(20))),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF4ECDC4))),
-        contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
-      ),
-      items: ['Male', 'Female', 'Other', 'Prefer not to say']
-          .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-          .toList(),
-      onChanged: (v) => setState(() => _selectedGender = v!),
     );
   }
 
   Widget _buildContinueButton() {
-    return SizedBox(
-      width: double.infinity,
+    return _buildModernButton(
+      label: _currentStep == 2 ? 'CREATE ACCOUNT' : 'CONTINUE',
+      onPressed: _handleContinue,
+    );
+  }
+
+  Widget _buildModernButton({required String label, required VoidCallback onPressed}) {
+    return Container(
       height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(colors: [Color(0xFF2D8A5B), Color(0xFF1E40AF)]),
+        boxShadow: [BoxShadow(color: const Color(0xFF2D8A5B).withAlpha(50), blurRadius: 15, offset: const Offset(0, 8))],
+      ),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleContinue,
+        onPressed: _isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4ECDC4),
-          foregroundColor: const Color(0xFF0F172A),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-          textStyle: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
-        child: _isLoading
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                    strokeWidth: 3, color: Color(0xFF0F172A)))
-            : Text(_currentStep == 2 ? 'CREATE ACCOUNT' : 'CONTINUE'),
+        child: Text(label, style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16)),
       ),
     );
   }
 
   Widget _buildGoogleButton() {
     return OutlinedButton(
-      onPressed: () {},
+      onPressed: _isLoading ? null : _signInWithGoogle,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 24),
-        side: BorderSide(color: Colors.white.withAlpha(40), width: 1),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        backgroundColor: Colors.white.withAlpha(10),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        side: BorderSide(color: Colors.white12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: Image.asset('assets/images/google_icon.png', width: 24, height: 24),
-          ),
-          Text(
-            'Google',
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Image.asset('assets/images/google_icon.png', height: 24),
+          const SizedBox(width: 12),
+          Text('Google', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -677,31 +594,10 @@ class _SignUpPageState extends State<SignUpPage>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Already member?  ',
-          style: TextStyle(color: Colors.white.withAlpha(120), fontSize: 14),
-        ),
+        const Text("Already a member? ", style: TextStyle(color: Colors.white38)),
         GestureDetector(
-          onTap: () => Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const LoginPage(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-              transitionDuration: const Duration(milliseconds: 400),
-            ),
-          ),
-          child: Text(
-            'Sign In',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: const Color(0xFF4ECDC4),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          onTap: () => Navigator.pop(context),
+          child: const Text("Sign In", style: TextStyle(color: Color(0xFF2D8A5B), fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -712,8 +608,7 @@ class _SignUpPageState extends State<SignUpPage>
       if (_validateCurrentStep()) {
         setState(() => _currentStep++);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please complete current step')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please complete current step')));
       }
     } else {
       _signUp();

@@ -28,6 +28,8 @@ class HabitLogService {
     required bool isCompleted,
     double? distance,
     int? durationSeconds,
+    double? weight,
+    double? value,
     String? notes,
   }) async {
     await _firestore.collection('habit_logs').add({
@@ -37,6 +39,8 @@ class HabitLogService {
       'isCompleted': isCompleted,
       if (distance != null) 'distance': distance,
       if (durationSeconds != null) 'durationSeconds': durationSeconds,
+      if (weight != null) 'weight': weight,
+      if (value != null) 'value': value,
       if (notes != null) 'notes': notes,
     });
   }

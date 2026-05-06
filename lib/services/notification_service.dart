@@ -1,8 +1,50 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:habit_spark/models/notification_model.dart';
 
 class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+
+  NotificationService() {
+    _initializeLocalNotifications();
+  }
+
+  Future<void> _initializeLocalNotifications() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings();
+    const initializationSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+    await _localNotifications.initialize(initializationSettings);
+  }
+
+  Future<void> showLocalNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
+      'habit_spark_channel',
+      'Habit Spark Notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails();
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      DateTime.now().millisecond,
+      title,
+      body,
+      notificationDetails,
+      payload: payload,
+    );
+  }
 
   // Get notifications stream for a user
   Stream<List<NotificationModel>> getNotificationsStream(String userId) {
@@ -46,6 +88,9 @@ class NotificationService {
       'isRead': false,
       'createdAt': Timestamp.fromDate(DateTime.now()),
     });
+
+    // Also trigger a local notification so the user sees it immediately
+    await showLocalNotification(title: title, body: message);
   }
 
   // Mark notification as read
