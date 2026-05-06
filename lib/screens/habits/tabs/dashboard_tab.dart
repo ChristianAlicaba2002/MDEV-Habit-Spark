@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/models/health_log_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
@@ -296,42 +297,82 @@ class _DailyActivityGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todayEnd = today.add(const Duration(days: 1));
+    
+    // Last week same period
+    final lastWeekStart = today.subtract(const Duration(days: 7));
+    final lastWeekEnd = lastWeekStart.add(const Duration(days: 1));
+
     return Column(
       children: [
         Row(
           children: [
+            // Distance Run Card
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: _ActivityCardNew(
-                  icon: LucideIcons.zap,
-                  iconColor: Colors.tealAccent,
-                  iconBgColor: Colors.tealAccent.withOpacity(0.2),
-                  title: 'Distance Run',
-                  value: '20.4',
-                  unit: 'km',
-                  subtitle: 'vs last week',
-                  trend: '↑ 12%',
-                  trendColor: Colors.greenAccent,
-                  visual: const _SpeedometerVisual(),
+                child: StreamBuilder<Map<String, dynamic>>(
+                  stream: healthService.getActivityMonthlyStats('distance run'),
+                  builder: (context, snapshot) {
+                    String distanceValue = '0';
+                    String distanceUnit = 'km';
+                    String distanceTrend = '↑ 0%';
+                    Color trendColor = Colors.greenAccent;
+
+                    if (snapshot.hasData) {
+                      final data = snapshot.data!;
+                      distanceValue = (data['total'] as double).toStringAsFixed(1);
+                      distanceUnit = data['unit'] ?? 'km';
+                    }
+
+                    return _ActivityCardNew(
+                      icon: LucideIcons.zap,
+                      iconColor: Colors.tealAccent,
+                      iconBgColor: Colors.tealAccent.withOpacity(0.2),
+                      title: 'Distance Run',
+                      value: distanceValue,
+                      unit: distanceUnit,
+                      subtitle: 'vs last week',
+                      trend: distanceTrend,
+                      trendColor: trendColor,
+                      visual: const _SpeedometerVisual(),
+                    );
+                  },
                 ),
               ),
             ),
             const SizedBox(width: 12),
+            // Workouts Card
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: _ActivityCardNew(
-                  icon: CupertinoIcons.bolt_fill,
-                  iconColor: Colors.purpleAccent,
-                  iconBgColor: Colors.purpleAccent.withOpacity(0.2),
-                  title: 'Workouts',
-                  value: '4',
-                  unit: 'sessions',
-                  subtitle: 'vs last week',
-                  trend: '↑ 18%',
-                  trendColor: Colors.greenAccent,
-                  visual: const _MiniBarChart(),
+                child: StreamBuilder<List<HealthLog>>(
+                  stream: healthService.getDailyLogs(today),
+                  builder: (context, snapshot) {
+                    int workoutCount = 0;
+                    String workoutTrend = '↑ 0%';
+                    Color trendColor = Colors.greenAccent;
+
+                    if (snapshot.hasData) {
+                      // Count unique workout sessions (could be based on type or count)
+                      workoutCount = snapshot.data!.length;
+                    }
+
+                    return _ActivityCardNew(
+                      icon: CupertinoIcons.bolt_fill,
+                      iconColor: Colors.purpleAccent,
+                      iconBgColor: Colors.purpleAccent.withOpacity(0.2),
+                      title: 'Workouts',
+                      value: workoutCount.toString(),
+                      unit: 'sessions',
+                      subtitle: 'vs last week',
+                      trend: workoutTrend,
+                      trendColor: trendColor,
+                      visual: const _MiniBarChart(),
+                    );
+                  },
                 ),
               ),
             ),
@@ -340,38 +381,70 @@ class _DailyActivityGrid extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
+            // Day Streak Card
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: _ActivityCardNew(
-                  icon: CupertinoIcons.flame_fill,
-                  iconColor: Colors.orangeAccent,
-                  iconBgColor: Colors.orangeAccent.withOpacity(0.2),
-                  title: 'Day Streak',
-                  value: '10',
-                  unit: 'days',
-                  subtitle: 'vs last week',
-                  trend: '↓ 15%',
-                  trendColor: Colors.orangeAccent,
-                  visual: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50),
+                child: StreamBuilder<Map<String, dynamic>>(
+                  stream: streakService.getStreakStream(userId),
+                  builder: (context, snapshot) {
+                    int streakDays = 0;
+                    String streakTrend = '↓ 0%';
+                    Color trendColor = Colors.orangeAccent;
+
+                    if (snapshot.hasData) {
+                      final data = snapshot.data!;
+                      streakDays = data['currentStreak'] ?? 0;
+                    }
+
+                    return _ActivityCardNew(
+                      icon: CupertinoIcons.flame_fill,
+                      iconColor: Colors.orangeAccent,
+                      iconBgColor: Colors.orangeAccent.withOpacity(0.2),
+                      title: 'Day Streak',
+                      value: streakDays.toString(),
+                      unit: 'days',
+                      subtitle: 'vs last week',
+                      trend: streakTrend,
+                      trendColor: trendColor,
+                      visual: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50),
+                    );
+                  },
                 ),
               ),
             ),
             const SizedBox(width: 12),
+            // Calories Burned Card
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: _ActivityCardNew(
-                  icon: CupertinoIcons.flame,
-                  iconColor: Colors.tealAccent,
-                  iconBgColor: Colors.tealAccent.withOpacity(0.2),
-                  title: 'Calories Burned',
-                  value: '3,500',
-                  unit: 'kcal',
-                  subtitle: 'vs last week',
-                  trend: '↑ 10%',
-                  trendColor: Colors.greenAccent,
-                  visual: const _WaveVisual(),
+                child: StreamBuilder<Map<String, dynamic>>(
+                  stream: healthService.getActivityMonthlyStats('calories burned'),
+                  builder: (context, snapshot) {
+                    String caloriesValue = '0';
+                    String caloriesUnit = 'kcal';
+                    String caloriesTrend = '↑ 0%';
+                    Color trendColor = Colors.greenAccent;
+
+                    if (snapshot.hasData) {
+                      final data = snapshot.data!;
+                      caloriesValue = (data['total'] as double).toStringAsFixed(0);
+                      caloriesUnit = data['unit'] ?? 'kcal';
+                    }
+
+                    return _ActivityCardNew(
+                      icon: CupertinoIcons.flame,
+                      iconColor: Colors.tealAccent,
+                      iconBgColor: Colors.tealAccent.withOpacity(0.2),
+                      title: 'Calories Burned',
+                      value: caloriesValue,
+                      unit: caloriesUnit,
+                      subtitle: 'vs last week',
+                      trend: caloriesTrend,
+                      trendColor: trendColor,
+                      visual: const _WaveVisual(),
+                    );
+                  },
                 ),
               ),
             ),
