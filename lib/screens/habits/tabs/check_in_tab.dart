@@ -198,7 +198,7 @@ class _CheckInTabState extends State<CheckInTab> {
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                           ],
                           if (afternoonHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
@@ -209,7 +209,7 @@ class _CheckInTabState extends State<CheckInTab> {
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                           ],
                           if (eveningHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
@@ -253,6 +253,7 @@ class _CheckInTabState extends State<CheckInTab> {
                 SliverToBoxAdapter(
                   child: _CategoriesSection(
                     categories: categories,
+                    allHabits: allHabits,
                     selectedFilter: _selectedCategoryFilter,
                     onFilterChanged: (filter) => setState(() => _selectedCategoryFilter = filter),
                     onAddCategory: _showAddCategoryModal,
@@ -402,6 +403,7 @@ class _CheckInTabState extends State<CheckInTab> {
 
 class _CategoriesSection extends StatelessWidget {
   final List<CategoryModel> categories;
+  final List<Habit> allHabits;
   final String? selectedFilter;
   final Function(String?) onFilterChanged;
   final VoidCallback onAddCategory;
@@ -411,6 +413,7 @@ class _CategoriesSection extends StatelessWidget {
 
   const _CategoriesSection({
     required this.categories,
+    required this.allHabits,
     required this.selectedFilter,
     required this.onFilterChanged,
     required this.onAddCategory,
@@ -487,6 +490,7 @@ class _CategoriesSection extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 12),
                   child: _CategoryCard(
                     category: cat,
+                    habitCount: allHabits.where((h) => h.category == cat.name).length,
                     isSelected: selectedFilter == cat.name,
                     onTap: () => onCategoryTap(cat),
                     onEdit: () => onEditCategory(cat),
@@ -599,12 +603,14 @@ class _CreateCategoryCard extends StatelessWidget {
 
 class _CategoryCard extends StatelessWidget {
   final CategoryModel category;
+  final int habitCount;
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onEdit;
 
   const _CategoryCard({
     required this.category,
+    required this.habitCount,
     required this.isSelected,
     required this.onTap,
     required this.onEdit,
@@ -620,14 +626,11 @@ class _CategoryCard extends StatelessWidget {
     }
   }
 
-  String _getCategoryStats(String name) {
-    switch (name) {
-      case 'Fitness': return '3 workouts';
-      case 'Productivity': return '5 tasks today';
-      case 'Wellness': return '2 sessions today';
-      case 'Mindfulness': return '2 sessions today';
-      default: return '5 tasks today';
+  String _getCategoryStats(String name, int count) {
+    if (name == 'Fitness') {
+      return '$count ${count == 1 ? 'workout' : 'workouts'}';
     }
+    return '$count ${count == 1 ? 'task' : 'tasks'}';
   }
 
   IconData _getCategoryStatsIcon(String name) {
@@ -788,7 +791,7 @@ class _CategoryCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
-                              _getCategoryStats(category.name),
+                              _getCategoryStats(category.name, habitCount),
                               style: GoogleFonts.outfit(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 11,
@@ -1890,11 +1893,38 @@ class _ExpandableRoutineCard extends StatelessWidget {
     required this.userId,
   });
 
+  Color _getRoutineColor(String title) {
+    if (title.contains('Morning')) return const Color(0xFFD4A574);
+    if (title.contains('Afternoon')) return const Color(0xFFFFD700);
+    if (title.contains('Evening')) return const Color(0xFF9B7EBD);
+    if (title.contains('Midnight')) return const Color(0xFF6366F1);
+    return const Color(0xFF7FD8BE);
+  }
+
+  Color _getRoutineBgColor(String title) {
+    if (title.contains('Morning')) return const Color(0xFF6B5344);
+    if (title.contains('Afternoon')) return const Color(0xFF8B7500);
+    if (title.contains('Evening')) return const Color(0xFF4A3F5C);
+    if (title.contains('Midnight')) return const Color(0xFF6366F1).withOpacity(0.2);
+    return const Color(0xFF3F6B5C);
+  }
+
+  IconData _getRoutineIcon(String title) {
+    if (title.contains('Morning')) return CupertinoIcons.sun_max_fill;
+    if (title.contains('Afternoon')) return CupertinoIcons.sun_max;
+    if (title.contains('Evening')) return CupertinoIcons.moon_stars_fill;
+    if (title.contains('Midnight')) return CupertinoIcons.moon_stars;
+    return CupertinoIcons.arrow_2_circlepath;
+  }
+
   @override
   Widget build(BuildContext context) {
     final done = habits.where((h) => h.isDone).length;
     final total = habits.length;
     final progress = total > 0 ? done / total : 0.0;
+    final routineColor = _getRoutineColor(title);
+    final routineBgColor = _getRoutineBgColor(title);
+    final routineIcon = _getRoutineIcon(title);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -1910,31 +1940,73 @@ class _ExpandableRoutineCard extends StatelessWidget {
             onTap: onToggle,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.all(12), // Reduced padding
               child: Row(
                 children: [
-                  Icon(
-                    isExpanded ? CupertinoIcons.chevron_down : CupertinoIcons.chevron_right,
-                    color: Colors.white70,
-                    size: 14,
+                  // Left Icon
+                  Container(
+                    width: 44, // Reduced from 48
+                    height: 44, // Reduced from 48
+                    decoration: BoxDecoration(
+                      color: routineBgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(routineIcon, color: routineColor, size: 24),
                   ),
-                  const SizedBox(width: 8),
-                  Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                  const Spacer(),
-                  Stack(
-                    alignment: Alignment.center,
+                  const SizedBox(width: 12),
+                  // Middle: Title and Progress
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600, // Matching Dashboard weight
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 4,
+                            backgroundColor: Colors.white.withOpacity(0.1),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${(progress * 100).toInt()}% completed',
+                          style: GoogleFonts.outfit(
+                            color: Colors.greenAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Right: Count and Chevron
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      SizedBox(
-                        width: 30,
-                        height: 30,
-                        child: CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 2.5,
-                          backgroundColor: Colors.white.withOpacity(0.05),
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+                      Text(
+                        '$done/$total',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text('$done/$total', style: GoogleFonts.outfit(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                      Icon(
+                        isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                        color: Colors.white38,
+                        size: 16,
+                      ),
                     ],
                   ),
                 ],
@@ -1943,7 +2015,7 @@ class _ExpandableRoutineCard extends StatelessWidget {
           ),
           if (isExpanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Column(
                 children: habits.map((habit) => _RoutineHabitItem(
                   habit: habit,
