@@ -13,54 +13,84 @@ class RecentActivityPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevron_left, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'All Activity',
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF2C3E3E), Color(0xFF4A6666)],
           ),
         ),
-      ),
-      body: StreamBuilder<List<HealthLog>>(
-        stream: healthService.getRecentLogsStream(limit: 50),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.warning));
-          }
-          final logs = snapshot.data ?? [];
-          if (logs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(LucideIcons.list, color: Colors.white24, size: 64),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No activities found yet',
-                    style: GoogleFonts.outfit(color: Colors.white38, fontSize: 16),
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              leading: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
+                  child: const Icon(LucideIcons.chevron_left, color: Colors.white, size: 20),
+                ),
+                onPressed: () => Navigator.pop(context),
               ),
-            );
-          }
+              title: Text(
+                'Activity History',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<List<HealthLog>>(
+                stream: healthService.getRecentLogsStream(limit: 50),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator(color: AppColors.warning));
+                  }
+                  final logs = snapshot.data ?? [];
+                  if (logs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(LucideIcons.history, color: Colors.white24, size: 48),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Your activity history is empty',
+                            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: logs.length,
-            itemBuilder: (context, index) {
-              return _ActivityLogItem(log: logs[index]);
-            },
-          );
-        },
+                  return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    itemCount: logs.length,
+                    itemBuilder: (context, index) {
+                      return _ActivityLogItem(log: logs[index]);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
