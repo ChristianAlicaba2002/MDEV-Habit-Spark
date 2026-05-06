@@ -91,6 +91,20 @@ class _CheckInTabState extends State<CheckInTab> {
     );
   }
 
+  void _showCategoryDetailModal(CategoryModel category, List<Habit> allHabits) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CategoryDetailModal(
+        category: category,
+        habits: allHabits.where((h) => h.category == category.name).toList(),
+        habitService: widget.habitService,
+        userId: widget.userId,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allHabits = widget.habits;
@@ -243,6 +257,7 @@ class _CheckInTabState extends State<CheckInTab> {
                     onFilterChanged: (filter) => setState(() => _selectedCategoryFilter = filter),
                     onAddCategory: _showAddCategoryModal,
                     onEditCategory: _showEditCategoryModal,
+                    onCategoryTap: (cat) => _showCategoryDetailModal(cat, allHabits),
                     onReorder: (oldIndex, newIndex) {
                       if (newIndex > oldIndex) newIndex -= 1;
                       final List<CategoryModel> items = List.from(categories);
@@ -391,6 +406,7 @@ class _CategoriesSection extends StatelessWidget {
   final Function(String?) onFilterChanged;
   final VoidCallback onAddCategory;
   final Function(CategoryModel) onEditCategory;
+  final Function(CategoryModel) onCategoryTap;
   final ReorderCallback onReorder;
 
   const _CategoriesSection({
@@ -399,6 +415,7 @@ class _CategoriesSection extends StatelessWidget {
     required this.onFilterChanged,
     required this.onAddCategory,
     required this.onEditCategory,
+    required this.onCategoryTap,
     required this.onReorder,
   });
 
@@ -471,9 +488,7 @@ class _CategoriesSection extends StatelessWidget {
                   child: _CategoryCard(
                     category: cat,
                     isSelected: selectedFilter == cat.name,
-                    onTap: () => onFilterChanged(
-                      selectedFilter == cat.name ? null : cat.name,
-                    ),
+                    onTap: () => onCategoryTap(cat),
                     onEdit: () => onEditCategory(cat),
                   ),
                 );
@@ -969,6 +984,238 @@ class _EmptyStateReminder extends StatelessWidget {
             message,
             textAlign: TextAlign.center,
             style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryDetailModal extends StatelessWidget {
+  final CategoryModel category;
+  final List<Habit> habits;
+  final HabitService habitService;
+  final String userId;
+
+  const _CategoryDetailModal({
+    required this.category,
+    required this.habits,
+    required this.habitService,
+    required this.userId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final int completedCount = habits.where((h) => h.isDone).length;
+    final double progress = habits.isEmpty ? 0 : completedCount / habits.length;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: category.color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: category.color.withOpacity(0.2)),
+                          ),
+                          child: Icon(category.icon, color: category.color, size: 24),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              category.name,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${habits.length} habits',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white54,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white54),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Progress bar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.white.withOpacity(0.05),
+                    valueColor: AlwaysStoppedAnimation<Color>(category.color),
+                    minHeight: 8,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Category Completion',
+                      style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+                    ),
+                    Text(
+                      '${(progress * 100).toInt()}%',
+                      style: GoogleFonts.outfit(
+                        color: category.color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Habits List
+          Expanded(
+            child: habits.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(LucideIcons.sparkles, color: Colors.white24, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No habits in this category yet',
+                          style: GoogleFonts.outfit(color: Colors.white38),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: habits.length,
+                    itemBuilder: (context, index) {
+                      final habit = habits[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _HabitListItem(
+                          habit: habit,
+                          categoryColor: category.color,
+                          onToggle: () {
+                            habitService.toggleHabit(habit.id, habit.isDone, userId);
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HabitListItem extends StatelessWidget {
+  final Habit habit;
+  final Color categoryColor;
+  final VoidCallback onToggle;
+
+  const _HabitListItem({
+    required this.habit,
+    required this.categoryColor,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: categoryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              habit.icon != null ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') : Icons.check_circle_outline,
+              color: categoryColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  habit.name,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    decoration: habit.isDone ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                Text(
+                  habit.routine,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white38,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onToggle,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: habit.isDone ? categoryColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: habit.isDone ? categoryColor : Colors.white24,
+                  width: 2,
+                ),
+              ),
+              child: habit.isDone
+                  ? const Icon(Icons.check, color: Colors.black, size: 18)
+                  : null,
+            ),
           ),
         ],
       ),
