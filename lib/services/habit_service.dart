@@ -127,9 +127,92 @@ class HabitService {
       notes: notes,
     );
     
-    // If habit is being marked as done, check for achievements
+    // If habit is being marked as done, log to health service and check for achievements
     if (!currentStatus) {
+      // Log to health service for Daily Activity tracking
+      await _logHealthData(userId, habitId, distance, durationSeconds, weight, value);
       await _checkHabitCompletion(userId, habitId);
+    }
+  }
+  
+  // Log health data when habit is completed
+  Future<void> _logHealthData(
+    String userId,
+    String habitId,
+    double? distance,
+    int? durationSeconds,
+    double? weight,
+    double? value,
+  ) async {
+    try {
+      // Get habit details to determine what to log
+      final habitDoc = await _firestore.collection('habits').doc(habitId).get();
+      final habitData = habitDoc.data();
+      
+      if (habitData == null) return;
+      
+      final habitName = (habitData['name'] ?? '').toString().toLowerCase();
+      
+      // Log completed task/habit
+      await _firestore.collection('health_logs').add({
+        'userId': userId,
+        'type': 'completed tasks',
+        'value': 1,
+        'unit': 'task',
+        'timestamp': Timestamp.fromDate(DateTime.now()),
+        'metadata': {
+          'habitId': habitId,
+          'habitName': habitName,
+        },
+      });
+      
+      // Log distance if provided
+      if (distance != null && distance > 0) {
+        await _firestore.collection('health_logs').add({
+          'userId': userId,
+          'type': 'distance run',
+          'value': distance,
+          'unit': 'km',
+          'timestamp': Timestamp.fromDate(DateTime.now()),
+          'metadata': {
+            'habitId': habitId,
+            'habitName': habitName,
+          },
+        });
+      }
+      
+      // Log workout/duration if provided
+      if (durationSeconds != null && durationSeconds > 0) {
+        await _firestore.collection('health_logs').add({
+          'userId': userId,
+          'type': 'workouts',
+          'value': 1,
+          'unit': 'session',
+          'timestamp': Timestamp.fromDate(DateTime.now()),
+          'metadata': {
+            'habitId': habitId,
+            'habitName': habitName,
+            'durationSeconds': durationSeconds,
+          },
+        });
+      }
+      
+      // Log calories if provided
+      if (value != null && value > 0 && habitName.contains('calor')) {
+        await _firestore.collection('health_logs').add({
+          'userId': userId,
+          'type': 'calories burned',
+          'value': value,
+          'unit': 'kcal',
+          'timestamp': Timestamp.fromDate(DateTime.now()),
+          'metadata': {
+            'habitId': habitId,
+            'habitName': habitName,
+          },
+        });
+      }
+    } catch (e) {
+      print('Error logging health data: $e');
     }
   }
   

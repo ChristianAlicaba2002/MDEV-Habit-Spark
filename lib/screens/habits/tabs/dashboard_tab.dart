@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:habit_spark/models/habit.dart';
+import 'package:habit_spark/models/health_log_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'dart:ui';
 
 class DashboardTab extends StatelessWidget {
   final String userId;
@@ -76,47 +79,111 @@ class DashboardTab extends StatelessWidget {
           ],
         ),
       ),
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "$userName's Activity",
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+      child: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "$userName's Activity",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
-                  const SizedBox(width: 12),
-                  _HeaderIcon(
-                    child: Text(
-                      userInitial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+                    const SizedBox(width: 12),
+                    _HeaderIcon(
+                      child: Text(
+                        userInitial,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
           // Search Bar
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: _SearchBar(controller: _searchController),
+            ),
+          ),
+
+          // Daily Tasks / Routines (Moved to top)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  if (morningHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'Morning Routine',
+                      habits: morningHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.sun_max_fill,
+                      iconColor: const Color(0xFFD4A574),
+                      iconBgColor: const Color(0xFF6B5344),
+                    ),
+                  if (morningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (afternoonHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'Afternoon Routine',
+                      habits: afternoonHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.sun_max,
+                      iconColor: const Color(0xFFFFD700),
+                      iconBgColor: const Color(0xFF8B7500),
+                      initiallyExpanded: true,
+                    ),
+                  if (afternoonHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (eveningHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'Evening Routine',
+                      habits: eveningHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.moon_stars_fill,
+                      iconColor: const Color(0xFF9B7EBD),
+                      iconBgColor: const Color(0xFF4A3F5C),
+                    ),
+                  if (eveningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (otherHabits.isNotEmpty)
+                    _RoutineCardWithIcon(
+                      title: 'General Habits',
+                      habits: otherHabits,
+                      userId: userId,
+                      habitService: habitService,
+                      onConfirmDelete: (h) => _confirmDelete(context, h),
+                      icon: CupertinoIcons.arrow_2_circlepath,
+                      iconColor: const Color(0xFF7FD8BE),
+                      iconBgColor: const Color(0xFF3F6B5C),
+                    ),
+                ],
+              ),
             ),
           ),
 
@@ -135,34 +202,6 @@ class DashboardTab extends StatelessWidget {
             ),
           ),
 
-          // Daily Tasks / Routines
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _RoutineSection(title: 'Morning Routine', habits: morningHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
-                  const SizedBox(height: 12),
-                  _RoutineSection(title: 'Afternoon Routine', habits: afternoonHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h), initiallyExpanded: true),
-                  const SizedBox(height: 12),
-                  _RoutineSection(title: 'Evening Routine', habits: eveningHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
-                  if (otherHabits.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _RoutineSection(title: 'General Habits', habits: otherHabits, userId: userId, habitService: habitService, onConfirmDelete: (h) => _confirmDelete(context, h)),
-                  ],
-                ],
-              ),
-            ),
-          ),
-
           // Weekly Performance
           SliverToBoxAdapter(
             child: Padding(
@@ -170,26 +209,12 @@ class DashboardTab extends StatelessWidget {
               child: _WeeklyPerformance(healthService: _healthService, userId: userId),
             ),
           ),
-
           // Recent Activities
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Recent Activities', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  const _RecentActivityItem(title: 'Morning Run', detail: '5.2 km, PR Pace', icon: Icons.directions_run, iconColor: Colors.tealAccent),
-                  const SizedBox(height: 12),
-                  const _RecentActivityItem(title: 'Heavy Push Day', detail: '85 kg bench', icon: Icons.fitness_center, iconColor: Colors.orangeAccent),
-                ],
-              ),
-            ),
-          ),
+          // Removed - using Weekly Performance chart instead
 
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
+      ),
       ),
     );
   }
@@ -264,7 +289,7 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _DailyActivityGrid extends StatelessWidget {
+class _DailyActivityGrid extends StatefulWidget {
   final HealthService healthService;
   final StreakService streakService;
   final String userId;
@@ -272,56 +297,282 @@ class _DailyActivityGrid extends StatelessWidget {
   const _DailyActivityGrid({required this.healthService, required this.streakService, required this.userId});
 
   @override
+  State<_DailyActivityGrid> createState() => _DailyActivityGridState();
+}
+
+class _DailyActivityGridState extends State<_DailyActivityGrid> with TickerProviderStateMixin {
+  // Track which activity is displayed in each position
+  late Map<int, String> displayedActivities;
+  
+  // Default activities for each position
+  final Map<int, String> defaultActivities = {
+    0: 'distance run',
+    1: 'completed tasks',
+    2: 'day streak',
+    3: 'calories burned',
+  };
+
+  bool isModifyMode = false;
+  int? selectedCardPosition; // Track which card is being modified
+  late AnimationController _shakeController;
+
+  @override
+  void initState() {
+    super.initState();
+    displayedActivities = Map.from(defaultActivities);
+    _shakeController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _shakeController.dispose();
+    super.dispose();
+  }
+
+  void _startShakeAnimation() {
+    _shakeController.forward().then((_) {
+      _shakeController.reverse().then((_) {
+        if (isModifyMode) {
+          _startShakeAnimation();
+        }
+      });
+    });
+  }
+
+  void _toggleModifyMode() {
+    setState(() {
+      if (isModifyMode) {
+        isModifyMode = false;
+        selectedCardPosition = null;
+        _shakeController.stop();
+      } else {
+        isModifyMode = true;
+        _startShakeAnimation();
+      }
+    });
+  }
+
+  void _showActivitySelector(BuildContext context, int position) {
+    setState(() {
+      selectedCardPosition = position;
+    });
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E2E2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => StreamBuilder<List<Map<String, String>>>(
+        stream: widget.healthService.getAllActivityTypes(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final activities = snapshot.data!;
+          
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'Select Activity',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: activities.length,
+                  itemBuilder: (context, index) {
+                    final activity = activities[index];
+                    final activityType = activity['type'] ?? '';
+                    final isSelected = displayedActivities[position] == activityType;
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          displayedActivities[position] = activityType;
+                          selectedCardPosition = null;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.greenAccent.withOpacity(0.2)
+                              : Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.greenAccent
+                                : Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    activityType.toUpperCase(),
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Unit: ${activity['unit'] ?? 'N/A'}',
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(CupertinoIcons.checkmark_circle_fill, color: Colors.greenAccent, size: 24),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton(
+                    color: Colors.white.withOpacity(0.1),
+                    onPressed: () {
+                      setState(() {
+                        selectedCardPosition = null;
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70)),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    ).then((_) {
+      setState(() {
+        selectedCardPosition = null;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            _ActivityCard(
-              title: 'Distance Run',
-              value: '20.4',
-              unit: 'km',
-              subtitle: 'vs last week',
-              trend: '',
-              visual: const _SpeedometerVisual(),
-            ),
-            const SizedBox(width: 12),
-            _ActivityCard(
-              title: 'Workouts',
-              value: '4',
-              unit: 'sessions',
-              subtitle: 'vs last week',
-              trend: '18 ↑',
-              trendColor: Colors.greenAccent,
-              visual: const _MiniBarChart(),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _ActivityCard(
-              title: 'Day Streak',
-              value: '10',
-              unit: 'days',
-              subtitle: 'vs last week',
-              trend: '15 ↓',
-              trendColor: Colors.orangeAccent,
-              visual: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 40),
-            ),
-            const SizedBox(width: 12),
-            _ActivityCard(
-              title: 'Calories Burned',
-              value: '3,500',
-              unit: 'kcal',
-              subtitle: 'vs last week',
-              trend: '10 ↑',
-              trendColor: Colors.greenAccent,
-              visual: const _WaveVisual(),
-            ),
-          ],
-        ),
-      ],
+    return GestureDetector(
+      onLongPress: _toggleModifyMode,
+      onTap: isModifyMode ? _toggleModifyMode : null,
+      child: Column(
+        children: [
+          // Activity Grid
+          Column(
+            children: [
+              Row(
+                children: [
+                  // Position 0 - Top Left
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 0,
+                        activityType: displayedActivities[0]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 0,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Position 1 - Top Right
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 1,
+                        activityType: displayedActivities[1]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 1,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 1),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  // Position 2 - Bottom Left
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 2,
+                        activityType: displayedActivities[2]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 2,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Position 3 - Bottom Right
+                  Expanded(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: _ActivityCardWithModify(
+                        position: 3,
+                        activityType: displayedActivities[3]!,
+                        healthService: widget.healthService,
+                        streakService: widget.streakService,
+                        userId: widget.userId,
+                        isModifyMode: isModifyMode,
+                        isSelected: selectedCardPosition == 3,
+                        shakeController: _shakeController,
+                        onModifyPressed: () => _showActivitySelector(context, 3),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -369,18 +620,467 @@ class _ActivityCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 2),
+                      Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                visual,
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: visual,
+                ),
               ],
             ),
             const SizedBox(height: 4),
             Text(subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Wrapper widget that handles modify mode with shake and blur effects
+class _ActivityCardWithModify extends StatelessWidget {
+  final int position;
+  final String activityType;
+  final HealthService healthService;
+  final StreakService streakService;
+  final String userId;
+  final bool isModifyMode;
+  final bool isSelected;
+  final AnimationController shakeController;
+  final VoidCallback onModifyPressed;
+
+  const _ActivityCardWithModify({
+    required this.position,
+    required this.activityType,
+    required this.healthService,
+    required this.streakService,
+    required this.userId,
+    required this.isModifyMode,
+    required this.isSelected,
+    required this.shakeController,
+    required this.onModifyPressed,
+  });
+
+  IconData _getIconForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return LucideIcons.zap;
+      case 'completed tasks':
+        return CupertinoIcons.checkmark_circle_fill;
+      case 'day streak':
+        return CupertinoIcons.flame_fill;
+      case 'calories burned':
+        return CupertinoIcons.flame;
+      default:
+        return CupertinoIcons.chart_bar;
+    }
+  }
+
+  Color _getColorForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return Colors.tealAccent;
+      case 'completed tasks':
+        return Colors.greenAccent;
+      case 'day streak':
+        return Colors.orangeAccent;
+      case 'calories burned':
+        return Colors.tealAccent;
+      default:
+        return Colors.blueAccent;
+    }
+  }
+
+  Widget _getVisualForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return const _SpeedometerVisual();
+      case 'completed tasks':
+        return const _MiniBarChart();
+      case 'day streak':
+        return const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50);
+      case 'calories burned':
+        return const _WaveVisual();
+      default:
+        return const Icon(CupertinoIcons.chart_bar, color: Colors.white, size: 40);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final color = _getColorForActivity(activityType);
+
+    return AnimatedBuilder(
+      animation: shakeController,
+      builder: (context, child) {
+        // iOS-style shake: small offset that alternates
+        final shakeOffset = isModifyMode ? (shakeController.value - 0.5) * 3 : 0.0;
+
+        return Transform.translate(
+          offset: Offset(shakeOffset, shakeOffset * 0.3),
+          child: Stack(
+            children: [
+              // Main card
+              StreamBuilder<dynamic>(
+                stream: _getStreamForActivity(activityType),
+                builder: (context, snapshot) {
+                  String value = '0';
+                  String unit = '';
+                  String title = activityType;
+
+                  if (snapshot.hasData) {
+                    if (activityType.toLowerCase() == 'day streak') {
+                      final data = snapshot.data as Map<String, dynamic>;
+                      value = (data['currentStreak'] ?? 0).toString();
+                      unit = 'days';
+                    } else if (activityType.toLowerCase() == 'completed tasks') {
+                      final logs = snapshot.data as List<HealthLog>;
+                      value = logs
+                          .where((log) => log.type.toLowerCase() == 'completed tasks')
+                          .length
+                          .toString();
+                      unit = 'tasks';
+                    } else {
+                      final data = snapshot.data as Map<String, dynamic>;
+                      value = (data['total'] as double).toStringAsFixed(1);
+                      unit = data['unit'] ?? '';
+                    }
+                  }
+
+                  return _ActivityCardNew(
+                    icon: _getIconForActivity(activityType),
+                    iconColor: color,
+                    iconBgColor: color.withOpacity(0.2),
+                    title: title,
+                    value: value,
+                    unit: unit,
+                    subtitle: 'vs last week',
+                    trend: '↑ 0%',
+                    trendColor: Colors.greenAccent,
+                    visual: _getVisualForActivity(activityType),
+                  );
+                },
+              ),
+              // Blur overlay when card is selected for modification
+              if (isModifyMode && isSelected)
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.3),
+                      ),
+                    ),
+                  ),
+                ),
+              // Modify button - centered on card
+              if (isModifyMode)
+                Positioned.fill(
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: onModifyPressed,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.orangeAccent.withOpacity(0.6),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Modify',
+                          style: GoogleFonts.outfit(
+                            color: Colors.black,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Stream<dynamic> _getStreamForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return streakService.getStreakStream(userId);
+      case 'completed tasks':
+        return healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      default:
+        return healthService.getActivityMonthlyStats(type);
+    }
+  }
+}
+
+// Old wrapper widget that handles long-press and displays the appropriate activity
+class _ActivityCardWrapper extends StatelessWidget {
+  final int position;
+  final String activityType;
+  final HealthService healthService;
+  final StreakService streakService;
+  final String userId;
+  final VoidCallback onLongPress;
+
+  const _ActivityCardWrapper({
+    required this.position,
+    required this.activityType,
+    required this.healthService,
+    required this.streakService,
+    required this.userId,
+    required this.onLongPress,
+  });
+
+  IconData _getIconForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return LucideIcons.zap;
+      case 'completed tasks':
+        return CupertinoIcons.checkmark_circle_fill;
+      case 'day streak':
+        return CupertinoIcons.flame_fill;
+      case 'calories burned':
+        return CupertinoIcons.flame;
+      default:
+        return CupertinoIcons.chart_bar;
+    }
+  }
+
+  Color _getColorForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return Colors.tealAccent;
+      case 'completed tasks':
+        return Colors.greenAccent;
+      case 'day streak':
+        return Colors.orangeAccent;
+      case 'calories burned':
+        return Colors.tealAccent;
+      default:
+        return Colors.blueAccent;
+    }
+  }
+
+  Widget _getVisualForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return const _SpeedometerVisual();
+      case 'completed tasks':
+        return const _MiniBarChart();
+      case 'day streak':
+        return const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50);
+      case 'calories burned':
+        return const _WaveVisual();
+      default:
+        return const Icon(CupertinoIcons.chart_bar, color: Colors.white, size: 40);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final color = _getColorForActivity(activityType);
+
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: StreamBuilder<dynamic>(
+        stream: _getStreamForActivity(activityType),
+        builder: (context, snapshot) {
+          String value = '0';
+          String unit = '';
+          String title = activityType;
+
+          if (snapshot.hasData) {
+            if (activityType.toLowerCase() == 'day streak') {
+              final data = snapshot.data as Map<String, dynamic>;
+              value = (data['currentStreak'] ?? 0).toString();
+              unit = 'days';
+            } else if (activityType.toLowerCase() == 'completed tasks') {
+              final logs = snapshot.data as List<HealthLog>;
+              value = logs
+                  .where((log) => log.type.toLowerCase() == 'completed tasks')
+                  .length
+                  .toString();
+              unit = 'tasks';
+            } else {
+              final data = snapshot.data as Map<String, dynamic>;
+              value = (data['total'] as double).toStringAsFixed(1);
+              unit = data['unit'] ?? '';
+            }
+          }
+
+          return _ActivityCardNew(
+            icon: _getIconForActivity(activityType),
+            iconColor: color,
+            iconBgColor: color.withOpacity(0.2),
+            title: title,
+            value: value,
+            unit: unit,
+            subtitle: 'vs last week',
+            trend: '↑ 0%',
+            trendColor: Colors.greenAccent,
+            visual: _getVisualForActivity(activityType),
+          );
+        },
+      ),
+    );
+  }
+
+  Stream<dynamic> _getStreamForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return streakService.getStreakStream(userId);
+      case 'completed tasks':
+        return healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      default:
+        return healthService.getActivityMonthlyStats(type);
+    }
+  }
+}
+
+class _ActivityCardNew extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+
+  final Color iconBgColor;
+  final String title;
+  final String value;
+  final String unit;
+  final String subtitle;
+  final String trend;
+  final Color trendColor;
+  final Widget visual;
+
+  const _ActivityCardNew({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBgColor,
+    required this.title,
+    required this.value,
+    required this.unit,
+    required this.subtitle,
+    required this.trend,
+    required this.trendColor,
+    required this.visual,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withOpacity(0.12),
+              Colors.white.withOpacity(0.06),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Icon, Title, Trend
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.3)),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: trendColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(trend, style: GoogleFonts.outfit(color: trendColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Value and Visual
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: -1)),
+                      const SizedBox(height: 1),
+                      Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                      const SizedBox(height: 1),
+                      Text(subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w400)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 35,
+                  height: 35,
+                  child: visual,
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -532,6 +1232,129 @@ class _HabitCheckItem extends StatelessWidget {
   }
 }
 
+class _RoutineCardWithIcon extends StatefulWidget {
+  final String title;
+  final List<Habit> habits;
+  final String userId;
+  final HabitService habitService;
+  final Function(Habit) onConfirmDelete;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBgColor;
+  final bool initiallyExpanded;
+
+  const _RoutineCardWithIcon({
+    required this.title,
+    required this.habits,
+    required this.userId,
+    required this.habitService,
+    required this.onConfirmDelete,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBgColor,
+    this.initiallyExpanded = false,
+  });
+
+  @override
+  State<_RoutineCardWithIcon> createState() => _RoutineCardWithIconState();
+}
+
+class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final completedCount = widget.habits.where((h) => h.isDone).length;
+    final totalCount = widget.habits.length;
+    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Icon with background
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: widget.iconBgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(widget.icon, color: widget.iconColor, size: 28),
+                  ),
+                  const SizedBox(width: 16),
+                  // Title and completion
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(widget.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 4,
+                            backgroundColor: Colors.white.withOpacity(0.1),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text('${(progress * 100).toStringAsFixed(0)}% completed', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Completion count and chevron
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('$completedCount/$totalCount', style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                      Icon(_isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, color: Colors.white, size: 18),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isExpanded && widget.habits.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                children: widget.habits.map((habit) => _HabitCheckItem(
+                  habit: habit,
+                  userId: widget.userId,
+                  habitService: widget.habitService,
+                  onDelete: () => widget.onConfirmDelete(habit),
+                )).toList(),
+              ),
+            ),
+          if (_isExpanded && widget.habits.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text('No tasks in this routine', style: TextStyle(color: Colors.white38, fontSize: 12)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WeeklyPerformance extends StatelessWidget {
   final HealthService healthService;
   final String userId;
@@ -539,77 +1362,145 @@ class _WeeklyPerformance extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    return StreamBuilder<Map<int, double>>(
+      stream: healthService.getWeeklyActivitySummary(),
+      builder: (context, snapshot) {
+        Map<int, double> weekData = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+        String peakDay = 'Mon';
+        double avgValue = 0;
+        double totalValue = 0;
+
+        if (snapshot.hasData) {
+          weekData = snapshot.data!;
+          
+          // Calculate peak day
+          int peakIndex = 0;
+          double maxValue = 0;
+          weekData.forEach((index, value) {
+            if (value > maxValue) {
+              maxValue = value;
+              peakIndex = index;
+            }
+          });
+          peakDay = days[peakIndex];
+          
+          // Calculate average and total
+          final values = weekData.values.toList();
+          totalValue = values.fold(0, (sum, val) => sum + val);
+          avgValue = values.isNotEmpty ? totalValue / values.length : 0;
+        }
+
+        return Column(
           children: [
             Text('Weekly Performance', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-            RichText(
-              text: TextSpan(
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.12),
+                    Colors.white.withOpacity(0.06),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
                 children: [
-                  TextSpan(text: 'Total progress: ', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
-                  TextSpan(text: '1300I 🔥', style: GoogleFonts.outfit(color: Colors.orangeAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                  // Chart bars
+                  SizedBox(
+                    height: 150,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: List.generate(7, (index) {
+                        final height = weekData[index] ?? 0;
+                        final isPeakDay = days[index] == peakDay;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              width: 28,
+                              height: 120 * height,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: isPeakDay
+                                      ? [Colors.greenAccent, Colors.greenAccent.withOpacity(0.6)]
+                                      : [Colors.tealAccent.withOpacity(0.8), Colors.tealAccent.withOpacity(0.3)],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              days[index],
+                              style: GoogleFonts.outfit(
+                                color: isPeakDay ? Colors.greenAccent : Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Stats - Labels on the left
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Avg', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(avgValue.toStringAsFixed(2), style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Peak', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(peakDay, style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Total', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+                            const SizedBox(height: 4),
+                            Text(totalValue.toStringAsFixed(2), style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
-                    bool isTue = day == 'Tue';
-                    return Column(
-                      children: [
-                        Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: isTue ? Colors.orangeAccent : Colors.tealAccent.withOpacity(0.4),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(day, style: TextStyle(color: isTue ? Colors.orangeAccent : Colors.white38, fontSize: 10)),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(15)),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [0.3, 1.0, 0.4, 0.2, 0.6, 0.3, 0.1].map((h) => Container(
-                    width: 8,
-                    height: 30 * h,
-                    decoration: BoxDecoration(
-                      color: h == 1.0 ? Colors.orangeAccent : Colors.white10,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  )).toList(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 }
