@@ -303,4 +303,33 @@ class HealthService {
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => HealthLog.fromFirestore(doc)).toList());
   }
+
+  // GOAL COMPLETION: Toggle a "done" status for an activity today
+  Future<void> toggleGoalDone(String type, bool isDone) async {
+    if (_userId.isEmpty) return;
+    final now = DateTime.now();
+    final dateId = "${now.year}-${now.month}-${now.day}";
+    final docId = "${_userId}_${type.toLowerCase()}_$dateId";
+
+    if (isDone) {
+      await _db.collection('goal_completions').doc(docId).set({
+        'userId': _userId,
+        'type': type.toLowerCase(),
+        'date': dateId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await _db.collection('goal_completions').doc(docId).delete();
+    }
+  }
+
+  // GOAL COMPLETION: Check if activity is "done" today
+  Stream<bool> getGoalDoneStream(String type) {
+    if (_userId.isEmpty) return Stream.value(false);
+    final now = DateTime.now();
+    final dateId = "${now.year}-${now.month}-${now.day}";
+    final docId = "${_userId}_${type.toLowerCase()}_$dateId";
+
+    return _db.collection('goal_completions').doc(docId).snapshots().map((doc) => doc.exists);
+  }
 }

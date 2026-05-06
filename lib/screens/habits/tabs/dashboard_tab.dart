@@ -759,53 +759,60 @@ class _ActivityCardWithModify extends StatelessWidget {
           child: Stack(
             children: [
               // Main card
-              StreamBuilder<dynamic>(
-                stream: _getStreamForActivity(activityType),
-                builder: (context, snapshot) {
-                  String value = '0';
-                  String unit = '';
-                  String title = activityType;
-                  String category = '';
+              StreamBuilder<bool>(
+                stream: healthService.getGoalDoneStream(activityType),
+                builder: (context, goalSnapshot) {
+                  final bool isDone = goalSnapshot.data ?? false;
 
-                  if (snapshot.hasData) {
-                    if (activityType.toLowerCase() == 'day streak') {
-                      final data = snapshot.data as Map<String, dynamic>;
-                      value = (data['currentStreak'] ?? 0).toString();
-                      unit = 'days';
-                      category = _getCategoryForActivity(activityType);
-                    } else if (activityType.toLowerCase() == 'completed tasks') {
-                      final logs = snapshot.data as List<HealthLog>;
-                      value = logs
-                          .where((log) => log.type.toLowerCase() == 'completed tasks')
-                          .length
-                          .toString();
-                      unit = 'tasks';
-                      category = _getCategoryForActivity(activityType);
-                    } else {
-                      final data = snapshot.data as Map<String, dynamic>;
-                      value = (data['total'] as double).toStringAsFixed(1);
-                      unit = data['unit'] ?? '';
-                      // Get category from the data map
-                      category = data['category'] ?? '';
-                    }
-                  }
+                  return StreamBuilder<dynamic>(
+                    stream: _getStreamForActivity(activityType),
+                    builder: (context, snapshot) {
+                      String value = '0';
+                      String unit = '';
+                      String title = activityType;
+                      String category = '';
 
-                  // Capitalize the title (first letter uppercase, rest lowercase)
-                  final capitalizedTitle = title.isEmpty 
-                      ? title 
-                      : title[0].toUpperCase() + title.substring(1).toLowerCase();
+                      if (snapshot.hasData) {
+                        if (activityType.toLowerCase() == 'day streak') {
+                          final data = snapshot.data as Map<String, dynamic>;
+                          value = (data['currentStreak'] ?? 0).toString();
+                          unit = 'days';
+                          category = _getCategoryForActivity(activityType);
+                        } else if (activityType.toLowerCase() == 'completed tasks') {
+                          final logs = snapshot.data as List<HealthLog>;
+                          value = logs
+                              .where((log) => log.type.toLowerCase() == 'completed tasks')
+                              .length
+                              .toString();
+                          unit = 'tasks';
+                          category = _getCategoryForActivity(activityType);
+                        } else {
+                          final data = snapshot.data as Map<String, dynamic>;
+                          value = (data['total'] as double).toStringAsFixed(1);
+                          unit = data['unit'] ?? '';
+                          category = data['category'] ?? '';
+                        }
+                      }
 
-                  return _ActivityCardNew(
-                    icon: _getIconForActivity(activityType),
-                    iconColor: color,
-                    iconBgColor: color.withOpacity(0.2),
-                    title: capitalizedTitle,
-                    value: value,
-                    unit: unit,
-                    subtitle: category.isNotEmpty ? category : capitalizedTitle,
-                    trend: '↑ 0%',
-                    trendColor: Colors.greenAccent,
-                    visual: _getVisualForActivity(activityType),
+                      final capitalizedTitle = title.isEmpty 
+                          ? title 
+                          : title[0].toUpperCase() + title.substring(1).toLowerCase();
+
+                      return _ActivityCardNew(
+                        icon: _getIconForActivity(activityType),
+                        iconColor: color,
+                        iconBgColor: color.withOpacity(0.2),
+                        title: capitalizedTitle,
+                        value: value,
+                        unit: unit,
+                        subtitle: category.isNotEmpty ? category : capitalizedTitle,
+                        trend: '↑ 0%',
+                        trendColor: Colors.greenAccent,
+                        visual: _getVisualForActivity(activityType),
+                        isDone: isDone,
+                        onDoubleTap: isModifyMode ? null : () => healthService.toggleGoalDone(activityType, !isDone),
+                      );
+                    },
                   );
                 },
               ),
@@ -998,10 +1005,9 @@ class _ActivityCardWrapper extends StatelessWidget {
   }
 }
 
-class _ActivityCardNew extends StatelessWidget {
+class _ActivityCardNew extends StatefulWidget {
   final IconData icon;
   final Color iconColor;
-
   final Color iconBgColor;
   final String title;
   final String value;
@@ -1010,6 +1016,8 @@ class _ActivityCardNew extends StatelessWidget {
   final String trend;
   final Color trendColor;
   final Widget visual;
+  final bool isDone;
+  final VoidCallback? onDoubleTap;
 
   const _ActivityCardNew({
     required this.icon,
@@ -1022,102 +1030,204 @@ class _ActivityCardNew extends StatelessWidget {
     required this.trend,
     required this.trendColor,
     required this.visual,
+    this.isDone = false,
+    this.onDoubleTap,
   });
 
   @override
+  State<_ActivityCardNew> createState() => _ActivityCardNewState();
+}
+
+class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _floatAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.04).chain(CurveTween(curve: Curves.easeOutCubic)), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.04, end: 1.0).chain(CurveTween(curve: Curves.easeInOutCubic)), weight: 60),
+    ]).animate(_pulseController);
+
+    _floatAnimation = Tween<double>(begin: 0.0, end: -4.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_ActivityCardNew oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isDone && !oldWidget.isDone) {
+      _pulseController.forward(from: 0.0);
+    } else if (!widget.isDone && oldWidget.isDone) {
+      _pulseController.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withOpacity(0.12),
-              Colors.white.withOpacity(0.06),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+    return GestureDetector(
+      onDoubleTap: widget.onDoubleTap,
+      child: AnimatedBuilder(
+        animation: _pulseController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, widget.isDone ? _floatAnimation.value : 0),
+            child: Transform.scale(
+              scale: widget.isDone ? _scaleAnimation.value : 1.0,
+              child: child,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Icon, Title, Trend
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutQuart,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: iconBgColor,
-                    borderRadius: BorderRadius.circular(10),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        widget.isDone ? widget.iconColor.withOpacity(0.25) : Colors.white.withOpacity(0.12),
+                        widget.isDone ? widget.iconColor.withOpacity(0.1) : Colors.white.withOpacity(0.06),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: widget.isDone ? widget.iconColor.withOpacity(0.7) : Colors.white.withOpacity(0.1),
+                      width: widget.isDone ? 2.0 : 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: iconColor.withOpacity(0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        color: widget.isDone ? widget.iconColor.withOpacity(0.4) : Colors.black.withOpacity(0.3),
+                        blurRadius: widget.isDone ? 35 : 20,
+                        spreadRadius: widget.isDone ? 4 : 0,
+                        offset: Offset(0, widget.isDone ? 15 : 8),
                       ),
                     ],
                   ),
-                  child: Icon(icon, color: iconColor, size: 20),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.3)),
-                      const SizedBox(height: 3),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: trendColor.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(trend, style: GoogleFonts.outfit(color: trendColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                      // Header: Icon, Title, Trend
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: widget.iconBgColor,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: widget.iconColor.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(widget.icon, color: widget.iconColor, size: 20),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(widget.title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.3)),
+                                const SizedBox(height: 3),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: widget.trendColor.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: Text(widget.trend, style: GoogleFonts.outfit(color: widget.trendColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Value and Visual
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(widget.value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: -1)),
+                                const SizedBox(height: 1),
+                                Text(widget.unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 1),
+                                Text(widget.subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w400)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          SizedBox(
+                            width: 35,
+                            height: 35,
+                            child: widget.visual,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // Value and Visual
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: -1)),
-                      const SizedBox(height: 1),
-                      Text(unit, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
-                      const SizedBox(height: 1),
-                      Text(subtitle, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.w400)),
-                    ],
+                if (widget.isDone)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: TweenAnimationBuilder<double>(
+                      duration: const Duration(milliseconds: 800),
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      curve: Curves.easeOutBack,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.greenAccent.withOpacity(0.6),
+                                  blurRadius: 15,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(CupertinoIcons.checkmark, color: Colors.black, size: 12),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 6),
-                SizedBox(
-                  width: 35,
-                  height: 35,
-                  child: visual,
-                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
