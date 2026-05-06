@@ -94,7 +94,8 @@ class HealthService {
       double total = 0;
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        final tsData = data['timestamp'];
+        final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) && 
             timestamp.isBefore(end)) {
           total += (data['value'] ?? 0).toDouble();
@@ -121,7 +122,8 @@ class HealthService {
       String category = '';
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        final tsData = data['timestamp'];
+        final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
             timestamp.isBefore(end)) {
           total += (data['value'] ?? 0).toDouble();
@@ -152,7 +154,8 @@ class HealthService {
       final Map<int, double> counts = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        final tsData = data['timestamp'];
+        final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(weekStart.subtract(const Duration(seconds: 1))) &&
             timestamp.isBefore(weekEnd)) {
           final dayIndex = timestamp.weekday - 1; // 0=Mon, 6=Sun
@@ -291,5 +294,65 @@ class HealthService {
         .doc('${_userId}_${type.toLowerCase()}')
         .snapshots()
         .map((snapshot) => snapshot.exists);
+  }
+
+  // READ: Get recent activity logs
+  Stream<List<HealthLog>> getRecentLogsStream({int limit = 3}) {
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .snapshots()
+        .map((snapshot) {
+      final logs = snapshot.docs.map((doc) => HealthLog.fromFirestore(doc)).toList();
+      // Sort locally to avoid index requirement
+      logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return logs.take(limit).toList();
+    });
+  }
+
+  // GOAL COMPLETION: Toggle a "done" status for an activity today
+  Future<void> toggleGoalDone(String type, bool isDone) async {
+    if (_userId.isEmpty) return;
+    final now = DateTime.now();
+    final dateId = "${now.year}-${now.month}-${now.day}";
+    final docId = "${_userId}_${type.toLowerCase()}_$dateId";
+    final goalLogId = "goal_log_$docId";
+
+    if (isDone) {
+      // 1. Mark as done for visual tracking
+      await _db.collection('goal_completions').doc(docId).set({
+        'userId': _userId,
+        'type': type.toLowerCase(),
+        'date': dateId,
+        'timestamp': now, // Use local now for immediate stream updates
+      });
+
+      // 2. Add to health_logs with a fixed ID to avoid duplicates
+      await _db.collection('health_logs').doc(goalLogId).set({
+        'userId': _userId,
+        'type': type.toLowerCase(),
+        'value': 1.0,
+        'unit': 'goal reached',
+        'timestamp': now, // Use local now for immediate stream updates
+        'metadata': {
+          'isGoalCompletion': true,
+          'activityName': type,
+        },
+      });
+    } else {
+      // UNDO: Delete both completion status and the activity log
+      await _db.collection('goal_completions').doc(docId).delete();
+      await _db.collection('health_logs').doc(goalLogId).delete();
+    }
+  }
+
+  // GOAL COMPLETION: Check if activity is "done" today
+  Stream<bool> getGoalDoneStream(String type) {
+    if (_userId.isEmpty) return Stream.value(false);
+    final now = DateTime.now();
+    final dateId = "${now.year}-${now.month}-${now.day}";
+    final docId = "${_userId}_${type.toLowerCase()}_$dateId";
+
+    return _db.collection('goal_completions').doc(docId).snapshots().map((doc) => doc.exists);
   }
 }
