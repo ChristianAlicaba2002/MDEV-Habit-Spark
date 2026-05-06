@@ -94,7 +94,8 @@ class HealthService {
       double total = 0;
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        final tsData = data['timestamp'];
+        final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) && 
             timestamp.isBefore(end)) {
           total += (data['value'] ?? 0).toDouble();
@@ -121,7 +122,8 @@ class HealthService {
       String category = '';
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        final tsData = data['timestamp'];
+        final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
             timestamp.isBefore(end)) {
           total += (data['value'] ?? 0).toDouble();
@@ -152,7 +154,8 @@ class HealthService {
       final Map<int, double> counts = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
       for (var doc in snapshot.docs) {
         final data = doc.data();
-        final timestamp = (data['timestamp'] as Timestamp).toDate();
+        final tsData = data['timestamp'];
+        final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(weekStart.subtract(const Duration(seconds: 1))) &&
             timestamp.isBefore(weekEnd)) {
           final dayIndex = timestamp.weekday - 1; // 0=Mon, 6=Sun
@@ -313,6 +316,7 @@ class HealthService {
     final now = DateTime.now();
     final dateId = "${now.year}-${now.month}-${now.day}";
     final docId = "${_userId}_${type.toLowerCase()}_$dateId";
+    final goalLogId = "goal_log_$docId";
 
     if (isDone) {
       // 1. Mark as done for visual tracking
@@ -320,26 +324,25 @@ class HealthService {
         'userId': _userId,
         'type': type.toLowerCase(),
         'date': dateId,
-        'timestamp': FieldValue.serverTimestamp(),
+        'timestamp': now, // Use local now for immediate stream updates
       });
 
-      // 2. Add to health_logs so it appears in Recent Activity
-      await logActivity(
-        type: type.toLowerCase(),
-        value: 1.0,
-        unit: 'goal reached',
-        timestamp: now,
-        metadata: {
+      // 2. Add to health_logs with a fixed ID to avoid duplicates
+      await _db.collection('health_logs').doc(goalLogId).set({
+        'userId': _userId,
+        'type': type.toLowerCase(),
+        'value': 1.0,
+        'unit': 'goal reached',
+        'timestamp': now, // Use local now for immediate stream updates
+        'metadata': {
           'isGoalCompletion': true,
           'activityName': type,
         },
-      );
+      });
     } else {
+      // UNDO: Delete both completion status and the activity log
       await _db.collection('goal_completions').doc(docId).delete();
-      
-      // Optional: Remove the log if toggled off? 
-      // Usually logging systems are additive, but we could find the latest log for this type today and delete it.
-      // For now, let's keep it simple and just log the completion.
+      await _db.collection('health_logs').doc(goalLogId).delete();
     }
   }
 

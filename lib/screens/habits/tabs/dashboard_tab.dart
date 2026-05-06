@@ -1044,6 +1044,7 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
   late Animation<double> _scaleAnimation;
   late Animation<double> _floatAnimation;
   late bool _isDoneOptimistic;
+  bool _showActionOverlay = false;
 
   @override
   void initState() {
@@ -1074,6 +1075,7 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
     if (widget.isDone != oldWidget.isDone) {
       setState(() {
         _isDoneOptimistic = widget.isDone;
+        _showActionOverlay = false; // Hide overlay when actual state updates
       });
       if (_isDoneOptimistic) {
         _pulseController.forward();
@@ -1093,7 +1095,14 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
     if (widget.onDoubleTap == null) return;
     
     setState(() {
+      _showActionOverlay = !_showActionOverlay;
+    });
+  }
+
+  void _confirmAction() {
+    setState(() {
       _isDoneOptimistic = !_isDoneOptimistic;
+      _showActionOverlay = false;
     });
 
     if (_isDoneOptimistic) {
@@ -1102,7 +1111,9 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
       _pulseController.reverse();
     }
 
-    widget.onDoubleTap!();
+    if (widget.onDoubleTap != null) {
+      widget.onDoubleTap!();
+    }
   }
 
   @override
@@ -1253,6 +1264,78 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
                       },
                     ),
                   ),
+                
+                // Action Overlay (Confirmation)
+                if (_showActionOverlay)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _showActionOverlay = false),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  GestureDetector(
+                                    onTap: _confirmAction,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: _isDoneOptimistic ? Colors.redAccent : Colors.greenAccent,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: (_isDoneOptimistic ? Colors.redAccent : Colors.greenAccent).withOpacity(0.4),
+                                            blurRadius: 15,
+                                            offset: const Offset(0, 5),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _isGoalReached() ? CupertinoIcons.refresh : CupertinoIcons.checkmark_alt,
+                                            color: Colors.black,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _isDoneOptimistic ? 'Undo' : 'Mark as Done',
+                                            style: GoogleFonts.outfit(
+                                              color: Colors.black,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Double tap to cancel',
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white38,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1260,6 +1343,8 @@ class _ActivityCardNewState extends State<_ActivityCardNew> with SingleTickerPro
       ),
     );
   }
+
+  bool _isGoalReached() => _isDoneOptimistic;
 }
 
 class _RoutineSection extends StatefulWidget {
