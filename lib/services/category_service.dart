@@ -12,12 +12,15 @@ class CategoryService {
     return _firestore
         .collection(_collectionName)
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
+      final items = snapshot.docs.map((doc) {
         return CategoryModel.fromMap(doc.data(), doc.id);
       }).toList();
+      
+      // Sort by position
+      items.sort((a, b) => a.position.compareTo(b.position));
+      return items;
     }).handleError((error) {
       print('Error fetching categories: $error');
       return [];
@@ -31,11 +34,19 @@ class CategoryService {
     }
 
     try {
+      // Get current count to set position
+      final snapshot = await _firestore
+          .collection(_collectionName)
+          .where('userId', isEqualTo: userId)
+          .get();
+      final position = snapshot.docs.length;
+
       await _firestore.collection(_collectionName).add({
         'name': name,
         'iconCode': iconCode,
         'colorValue': colorValue,
         'userId': userId,
+        'position': position,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -61,6 +72,16 @@ class CategoryService {
       print('Error updating category: $e');
       rethrow;
     }
+  }
+
+  /// Reorder categories
+  Future<void> reorderCategories(List<CategoryModel> categories) async {
+    final batch = _firestore.batch();
+    for (int i = 0; i < categories.length; i++) {
+      final docRef = _firestore.collection(_collectionName).doc(categories[i].id);
+      batch.update(docRef, {'position': i});
+    }
+    await batch.commit();
   }
 
   /// Delete a category

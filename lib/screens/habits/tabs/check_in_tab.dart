@@ -78,6 +78,19 @@ class _CheckInTabState extends State<CheckInTab> {
     );
   }
 
+  void _showEditCategoryModal(CategoryModel category) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _CreateCategoryModal(
+        userId: widget.userId,
+        categoryService: widget.categoryService,
+        category: category,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allHabits = widget.habits;
@@ -229,6 +242,14 @@ class _CheckInTabState extends State<CheckInTab> {
                     selectedFilter: _selectedCategoryFilter,
                     onFilterChanged: (filter) => setState(() => _selectedCategoryFilter = filter),
                     onAddCategory: _showAddCategoryModal,
+                    onEditCategory: _showEditCategoryModal,
+                    onReorder: (oldIndex, newIndex) {
+                      if (newIndex > oldIndex) newIndex -= 1;
+                      final List<CategoryModel> items = List.from(categories);
+                      final CategoryModel item = items.removeAt(oldIndex);
+                      items.insert(newIndex, item);
+                      widget.categoryService.reorderCategories(items);
+                    },
                   ),
                 ),
 
@@ -369,12 +390,16 @@ class _CategoriesSection extends StatelessWidget {
   final String? selectedFilter;
   final Function(String?) onFilterChanged;
   final VoidCallback onAddCategory;
+  final Function(CategoryModel) onEditCategory;
+  final ReorderCallback onReorder;
 
   const _CategoriesSection({
     required this.categories,
     required this.selectedFilter,
     required this.onFilterChanged,
     required this.onAddCategory,
+    required this.onEditCategory,
+    required this.onReorder,
   });
 
   @override
@@ -384,60 +409,26 @@ class _CategoriesSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with title and edit button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Header with title only
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Categories',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Organize your life, your way.',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white60,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                  ),
+              Text(
+                'Categories',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      CupertinoIcons.pencil,
-                      color: Colors.white70,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Edit',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Organize your life, your way.',
+                style: GoogleFonts.outfit(
+                  color: Colors.white60,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
@@ -445,16 +436,37 @@ class _CategoriesSection extends StatelessWidget {
           const SizedBox(height: 20),
           // Categories grid
           SizedBox(
-            height: 215, // Reduced from 240
-            child: ListView(
+            height: 215,
+            child: ReorderableListView.builder(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              children: [
-                // Create New Category Card
-                _CreateCategoryCard(onTap: onAddCategory),
-                const SizedBox(width: 12),
-                // Category cards
-                ...categories.map((cat) => Padding(
+              padding: const EdgeInsets.only(right: 20),
+              proxyDecorator: (child, index, animation) => Material(
+                color: Colors.transparent,
+                child: child,
+              ),
+              itemCount: categories.length + 1,
+              onReorder: (oldIndex, newIndex) {
+                // Prevent reordering the 'Create' button (it's always the last item)
+                if (oldIndex >= categories.length || newIndex > categories.length) return;
+                
+                onReorder(oldIndex, newIndex);
+              },
+              itemBuilder: (context, index) {
+                if (index == categories.length) {
+                  return Padding(
+                    key: const ValueKey('create_button'),
+                    padding: const EdgeInsets.only(left: 4),
+                    child: ReorderableDelayedDragStartListener(
+                      index: index,
+                      enabled: false, // Disable dragging for create button
+                      child: _CreateCategoryCard(onTap: onAddCategory),
+                    ),
+                  );
+                }
+
+                final cat = categories[index];
+                return Padding(
+                  key: ValueKey(cat.id),
                   padding: const EdgeInsets.only(right: 12),
                   child: _CategoryCard(
                     category: cat,
@@ -462,9 +474,10 @@ class _CategoriesSection extends StatelessWidget {
                     onTap: () => onFilterChanged(
                       selectedFilter == cat.name ? null : cat.name,
                     ),
+                    onEdit: () => onEditCategory(cat),
                   ),
-                )).toList(),
-              ],
+                );
+              },
             ),
           ),
           const SizedBox(height: 16),
@@ -573,11 +586,13 @@ class _CategoryCard extends StatelessWidget {
   final CategoryModel category;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
 
   const _CategoryCard({
     required this.category,
     required this.isSelected,
     required this.onTap,
+    required this.onEdit,
   });
 
   String _getCategoryDescription(String name) {
@@ -675,10 +690,13 @@ class _CategoryCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Icon(
-                          CupertinoIcons.ellipsis,
-                          color: Colors.white.withOpacity(0.4),
-                          size: 18,
+                        GestureDetector(
+                          onTap: onEdit,
+                          child: Icon(
+                            CupertinoIcons.ellipsis,
+                            color: Colors.white.withOpacity(0.4),
+                            size: 22, // Slightly larger for better tap target
+                          ),
                         ),
                       ],
                     ),
@@ -961,8 +979,13 @@ class _EmptyStateReminder extends StatelessWidget {
 class _CreateCategoryModal extends StatefulWidget {
   final String userId;
   final CategoryService categoryService;
+  final CategoryModel? category;
 
-  const _CreateCategoryModal({required this.userId, required this.categoryService});
+  const _CreateCategoryModal({
+    required this.userId,
+    required this.categoryService,
+    this.category,
+  });
 
   @override
   State<_CreateCategoryModal> createState() => _CreateCategoryModalState();
@@ -970,8 +993,8 @@ class _CreateCategoryModal extends StatefulWidget {
 
 class _CreateCategoryModalState extends State<_CreateCategoryModal> {
   final _nameController = TextEditingController();
-  IconData _selectedIcon = Icons.fitness_center;
-  Color _selectedColor = AppColors.warning;
+  late IconData _selectedIcon;
+  late Color _selectedColor;
 
   final List<IconData> _icons = [
     Icons.fitness_center, Icons.work, Icons.spa, Icons.self_improvement,
@@ -985,7 +1008,22 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.category != null) {
+      _nameController.text = widget.category!.name;
+      _selectedIcon = widget.category!.icon;
+      _selectedColor = widget.category!.color;
+    } else {
+      _selectedIcon = Icons.fitness_center;
+      _selectedColor = AppColors.warning;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool isEditing = widget.category != null;
+
     return Container(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       decoration: const BoxDecoration(
@@ -1002,7 +1040,10 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("New Category", style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(
+                    isEditing ? "Edit Category" : "New Category",
+                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                   IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
                 ],
               ),
@@ -1069,12 +1110,21 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (_nameController.text.isNotEmpty) {
-                      await widget.categoryService.addCategory(
-                        widget.userId,
-                        _nameController.text,
-                        '${_selectedIcon.codePoint}',
-                        _selectedColor.value,
-                      );
+                      if (isEditing) {
+                        await widget.categoryService.updateCategory(
+                          widget.category!.id,
+                          _nameController.text,
+                          '${_selectedIcon.codePoint}',
+                          _selectedColor.value,
+                        );
+                      } else {
+                        await widget.categoryService.addCategory(
+                          widget.userId,
+                          _nameController.text,
+                          '${_selectedIcon.codePoint}',
+                          _selectedColor.value,
+                        );
+                      }
                       Navigator.pop(context);
                     }
                   },
@@ -1082,7 +1132,10 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
                     backgroundColor: _selectedColor,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: Text("Create Category", style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    isEditing ? "Update Category" : "Create Category",
+                    style: GoogleFonts.outfit(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
