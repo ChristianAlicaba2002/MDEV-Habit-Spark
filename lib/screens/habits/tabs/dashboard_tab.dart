@@ -19,7 +19,6 @@ class DashboardTab extends StatelessWidget {
   final HabitService habitService;
   final HealthService _healthService = HealthService();
   final StreakService _streakService = StreakService();
-  final TextEditingController _searchController = TextEditingController();
 
   DashboardTab({
     super.key,
@@ -117,14 +116,6 @@ class DashboardTab extends StatelessWidget {
                 ),
               ),
             ),
-
-          // Search Bar
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: _SearchBar(controller: _searchController),
-            ),
-          ),
 
           // Daily Tasks / Routines (Moved to top)
           SliverToBoxAdapter(
@@ -258,33 +249,6 @@ class _HeaderIcon extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatelessWidget {
-  final TextEditingController controller;
-  const _SearchBar({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        controller: controller,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-          prefixIcon: Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.4)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        ),
       ),
     );
   }
@@ -738,6 +702,17 @@ class _ActivityCardWithModify extends StatelessWidget {
     }
   }
 
+  String _getCategoryForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return 'Consistency';
+      case 'completed tasks':
+        return 'Productivity';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -768,6 +743,7 @@ class _ActivityCardWithModify extends StatelessWidget {
                       final data = snapshot.data as Map<String, dynamic>;
                       value = (data['currentStreak'] ?? 0).toString();
                       unit = 'days';
+                      category = _getCategoryForActivity(activityType);
                     } else if (activityType.toLowerCase() == 'completed tasks') {
                       final logs = snapshot.data as List<HealthLog>;
                       value = logs
@@ -775,22 +751,17 @@ class _ActivityCardWithModify extends StatelessWidget {
                           .length
                           .toString();
                       unit = 'tasks';
-                      // Get category from first log if available
-                      if (logs.isNotEmpty && logs.first.metadata != null) {
-                        category = logs.first.metadata!['category'] ?? '';
-                      }
+                      category = _getCategoryForActivity(activityType);
                     } else {
                       final data = snapshot.data as Map<String, dynamic>;
                       value = (data['total'] as double).toStringAsFixed(1);
                       unit = data['unit'] ?? '';
-                      // Get category from metadata if available
-                      if (data['metadata'] != null && data['metadata'] is Map) {
-                        category = data['metadata']['category'] ?? '';
-                      }
+                      // Get category from the data map
+                      category = data['category'] ?? '';
                     }
                   }
 
-                  // Capitalize the title
+                  // Capitalize the title (first letter uppercase, rest lowercase)
                   final capitalizedTitle = title.isEmpty 
                       ? title 
                       : title[0].toUpperCase() + title.substring(1).toLowerCase();

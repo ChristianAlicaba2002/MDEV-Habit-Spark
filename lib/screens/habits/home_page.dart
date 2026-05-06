@@ -32,8 +32,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final CategoryService _categoryService = CategoryService();
 
   int _selectedIndex = 0;
-  final _searchController = TextEditingController(); // Added
-  String _searchQuery = ''; // Added
 
   late AnimationController _heroAnimController;
   Stream<List<Habit>>? _habitStream;
@@ -41,11 +39,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text;
-      });
-    });
     _heroAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -60,7 +53,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _searchController.dispose(); // Added
     _heroAnimController.dispose();
     super.dispose();
   }
@@ -103,10 +95,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             }
 
             final habits = snapshot.data ?? [];
-            final filteredHabits = habits
-                .where((h) =>
-                    h.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-                .toList();
             final completedCount = habits.where((h) => h.isDone == true).length;
             final totalCount = habits.length;
 
@@ -118,7 +106,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   userId: userId,
                   userName: firstName,
                   userInitial: userInitial,
-                  habits: filteredHabits,
+                  habits: habits,
                   habitService: _habitService,
                 ),
                 CheckInTab(

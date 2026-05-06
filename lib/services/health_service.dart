@@ -118,6 +118,7 @@ class HealthService {
         .map((snapshot) {
       double total = 0;
       String unit = '';
+      String category = '';
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final timestamp = (data['timestamp'] as Timestamp).toDate();
@@ -125,9 +126,13 @@ class HealthService {
             timestamp.isBefore(end)) {
           total += (data['value'] ?? 0).toDouble();
           if (unit.isEmpty) unit = (data['unit'] ?? '').toString();
+          // Get category from metadata on first matching log
+          if (category.isEmpty && data['metadata'] != null && data['metadata'] is Map) {
+            category = data['metadata']['category'] ?? '';
+          }
         }
       }
-      return {'total': total, 'unit': unit};
+      return {'total': total, 'unit': unit, 'category': category};
     });
   }
 
