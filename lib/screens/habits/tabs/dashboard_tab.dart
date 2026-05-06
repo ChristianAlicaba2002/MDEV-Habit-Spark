@@ -288,7 +288,7 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _DailyActivityGrid extends StatelessWidget {
+class _DailyActivityGrid extends StatefulWidget {
   final HealthService healthService;
   final StreakService streakService;
   final String userId;
@@ -296,81 +296,173 @@ class _DailyActivityGrid extends StatelessWidget {
   const _DailyActivityGrid({required this.healthService, required this.streakService, required this.userId});
 
   @override
+  State<_DailyActivityGrid> createState() => _DailyActivityGridState();
+}
+
+class _DailyActivityGridState extends State<_DailyActivityGrid> {
+  // Track which activity is displayed in each position
+  late Map<int, String> displayedActivities;
+  
+  // Default activities for each position
+  final Map<int, String> defaultActivities = {
+    0: 'distance run',
+    1: 'completed tasks',
+    2: 'day streak',
+    3: 'calories burned',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    displayedActivities = Map.from(defaultActivities);
+  }
+
+  void _showActivitySelector(BuildContext context, int position) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E2E2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => StreamBuilder<List<Map<String, String>>>(
+        stream: widget.healthService.getAllActivityTypes(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final activities = snapshot.data!;
+          
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'Select Activity',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: activities.length,
+                  itemBuilder: (context, index) {
+                    final activity = activities[index];
+                    final activityType = activity['type'] ?? '';
+                    final isSelected = displayedActivities[position] == activityType;
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          displayedActivities[position] = activityType;
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.greenAccent.withOpacity(0.2)
+                              : Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.greenAccent
+                                : Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    activityType.toUpperCase(),
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Unit: ${activity['unit'] ?? 'N/A'}',
+                                    style: GoogleFonts.outfit(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(CupertinoIcons.checkmark_circle_fill, color: Colors.greenAccent, size: 24),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton(
+                    color: Colors.white.withOpacity(0.1),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70)),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final todayEnd = today.add(const Duration(days: 1));
 
     return Column(
       children: [
         Row(
           children: [
-            // Distance Run Card
+            // Position 0 - Top Left
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: StreamBuilder<Map<String, dynamic>>(
-                  stream: healthService.getActivityMonthlyStats('distance run'),
-                  builder: (context, snapshot) {
-                    String distanceValue = '0';
-                    String distanceUnit = 'km';
-                    String distanceTrend = '↑ 0%';
-                    Color trendColor = Colors.greenAccent;
-
-                    if (snapshot.hasData) {
-                      final data = snapshot.data!;
-                      distanceValue = (data['total'] as double).toStringAsFixed(1);
-                      distanceUnit = data['unit'] ?? 'km';
-                    }
-
-                    return _ActivityCardNew(
-                      icon: LucideIcons.zap,
-                      iconColor: Colors.tealAccent,
-                      iconBgColor: Colors.tealAccent.withOpacity(0.2),
-                      title: 'Distance Run',
-                      value: distanceValue,
-                      unit: distanceUnit,
-                      subtitle: 'vs last week',
-                      trend: distanceTrend,
-                      trendColor: trendColor,
-                      visual: const _SpeedometerVisual(),
-                    );
-                  },
+                child: _ActivityCardWrapper(
+                  position: 0,
+                  activityType: displayedActivities[0]!,
+                  healthService: widget.healthService,
+                  streakService: widget.streakService,
+                  userId: widget.userId,
+                  onLongPress: () => _showActivitySelector(context, 0),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            // Completed Tasks Card
+            // Position 1 - Top Right
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: StreamBuilder<List<HealthLog>>(
-                  stream: healthService.getDailyLogs(today),
-                  builder: (context, snapshot) {
-                    int completedCount = 0;
-                    String completedTrend = '↑ 0%';
-                    Color trendColor = Colors.greenAccent;
-
-                    if (snapshot.hasData) {
-                      // Count completed tasks/habits for today
-                      completedCount = snapshot.data!
-                          .where((log) => log.type.toLowerCase() == 'completed tasks')
-                          .length;
-                    }
-
-                    return _ActivityCardNew(
-                      icon: CupertinoIcons.checkmark_circle_fill,
-                      iconColor: Colors.greenAccent,
-                      iconBgColor: Colors.greenAccent.withOpacity(0.2),
-                      title: 'Completed Tasks',
-                      value: completedCount.toString(),
-                      unit: 'tasks',
-                      subtitle: 'vs last week',
-                      trend: completedTrend,
-                      trendColor: trendColor,
-                      visual: const _MiniBarChart(),
-                    );
-                  },
+                child: _ActivityCardWrapper(
+                  position: 1,
+                  activityType: displayedActivities[1]!,
+                  healthService: widget.healthService,
+                  streakService: widget.streakService,
+                  userId: widget.userId,
+                  onLongPress: () => _showActivitySelector(context, 1),
                 ),
               ),
             ),
@@ -379,70 +471,32 @@ class _DailyActivityGrid extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            // Day Streak Card
+            // Position 2 - Bottom Left
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: StreamBuilder<Map<String, dynamic>>(
-                  stream: streakService.getStreakStream(userId),
-                  builder: (context, snapshot) {
-                    int streakDays = 0;
-                    String streakTrend = '↓ 0%';
-                    Color trendColor = Colors.orangeAccent;
-
-                    if (snapshot.hasData) {
-                      final data = snapshot.data!;
-                      streakDays = data['currentStreak'] ?? 0;
-                    }
-
-                    return _ActivityCardNew(
-                      icon: CupertinoIcons.flame_fill,
-                      iconColor: Colors.orangeAccent,
-                      iconBgColor: Colors.orangeAccent.withOpacity(0.2),
-                      title: 'Day Streak',
-                      value: streakDays.toString(),
-                      unit: 'days',
-                      subtitle: 'vs last week',
-                      trend: streakTrend,
-                      trendColor: trendColor,
-                      visual: const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50),
-                    );
-                  },
+                child: _ActivityCardWrapper(
+                  position: 2,
+                  activityType: displayedActivities[2]!,
+                  healthService: widget.healthService,
+                  streakService: widget.streakService,
+                  userId: widget.userId,
+                  onLongPress: () => _showActivitySelector(context, 2),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            // Calories Burned Card
+            // Position 3 - Bottom Right
             Expanded(
               child: AspectRatio(
                 aspectRatio: 1,
-                child: StreamBuilder<Map<String, dynamic>>(
-                  stream: healthService.getActivityMonthlyStats('calories burned'),
-                  builder: (context, snapshot) {
-                    String caloriesValue = '0';
-                    String caloriesUnit = 'kcal';
-                    String caloriesTrend = '↑ 0%';
-                    Color trendColor = Colors.greenAccent;
-
-                    if (snapshot.hasData) {
-                      final data = snapshot.data!;
-                      caloriesValue = (data['total'] as double).toStringAsFixed(0);
-                      caloriesUnit = data['unit'] ?? 'kcal';
-                    }
-
-                    return _ActivityCardNew(
-                      icon: CupertinoIcons.flame,
-                      iconColor: Colors.tealAccent,
-                      iconBgColor: Colors.tealAccent.withOpacity(0.2),
-                      title: 'Calories Burned',
-                      value: caloriesValue,
-                      unit: caloriesUnit,
-                      subtitle: 'vs last week',
-                      trend: caloriesTrend,
-                      trendColor: trendColor,
-                      visual: const _WaveVisual(),
-                    );
-                  },
+                child: _ActivityCardWrapper(
+                  position: 3,
+                  activityType: displayedActivities[3]!,
+                  healthService: widget.healthService,
+                  streakService: widget.streakService,
+                  userId: widget.userId,
+                  onLongPress: () => _showActivitySelector(context, 3),
                 ),
               ),
             ),
@@ -523,9 +577,136 @@ class _ActivityCard extends StatelessWidget {
   }
 }
 
+// Wrapper widget that handles long-press and displays the appropriate activity
+class _ActivityCardWrapper extends StatelessWidget {
+  final int position;
+  final String activityType;
+  final HealthService healthService;
+  final StreakService streakService;
+  final String userId;
+  final VoidCallback onLongPress;
+
+  const _ActivityCardWrapper({
+    required this.position,
+    required this.activityType,
+    required this.healthService,
+    required this.streakService,
+    required this.userId,
+    required this.onLongPress,
+  });
+
+  IconData _getIconForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return LucideIcons.zap;
+      case 'completed tasks':
+        return CupertinoIcons.checkmark_circle_fill;
+      case 'day streak':
+        return CupertinoIcons.flame_fill;
+      case 'calories burned':
+        return CupertinoIcons.flame;
+      default:
+        return CupertinoIcons.chart_bar;
+    }
+  }
+
+  Color _getColorForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return Colors.tealAccent;
+      case 'completed tasks':
+        return Colors.greenAccent;
+      case 'day streak':
+        return Colors.orangeAccent;
+      case 'calories burned':
+        return Colors.tealAccent;
+      default:
+        return Colors.blueAccent;
+    }
+  }
+
+  Widget _getVisualForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'distance run':
+        return const _SpeedometerVisual();
+      case 'completed tasks':
+        return const _MiniBarChart();
+      case 'day streak':
+        return const Icon(CupertinoIcons.flame_fill, color: Colors.orange, size: 50);
+      case 'calories burned':
+        return const _WaveVisual();
+      default:
+        return const Icon(CupertinoIcons.chart_bar, color: Colors.white, size: 40);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final color = _getColorForActivity(activityType);
+
+    return GestureDetector(
+      onLongPress: onLongPress,
+      child: StreamBuilder<dynamic>(
+        stream: _getStreamForActivity(activityType),
+        builder: (context, snapshot) {
+          String value = '0';
+          String unit = '';
+          String title = activityType;
+
+          if (snapshot.hasData) {
+            if (activityType.toLowerCase() == 'day streak') {
+              final data = snapshot.data as Map<String, dynamic>;
+              value = (data['currentStreak'] ?? 0).toString();
+              unit = 'days';
+            } else if (activityType.toLowerCase() == 'completed tasks') {
+              final logs = snapshot.data as List<HealthLog>;
+              value = logs
+                  .where((log) => log.type.toLowerCase() == 'completed tasks')
+                  .length
+                  .toString();
+              unit = 'tasks';
+            } else {
+              final data = snapshot.data as Map<String, dynamic>;
+              value = (data['total'] as double).toStringAsFixed(1);
+              unit = data['unit'] ?? '';
+            }
+          }
+
+          return _ActivityCardNew(
+            icon: _getIconForActivity(activityType),
+            iconColor: color,
+            iconBgColor: color.withOpacity(0.2),
+            title: title,
+            value: value,
+            unit: unit,
+            subtitle: 'vs last week',
+            trend: '↑ 0%',
+            trendColor: Colors.greenAccent,
+            visual: _getVisualForActivity(activityType),
+          );
+        },
+      ),
+    );
+  }
+
+  Stream<dynamic> _getStreamForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return streakService.getStreakStream(userId);
+      case 'completed tasks':
+        return healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      default:
+        return healthService.getActivityMonthlyStats(type);
+    }
+  }
+}
+
 class _ActivityCardNew extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
+
   final Color iconBgColor;
   final String title;
   final String value;
