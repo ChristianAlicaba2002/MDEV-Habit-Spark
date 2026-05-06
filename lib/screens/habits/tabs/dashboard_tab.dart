@@ -1305,28 +1305,29 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
         children: [
           GestureDetector(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
                   // Icon with background
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: widget.iconBgColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(widget.icon, color: widget.iconColor, size: 28),
+                    child: Icon(widget.icon, color: widget.iconColor, size: 24),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   // Title and completion
                   Expanded(
                     child: Column(
@@ -1344,7 +1345,7 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text('${(progress * 100).toStringAsFixed(0)}% completed', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w500)),
+                        Text('${(progress * 100).toStringAsFixed(0)}% completed', style: GoogleFonts.outfit(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.w500)),
                       ],
                     ),
                   ),
@@ -1354,7 +1355,7 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text('$completedCount/$totalCount', style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                      Icon(_isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, color: Colors.white, size: 18),
+                      Icon(_isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down, color: Colors.white38, size: 16),
                     ],
                   ),
                 ],
