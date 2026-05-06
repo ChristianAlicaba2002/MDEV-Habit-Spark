@@ -17,6 +17,7 @@ import 'package:habit_spark/screens/habits/tabs/dashboard_tab.dart';
 import 'package:habit_spark/screens/habits/tabs/check_in_tab.dart';
 import 'package:habit_spark/screens/habits/tabs/stats_tab.dart';
 import 'package:habit_spark/screens/habits/tabs/profile_tab.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -88,7 +89,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               stream: _habitStream,
               builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const _DashboardSkeleton();
+              return Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF2C3E3E), Color(0xFF4A6666)],
+                  ),
+                ),
+                child: const SafeArea(child: DashboardSkeleton()),
+              );
             }
             if (snapshot.hasError) {
               return _ErrorView(onRetry: () => setState(() {}));
@@ -326,128 +336,4 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-class _DashboardSkeleton extends StatelessWidget {
-  const _DashboardSkeleton();
 
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.white.withAlpha(15),
-      highlightColor: Colors.white.withAlpha(30),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Skeleton (App Bar)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: const [
-                  _SkeletonBlock(width: 44, height: 44, shape: BoxShape.circle),
-                ],
-              ),
-            ),
-            
-            // Greeting & Date Skeleton
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  _SkeletonBlock(width: 250, height: 32),
-                  SizedBox(height: 12),
-                  _SkeletonBlock(width: 150, height: 16),
-                ],
-              ),
-            ),
-            
-            // Search Bar Skeleton
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: _SkeletonBlock(width: double.infinity, height: 60, borderRadius: 35),
-            ),
-            
-            // Today's Stats Header Skeleton
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  _SkeletonBlock(width: 120, height: 24),
-                  _SkeletonBlock(width: 60, height: 16),
-                ],
-              ),
-            ),
-            
-            // Health Stat Cards (Horizontal List) Skeleton
-            SizedBox(
-              height: 160,
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                scrollDirection: Axis.horizontal,
-                physics: const NeverScrollableScrollPhysics(),
-                children: const [
-                  _SkeletonBlock(width: 160, height: 160, borderRadius: 30),
-                  SizedBox(width: 16),
-                  _SkeletonBlock(width: 160, height: 160, borderRadius: 30),
-                  SizedBox(width: 16),
-                  _SkeletonBlock(width: 160, height: 160, borderRadius: 30),
-                ],
-              ),
-            ),
-            
-            // Today's Workout Header Skeleton
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 30, 24, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  _SkeletonBlock(width: 150, height: 24),
-                  _SkeletonBlock(width: 60, height: 16),
-                ],
-              ),
-            ),
-            
-            // Large Workout Card Skeleton
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: _SkeletonBlock(width: double.infinity, height: 240, borderRadius: 35),
-            ),
-            
-            const SizedBox(height: 140),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SkeletonBlock extends StatelessWidget {
-  final double width;
-  final double height;
-  final double borderRadius;
-  final BoxShape shape;
-
-  const _SkeletonBlock({
-    required this.width,
-    required this.height,
-    this.borderRadius = 8,
-    this.shape = BoxShape.rectangle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: shape,
-        borderRadius:
-            shape == BoxShape.circle ? null : BorderRadius.circular(borderRadius),
-      ),
-    );
-  }
-}

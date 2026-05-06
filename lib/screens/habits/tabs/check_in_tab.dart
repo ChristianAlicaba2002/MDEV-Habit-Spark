@@ -8,6 +8,7 @@ import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
 
 class CheckInTab extends StatefulWidget {
   final List<Habit> habits;
@@ -35,6 +36,13 @@ class _CheckInTabState extends State<CheckInTab> {
   String? _expandedRoutine = 'Morning';
   String? _selectedCategoryFilter;
   bool _expandedActivities = false;
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _isRefreshing = false);
+  }
 
   @override
   void initState() {
@@ -321,8 +329,14 @@ class _CheckInTabState extends State<CheckInTab> {
         ),
       ),
           child: SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
+            child: _isRefreshing
+              ? const CheckInSkeleton()
+              : RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: AppColors.warning,
+              backgroundColor: const Color(0xFF1E2E2E),
+              child: CustomScrollView(
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               slivers: [
                 // Header
                 SliverToBoxAdapter(
@@ -580,6 +594,7 @@ class _CheckInTabState extends State<CheckInTab> {
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
             ),
+          ),
           ),
         );
       },

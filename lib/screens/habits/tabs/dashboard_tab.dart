@@ -8,19 +8,18 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DashboardTab extends StatelessWidget {
+class DashboardTab extends StatefulWidget {
   final String userId;
   final String userName;
   final String userInitial;
   final List<Habit> habits;
   final HabitService habitService;
-  final HealthService _healthService = HealthService();
-  final StreakService _streakService = StreakService();
 
-  DashboardTab({
+  const DashboardTab({
     super.key,
     required this.userId,
     required this.userName,
@@ -28,6 +27,21 @@ class DashboardTab extends StatelessWidget {
     required this.habits,
     required this.habitService,
   });
+
+  @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
+  final HealthService _healthService = HealthService();
+  final StreakService _streakService = StreakService();
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _isRefreshing = false);
+  }
 
   void _confirmDelete(BuildContext context, Habit habit) {
     showDialog(
@@ -50,7 +64,7 @@ class DashboardTab extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              habitService.deleteHabit(habit.id);
+              widget.habitService.deleteHabit(habit.id);
               Navigator.pop(ctx);
             },
             child: Text('Delete', style: GoogleFonts.outfit(color: AppColors.secondaryLight, fontWeight: FontWeight.bold)),
@@ -62,6 +76,20 @@ class DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isRefreshing) {
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF2C3E3E), Color(0xFF4A6666)],
+          ),
+        ),
+        child: const SafeArea(child: DashboardSkeleton()),
+      );
+    }
+
+    final habits = widget.habits;
     // Group habits by routine
     final morningHabits = habits.where((h) => h.routine == 'Morning').toList();
     final afternoonHabits = habits.where((h) => h.routine == 'Afternoon').toList();
@@ -80,8 +108,12 @@ class DashboardTab extends StatelessWidget {
         ),
       ),
       child: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          color: AppColors.warning,
+          backgroundColor: const Color(0xFF1E2E2E),
+          child: CustomScrollView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             // Header
             SliverToBoxAdapter(
@@ -92,7 +124,7 @@ class DashboardTab extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        "$userName's Activity",
+                        "${widget.userName}'s Activity",
                         style: GoogleFonts.outfit(
                           color: Colors.white,
                           fontSize: 28,
@@ -104,7 +136,7 @@ class DashboardTab extends StatelessWidget {
                     const SizedBox(width: 12),
                     _HeaderIcon(
                       child: Text(
-                        userInitial,
+                        widget.userInitial,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -130,8 +162,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'Morning Routine',
                       habits: morningHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max_fill,
                       iconColor: const Color(0xFFD4A574),
@@ -142,8 +174,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'Afternoon Routine',
                       habits: afternoonHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max,
                       iconColor: const Color(0xFFFFD700),
@@ -155,8 +187,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'Evening Routine',
                       habits: eveningHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.moon_stars_fill,
                       iconColor: const Color(0xFF9B7EBD),
@@ -167,8 +199,8 @@ class DashboardTab extends StatelessWidget {
                     _RoutineCardWithIcon(
                       title: 'General Habits',
                       habits: otherHabits,
-                      userId: userId,
-                      habitService: habitService,
+                      userId: widget.userId,
+                      habitService: widget.habitService,
                       onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.arrow_2_circlepath,
                       iconColor: const Color(0xFF7FD8BE),
@@ -188,7 +220,7 @@ class DashboardTab extends StatelessWidget {
                 children: [
                   Text('Daily Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  _DailyActivityGrid(healthService: _healthService, streakService: _streakService, userId: userId),
+                  _DailyActivityGrid(healthService: _healthService, streakService: _streakService, userId: widget.userId),
                 ],
               ),
             ),
@@ -198,7 +230,7 @@ class DashboardTab extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
-              child: _WeeklyPerformance(healthService: _healthService, userId: userId),
+              child: _WeeklyPerformance(healthService: _healthService, userId: widget.userId),
             ),
           ),
           // Recent Activities
@@ -206,6 +238,7 @@ class DashboardTab extends StatelessWidget {
 
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
+      ),
       ),
       ),
     );
