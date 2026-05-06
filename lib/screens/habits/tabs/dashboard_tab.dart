@@ -76,19 +76,6 @@ class _DashboardTabState extends State<DashboardTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isRefreshing) {
-      return Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2C3E3E), Color(0xFF4A6666)],
-          ),
-        ),
-        child: const SafeArea(child: DashboardSkeleton()),
-      );
-    }
-
     final habits = widget.habits;
     // Group habits by routine
     final morningHabits = habits.where((h) => h.routine == 'Morning').toList();
@@ -113,10 +100,12 @@ class _DashboardTabState extends State<DashboardTab> {
           color: AppColors.warning,
           backgroundColor: const Color(0xFF1E2E2E),
           child: CustomScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          slivers: [
-            // Header
-            SliverToBoxAdapter(
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            slivers: _isRefreshing 
+              ? [const SliverDashboardSkeleton()]
+              : [
+              // Header
+              SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Row(

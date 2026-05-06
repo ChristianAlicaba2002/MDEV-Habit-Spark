@@ -87,19 +87,19 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
           ),
           child: SafeArea(
-            child: _isRefreshing
-              ? const ProfileSkeleton()
-              : Stack(
+            child: Stack(
             children: [
               RefreshIndicator(
                 onRefresh: _onRefresh,
                 color: AppColors.warning,
                 backgroundColor: const Color(0xFF1E2E2E),
                 child: CustomScrollView(
-                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                slivers: [
-                  // ── Custom Header
-                  SliverToBoxAdapter(
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  slivers: _isRefreshing
+                    ? [const SliverProfileSkeleton()]
+                    : [
+                    // ── Custom Header
+                    SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
                       child: Row(

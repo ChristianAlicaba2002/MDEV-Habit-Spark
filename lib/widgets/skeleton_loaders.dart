@@ -22,7 +22,7 @@ class SkeletonBlock extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withOpacity(0.15),
         shape: shape,
         borderRadius:
             shape == BoxShape.circle ? null : BorderRadius.circular(borderRadius),
@@ -31,17 +31,28 @@ class SkeletonBlock extends StatelessWidget {
   }
 }
 
-/// Skeleton for Dashboard Tab — matches routine cards + weekly performance layout
+/// Full-page Dashboard Skeleton (Box Widget)
 class DashboardSkeleton extends StatelessWidget {
   const DashboardSkeleton({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const CustomScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      slivers: [SliverDashboardSkeleton()],
+    );
+  }
+}
+
+/// Sliver-based Skeleton for Dashboard Tab
+class SliverDashboardSkeleton extends StatelessWidget {
+  const SliverDashboardSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.white.withAlpha(15),
-      highlightColor: Colors.white.withAlpha(30),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
+    return SliverToBoxAdapter(
+      child: Shimmer.fromColors(
+        baseColor: Colors.white.withOpacity(0.15),
+        highlightColor: Colors.white.withOpacity(0.3),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -96,17 +107,31 @@ class DashboardSkeleton extends StatelessWidget {
   }
 }
 
+
+
 /// Skeleton for Check-In Tab — matches routine cards + category squares + activity list
+/// Full-page Check-In Skeleton (Box Widget)
 class CheckInSkeleton extends StatelessWidget {
   const CheckInSkeleton({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const CustomScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      slivers: [SliverCheckInSkeleton()],
+    );
+  }
+}
+
+/// Sliver-based Skeleton for Check-In Tab
+class SliverCheckInSkeleton extends StatelessWidget {
+  const SliverCheckInSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.white.withAlpha(15),
-      highlightColor: Colors.white.withAlpha(30),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
+    return SliverToBoxAdapter(
+      child: Shimmer.fromColors(
+        baseColor: Colors.white.withOpacity(0.15),
+        highlightColor: Colors.white.withOpacity(0.3),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -148,8 +173,6 @@ class CheckInSkeleton extends StatelessWidget {
               const SkeletonBlock(width: double.infinity, height: 68, borderRadius: 16),
               const SizedBox(height: 10),
               const SkeletonBlock(width: double.infinity, height: 68, borderRadius: 16),
-              const SizedBox(height: 10),
-              const SkeletonBlock(width: double.infinity, height: 68, borderRadius: 16),
               const SizedBox(height: 100),
             ],
           ),
@@ -159,17 +182,31 @@ class CheckInSkeleton extends StatelessWidget {
   }
 }
 
+
+
 /// Skeleton for Stats Tab — matches time selector + trend card + stat cards
+/// Full-page Stats Skeleton (Box Widget)
 class StatsSkeleton extends StatelessWidget {
   const StatsSkeleton({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const CustomScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      slivers: [SliverStatsSkeleton()],
+    );
+  }
+}
+
+/// Sliver-based Skeleton for Stats Tab
+class SliverStatsSkeleton extends StatelessWidget {
+  const SliverStatsSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.white.withAlpha(15),
-      highlightColor: Colors.white.withAlpha(30),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
+    return SliverToBoxAdapter(
+      child: Shimmer.fromColors(
+        baseColor: Colors.white.withOpacity(0.15),
+        highlightColor: Colors.white.withOpacity(0.3),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -217,28 +254,42 @@ class StatsSkeleton extends StatelessWidget {
   }
 }
 
+
+
 /// Skeleton for Profile Tab — matches profile avatar + settings list
+/// Full-page Profile Skeleton (Box Widget)
 class ProfileSkeleton extends StatelessWidget {
   const ProfileSkeleton({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const CustomScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      slivers: [SliverProfileSkeleton()],
+    );
+  }
+}
+
+/// Sliver-based Skeleton for Profile Tab
+class SliverProfileSkeleton extends StatelessWidget {
+  const SliverProfileSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: Colors.white.withAlpha(15),
-      highlightColor: Colors.white.withAlpha(30),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
+    return SliverToBoxAdapter(
+      child: Shimmer.fromColors(
+        baseColor: Colors.white.withOpacity(0.15),
+        highlightColor: Colors.white.withOpacity(0.3),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             children: [
               const SizedBox(height: 40),
               // Profile avatar
-              const SkeletonBlock(width: 100, height: 100, shape: BoxShape.circle),
+              const Center(child: SkeletonBlock(width: 100, height: 100, shape: BoxShape.circle)),
               const SizedBox(height: 16),
-              const SkeletonBlock(width: 160, height: 24, borderRadius: 8),
+              const Center(child: SkeletonBlock(width: 160, height: 24, borderRadius: 8)),
               const SizedBox(height: 8),
-              const SkeletonBlock(width: 200, height: 14, borderRadius: 4),
+              const Center(child: SkeletonBlock(width: 200, height: 14, borderRadius: 4)),
               const SizedBox(height: 32),
               // Stats row
               SizedBox(

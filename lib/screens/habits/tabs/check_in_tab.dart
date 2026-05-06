@@ -329,17 +329,17 @@ class _CheckInTabState extends State<CheckInTab> {
         ),
       ),
           child: SafeArea(
-            child: _isRefreshing
-              ? const CheckInSkeleton()
-              : RefreshIndicator(
+            child: RefreshIndicator(
               onRefresh: _onRefresh,
               color: AppColors.warning,
               backgroundColor: const Color(0xFF1E2E2E),
               child: CustomScrollView(
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-              slivers: [
-                // Header
-                SliverToBoxAdapter(
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                slivers: _isRefreshing 
+                  ? [const SliverCheckInSkeleton()]
+                  : [
+                  // Header
+                  SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                     child: Row(

@@ -121,17 +121,17 @@ class _StatsTabState extends State<StatsTab> {
             child: Column(
               children: [
                 Expanded(
-                  child: _isRefreshing
-                    ? const StatsSkeleton()
-                    : RefreshIndicator(
+                  child: RefreshIndicator(
                     onRefresh: _onRefresh,
                     color: AppColors.warning,
                     backgroundColor: const Color(0xFF1E2E2E),
                     child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                    slivers: [
-                      // Header
-                      SliverToBoxAdapter(
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      slivers: _isRefreshing 
+                        ? [const SliverStatsSkeleton()]
+                        : [
+                        // Header
+                        SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                           child: StatsHeader(
