@@ -8,6 +8,7 @@ import 'package:habit_spark/services/habit_service.dart';
 import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
 
 class CheckInTab extends StatefulWidget {
   final List<Habit> habits;
@@ -35,6 +36,13 @@ class _CheckInTabState extends State<CheckInTab> {
   String? _expandedRoutine = 'Morning';
   String? _selectedCategoryFilter;
   bool _expandedActivities = false;
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _isRefreshing = false);
+  }
 
   @override
   void initState() {
@@ -112,14 +120,6 @@ class _CheckInTabState extends State<CheckInTab> {
               Navigator.pop(context);
               try {
                 await widget.categoryService.deleteCategory(category.id);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Category deleted successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +148,150 @@ class _CheckInTabState extends State<CheckInTab> {
         habits: allHabits.where((h) => h.category == category.name).toList(),
         habitService: widget.habitService,
         userId: widget.userId,
+      ),
+    );
+  }
+
+  void _showRenameActivityDialog(String activityType, HealthService healthService) {
+    final controller = TextEditingController(text: activityType);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E2E2E),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Rename Activity',
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'This will update the name across all your logs.',
+                style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 16),
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  hintText: 'Activity name',
+                  hintStyle: GoogleFonts.outfit(color: Colors.white24),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white.withOpacity(0.15)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 15)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final newName = controller.text.trim();
+                          if (newName.isNotEmpty && newName.toLowerCase() != activityType.toLowerCase()) {
+                            Navigator.pop(context);
+                            try {
+                              await healthService.renameActivityType(activityType, newName);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Activity renamed to "$newName"'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                        child: Text('Save', style: GoogleFonts.outfit(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteActivityDialog(String activityType, HealthService healthService) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Delete Activity', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text(
+          'Are you sure you want to delete "$activityType"? All logged data for this activity will be permanently removed.',
+          style: GoogleFonts.outfit(),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.blue)),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await healthService.deleteActivityType(activityType);
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            },
+            child: Text('Delete', style: GoogleFonts.outfit(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }
@@ -185,11 +329,17 @@ class _CheckInTabState extends State<CheckInTab> {
         ),
       ),
           child: SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Header
-                SliverToBoxAdapter(
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: AppColors.warning,
+              backgroundColor: const Color(0xFF1E2E2E),
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                slivers: _isRefreshing 
+                  ? [const SliverCheckInSkeleton()]
+                  : [
+                  // Header
+                  SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                     child: Row(
@@ -393,6 +543,8 @@ class _CheckInTabState extends State<CheckInTab> {
                                       unit: unit,
                                       healthService: healthService,
                                       userId: widget.userId,
+                                      onEdit: () => _showRenameActivityDialog(activityType, healthService),
+                                      onDelete: () => _showDeleteActivityDialog(activityType, healthService),
                                     ),
                                   );
                                 },
@@ -442,6 +594,7 @@ class _CheckInTabState extends State<CheckInTab> {
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
             ),
+          ),
           ),
         );
       },
@@ -2160,12 +2313,16 @@ class _CompactActivityCard extends StatelessWidget {
   final String unit;
   final HealthService healthService;
   final String userId;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const _CompactActivityCard({
     required this.title,
     required this.unit,
     required this.healthService,
     required this.userId,
+    this.onEdit,
+    this.onDelete,
   });
 
   Color _getActivityColor(String type) {
@@ -2272,6 +2429,32 @@ class _CompactActivityCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // 3-dot menu
+              if (onEdit != null || onDelete != null)
+                GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => _ActivityActionSheet(
+                        activityName: title,
+                        color: color,
+                        icon: icon,
+                        onEdit: onEdit,
+                        onDelete: onDelete,
+                      ),
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      CupertinoIcons.ellipsis_vertical,
+                      color: Colors.white.withOpacity(0.4),
+                      size: 18,
+                    ),
+                  ),
+                ),
             ],
           ),
         );
@@ -2279,6 +2462,107 @@ class _CompactActivityCard extends StatelessWidget {
     );
   }
 }
+
+/// Bottom sheet for activity edit/delete actions
+class _ActivityActionSheet extends StatelessWidget {
+  final String activityName;
+  final Color color;
+  final IconData icon;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  const _ActivityActionSheet({
+    required this.activityName,
+    required this.color,
+    required this.icon,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2E2E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  activityName,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(color: Colors.white.withOpacity(0.05), height: 1),
+          // Edit option
+          if (onEdit != null)
+            ListTile(
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(CupertinoIcons.pencil, color: Colors.blueAccent, size: 18),
+              ),
+              title: Text('Rename Activity', style: GoogleFonts.outfit(color: Colors.white, fontSize: 15)),
+              subtitle: Text('Change the activity name', style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                onEdit!();
+              },
+            ),
+          // Delete option
+          if (onDelete != null)
+            ListTile(
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(CupertinoIcons.trash, color: Colors.redAccent, size: 18),
+              ),
+              title: Text('Delete Activity', style: GoogleFonts.outfit(color: Colors.redAccent, fontSize: 15)),
+              subtitle: Text('Remove all logs for this activity', style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                onDelete!();
+              },
+            ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
 
 class _ActivityDataCard extends StatelessWidget {
   final String title;

@@ -9,8 +9,10 @@ import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
 import 'package:habit_spark/screens/misc/user_reminders_page.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
+import 'package:habit_spark/widgets/skeleton_loaders.dart';
+import 'package:habit_spark/constants/app_colors.dart';
 
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends StatefulWidget {
   final String userId;
   final AuthService authService;
   final StreakService streakService;
@@ -25,6 +27,19 @@ class ProfileTab extends StatelessWidget {
     required this.habits,
     required this.onBackTap,
   });
+
+  @override
+  State<ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<ProfileTab> {
+  bool _isRefreshing = false;
+
+  Future<void> _onRefresh() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) setState(() => _isRefreshing = false);
+  }
 
   void _showLogoutConfirmation(BuildContext context) {
     showCupertinoDialog(
@@ -41,7 +56,7 @@ class ProfileTab extends StatelessWidget {
             isDestructiveAction: true,
             onPressed: () async {
               Navigator.pop(context);
-              await authService.signOut();
+              await widget.authService.signOut();
             },
             child: const Text('Logout'),
           ),
@@ -53,10 +68,10 @@ class ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<UserModel?>(
-      stream: authService.getUserDataStream(userId),
+      stream: widget.authService.getUserDataStream(widget.userId),
       builder: (context, snapshot) {
         final userData = snapshot.data;
-        final user = authService.currentUser;
+        final user = widget.authService.currentUser;
         final displayName = '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim();
         final name = displayName.isEmpty ? user?.email?.split('@')[0] ?? 'User' : displayName;
 
@@ -71,13 +86,20 @@ class ProfileTab extends StatelessWidget {
               ],
             ),
           ),
-          child: Stack(
+          child: SafeArea(
+            child: Stack(
             children: [
-              CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // ── Custom Header
-                  SliverToBoxAdapter(
+              RefreshIndicator(
+                onRefresh: _onRefresh,
+                color: AppColors.warning,
+                backgroundColor: const Color(0xFF1E2E2E),
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  slivers: _isRefreshing
+                    ? [const SliverProfileSkeleton()]
+                    : [
+                    // ── Custom Header
+                    SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
                       child: Row(
@@ -85,7 +107,7 @@ class ProfileTab extends StatelessWidget {
                         children: [
                           RoundIconButton(
                             icon: CupertinoIcons.arrow_left,
-                            onTap: onBackTap,
+                            onTap: widget.onBackTap,
                             outlined: true,
                             isSquare: true,
                           ),
@@ -212,8 +234,8 @@ class ProfileTab extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => PersonalInformationPage(
-                                userId: userId,
-                                authService: authService,
+                                userId: widget.userId,
+                                authService: widget.authService,
                                 initialData: userData,
                               ),
                             ),
@@ -228,7 +250,7 @@ class ProfileTab extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (_) => UserRemindersPage(
-                                  userId: userId,
+                                  userId: widget.userId,
                                 ),
                               ),
                             );
@@ -276,7 +298,9 @@ class ProfileTab extends StatelessWidget {
                   const SliverToBoxAdapter(child: SizedBox(height: 140)),
                 ],
               ),
+              ),
             ],
+          ),
           ),
         );
       },
