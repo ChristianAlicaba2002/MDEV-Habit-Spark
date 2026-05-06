@@ -19,7 +19,6 @@ class DashboardTab extends StatelessWidget {
   final HabitService habitService;
   final HealthService _healthService = HealthService();
   final StreakService _streakService = StreakService();
-  final TextEditingController _searchController = TextEditingController();
 
   DashboardTab({
     super.key,
@@ -117,14 +116,6 @@ class DashboardTab extends StatelessWidget {
                 ),
               ),
             ),
-
-          // Search Bar
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: _SearchBar(controller: _searchController),
-            ),
-          ),
 
           // Daily Tasks / Routines (Moved to top)
           SliverToBoxAdapter(
@@ -258,33 +249,6 @@ class _HeaderIcon extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _SearchBar extends StatelessWidget {
-  final TextEditingController controller;
-  const _SearchBar({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        controller: controller,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
-          prefixIcon: Icon(CupertinoIcons.search, color: Colors.white.withOpacity(0.4)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        ),
       ),
     );
   }
