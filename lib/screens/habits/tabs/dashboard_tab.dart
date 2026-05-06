@@ -11,6 +11,7 @@ import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class DashboardTab extends StatefulWidget {
   final String userId;
@@ -222,8 +223,14 @@ class _DashboardTabState extends State<DashboardTab> {
               child: _WeeklyPerformance(healthService: _healthService, userId: widget.userId),
             ),
           ),
-          // Recent Activities
-          // Removed - using Weekly Performance chart instead
+
+          // Recent Activity Section
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+              child: _RecentActivitySection(healthService: _healthService),
+            ),
+          ),
 
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
@@ -1644,4 +1651,179 @@ class _WavePainter extends CustomPainter {
   }
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _RecentActivitySection extends StatelessWidget {
+  final HealthService healthService;
+  const _RecentActivitySection({required this.healthService});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Activity',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              'View All',
+              style: GoogleFonts.outfit(
+                color: AppColors.warning,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        StreamBuilder<List<HealthLog>>(
+          stream: healthService.getRecentLogsStream(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator(color: AppColors.warning));
+            }
+            final logs = snapshot.data ?? [];
+            if (logs.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(CupertinoIcons.square_list, color: Colors.white24, size: 40),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No recent activities found',
+                      style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Column(
+              children: logs.map((log) => _ActivityLogItem(log: log)).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _ActivityLogItem extends StatelessWidget {
+  final HealthLog log;
+  const _ActivityLogItem({required this.log});
+
+  IconData _getIcon() {
+    final type = log.type.toLowerCase();
+    if (type.contains('steps')) return LucideIcons.footprints;
+    if (type.contains('calor')) return LucideIcons.flame;
+    if (type.contains('dist')) return LucideIcons.map_pin;
+    if (type.contains('workout')) return LucideIcons.dumbbell;
+    if (type.contains('sleep')) return LucideIcons.moon;
+    if (type.contains('drink') || type.contains('water')) return LucideIcons.droplets;
+    return LucideIcons.activity;
+  }
+
+  Color _getColor() {
+    final type = log.type.toLowerCase();
+    if (type.contains('steps')) return Colors.orangeAccent;
+    if (type.contains('calor')) return Colors.redAccent;
+    if (type.contains('dist')) return Colors.blueAccent;
+    if (type.contains('workout')) return Colors.greenAccent;
+    if (type.contains('sleep')) return Colors.purpleAccent;
+    if (type.contains('drink') || type.contains('water')) return Colors.cyanAccent;
+    return AppColors.warning;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _getColor();
+    final timeStr = DateFormat('h:mm a').format(log.timestamp);
+    final dateStr = DateFormat('MMM d').format(log.timestamp);
+    final isToday = DateTime.now().day == log.timestamp.day && 
+                   DateTime.now().month == log.timestamp.month;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(_getIcon(), color: color, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  log.type.toUpperCase(),
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${log.value.toStringAsFixed(1)} ${log.unit}',
+                  style: GoogleFonts.outfit(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                isToday ? 'Today' : dateStr,
+                style: GoogleFonts.outfit(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                timeStr,
+                style: GoogleFonts.outfit(
+                  color: Colors.white38,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

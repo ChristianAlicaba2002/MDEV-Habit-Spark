@@ -292,4 +292,15 @@ class HealthService {
         .snapshots()
         .map((snapshot) => snapshot.exists);
   }
+
+  // READ: Get recent activity logs (Latest 5)
+  Stream<List<HealthLog>> getRecentLogsStream() {
+    return _db
+        .collection('health_logs')
+        .where('userId', isEqualTo: _userId)
+        .orderBy('timestamp', descending: true)
+        .limit(5)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => HealthLog.fromFirestore(doc)).toList());
+  }
 }
