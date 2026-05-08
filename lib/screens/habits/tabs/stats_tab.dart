@@ -6,12 +6,14 @@ import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/widgets/stats/stats_header.dart';
-import 'package:habit_spark/widgets/stats/trends_card.dart';
+import 'package:habit_spark/widgets/stats/velocity_graph_card.dart';
 import 'package:habit_spark/widgets/stats/focus_distribution_card.dart';
 import 'package:habit_spark/widgets/stats/consistency_card.dart';
 import 'package:habit_spark/widgets/stats/streak_card.dart';
 import 'package:habit_spark/widgets/stats/routine_mastery_card.dart';
 import 'package:habit_spark/widgets/stats/contribution_heatmap_card.dart';
+import 'package:habit_spark/widgets/stats/today_focus_card.dart';
+import 'package:habit_spark/widgets/stats/radar_chart_card.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 
@@ -37,7 +39,6 @@ class StatsTab extends StatefulWidget {
 
 class _StatsTabState extends State<StatsTab> {
   String _selectedTimeFrame = 'Week';
-  String _selectedTrendsCategory = 'Fitness';
   final CategoryService _categoryService = CategoryService();
   bool _isRefreshing = false;
 
@@ -47,59 +48,11 @@ class _StatsTabState extends State<StatsTab> {
     if (mounted) setState(() => _isRefreshing = false);
   }
 
-  void _showCategoryPicker(List<CategoryModel> categories) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF2C3E3E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Select Category',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  final cat = categories[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: cat.color.withOpacity(0.1),
-                      child: Icon(cat.icon, color: cat.color, size: 20),
-                    ),
-                    title: Text(
-                      cat.name,
-                      style: GoogleFonts.outfit(color: Colors.white),
-                    ),
-                    onTap: () {
-                      setState(() => _selectedTrendsCategory = cat.name);
-                      Navigator.pop(context);
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    const double cardHeight = 250.0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final sideCardWidth = (screenWidth - 56) / 2; // 20 padding each side + 16 spacing
+    final sideCardHeight = 220.0;
 
     return StreamBuilder<List<CategoryModel>>(
       stream: _categoryService.getCategoriesStream(widget.userId),
@@ -115,170 +68,133 @@ class _StatsTabState extends State<StatsTab> {
             ),
           ),
           child: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _onRefresh,
-                    color: AppColors.warning,
-                    backgroundColor: const Color(0xFF1E2E2E),
-                    child: CustomScrollView(
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                      slivers: _isRefreshing 
-                        ? [const SliverStatsSkeleton()]
-                        : [
-                        // Header
-                        SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                          child: StatsHeader(
-                            title: "My Stats",
-                            userInitial: widget.userInitial,
-                          ),
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: Colors.cyanAccent,
+              backgroundColor: const Color(0xFF1E2E2E),
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                slivers: [
+                  // 1. Top Header (Date & Toggle)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: StatsHeader(
+                        userName: widget.userName,
+                        userInitial: widget.userInitial,
+                      ),
+                    ),
+                  ),
+
+                  // Today's Focus (Summary)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: TodayFocusCard(
+                        habits: widget.habits,
+                        userId: widget.userId,
+                      ),
+                    ),
+                  ),
+
+                  if (_isRefreshing)
+                    const SliverStatsSkeleton()
+                  else ...[
+                    // 2. Card 1 (Full Width): Contribution Heatmap
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        child: ContributionHeatmapCard(
+                          userId: widget.userId,
+                          habits: widget.habits,
                         ),
                       ),
+                    ),
 
-                      // Time Selector
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                          child: _TimeFrameSelector(
-                            selected: _selectedTimeFrame,
-                            onChanged: (val) => setState(() => _selectedTimeFrame = val),
-                          ),
-                        ),
-                      ),
-
-                      // Trends Card
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                          child: GestureDetector(
-                            onLongPress: () => _showCategoryPicker(categories),
-                            child: TrendsCard(
-                              category: _selectedTrendsCategory,
-                              habits: widget.habits,
-                              categories: categories,
+                    // 3. Card 2 & 3 (Side-by-Side): Consistency & Highest Habit Streak
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              width: sideCardWidth,
+                              height: sideCardHeight,
+                              child: ConsistencyCard(
+                                habits: widget.habits,
+                                userId: widget.userId,
+                                height: sideCardHeight,
+                              ),
                             ),
-                          ),
+                            SizedBox(
+                              width: sideCardWidth,
+                              height: sideCardHeight,
+                              child: StreakCard(
+                                userId: widget.userId,
+                                habits: widget.habits,
+                                height: sideCardHeight,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
 
-                      // Timer & Consistency Row
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: FocusDistributionCard(
-                                  habits: widget.habits,
-                                  categories: categories,
-                                  height: cardHeight,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: ConsistencyCard(
-                                  habits: widget.habits,
-                                  height: cardHeight,
-                                ),
-                              ),
-                            ],
-                          ),
+                    // 4. Card 4 (Full Width): Focus Distribution (Donut Chart)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        child: FocusDistributionCard(
+                          habits: widget.habits,
+                          categories: categories,
+                          height: 300,
                         ),
                       ),
+                    ),
 
-                      // Streak & Records Row
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: StreakCard(
-                                  streakService: widget.streakService,
-                                  userId: widget.userId,
-                                  height: cardHeight,
-                                ),
+                    // 5. Card 5 & 6 (Side-by-Side): Routine Mastery & Velocity
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            SizedBox(
+                              width: sideCardWidth,
+                              height: sideCardHeight,
+                              child: RoutineMasteryCard(
+                                habits: widget.habits,
+                                height: sideCardHeight,
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: RoutineMasteryCard(
-                                  habits: widget.habits,
-                                  height: cardHeight,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(
+                              width: sideCardWidth,
+                              height: sideCardHeight,
+                              child: VelocityGraphCard(userId: widget.userId),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
 
-                      // Contribution Heatmap
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-                          child: ContributionHeatmapCard(
-                            userId: widget.userId,
-                            habits: widget.habits,
-                          ),
+                    // 6. Card 7 (Full Width): Daily Routine Balance (Radar Chart)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+                        child: RadarChartCard(
+                          habits: widget.habits,
+                          categories: categories,
                         ),
                       ),
-                    ],
-                  ),
-                  ),
-                ),
-              ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         );
       },
-    );
-  }
-}
-
-class _TimeFrameSelector extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onChanged;
-
-  const _TimeFrameSelector({required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: ['Week', 'Month', 'Year'].map((time) {
-          bool isSelected = selected == time;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(time),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Center(
-                  child: Text(
-                    time,
-                    style: GoogleFonts.outfit(
-                      color: isSelected ? Colors.white : Colors.white60,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
     );
   }
 }

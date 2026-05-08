@@ -1,38 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class StatsHeader extends StatelessWidget {
-  final String title;
+  final String userName;
   final String userInitial;
 
   const StatsHeader({
     super.key,
-    required this.title,
+    required this.userName,
     required this.userInitial,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Text(
-            title,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Hey, $userName",
+                    style: GoogleFonts.outfit(
+                      color: Colors.white60,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    DateFormat('EEEE, MMM d').format(DateTime.now()),
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
-        const _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
-        const SizedBox(width: 12),
-        _HeaderIcon(
-          child: Text(
-            userInitial,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+            const _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+            const SizedBox(width: 12),
+            _HeaderIcon(
+              child: Text(
+                userInitial,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -48,7 +66,7 @@ class _HeaderIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 42, // Slightly larger for better touch target
+      width: 42,
       height: 42,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.08),
