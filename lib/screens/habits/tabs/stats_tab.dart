@@ -51,8 +51,8 @@ class _StatsTabState extends State<StatsTab> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final sideCardWidth = (screenWidth - 56) / 2; // 20 padding each side + 16 spacing
-    final sideCardHeight = 220.0;
+    final sideCardWidth = (screenWidth - 40) / 2; // 12 padding each side + 16 spacing
+    final sideCardHeight = 150.0;
 
     return StreamBuilder<List<CategoryModel>>(
       stream: _categoryService.getCategoriesStream(widget.userId),
@@ -86,13 +86,14 @@ class _StatsTabState extends State<StatsTab> {
                     ),
                   ),
 
-                  // Today's Focus (Summary)
+                  // 1. Summary Card (Today's Focus + Global Streak)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: TodayFocusCard(
                         habits: widget.habits,
                         userId: widget.userId,
+                        streakService: widget.streakService,
                       ),
                     ),
                   ),
@@ -100,10 +101,10 @@ class _StatsTabState extends State<StatsTab> {
                   if (_isRefreshing)
                     const SliverStatsSkeleton()
                   else ...[
-                    // 2. Card 1 (Full Width): Contribution Heatmap
+                    // 2. Card 1 (Full Width): Contribution Activity
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: ContributionHeatmapCard(
                           userId: widget.userId,
                           habits: widget.habits,
@@ -114,7 +115,7 @@ class _StatsTabState extends State<StatsTab> {
                     // 3. Card 2 & 3 (Side-by-Side): Consistency & Highest Habit Streak
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -141,47 +142,47 @@ class _StatsTabState extends State<StatsTab> {
                       ),
                     ),
 
-                    // 4. Card 4 (Full Width): Focus Distribution (Donut Chart)
+                    // 4. Card 4 (Full Width): Focus Distribution
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: FocusDistributionCard(
                           habits: widget.habits,
                           categories: categories,
-                          height: 300,
+                          height: 280,
                         ),
                       ),
                     ),
 
-                    // 5. Card 5 & 6 (Side-by-Side): Routine Mastery & Velocity
+                    // 5. Card 5 & 6 (Side-by-Side): Weekly Velocity & Routine Mastery
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             SizedBox(
                               width: sideCardWidth,
-                              height: sideCardHeight,
-                              child: RoutineMasteryCard(
-                                habits: widget.habits,
-                                height: sideCardHeight,
-                              ),
+                              height: sideCardHeight + 10,
+                              child: VelocityGraphCard(userId: widget.userId),
                             ),
                             SizedBox(
                               width: sideCardWidth,
-                              height: sideCardHeight,
-                              child: VelocityGraphCard(userId: widget.userId),
+                              height: sideCardHeight + 10,
+                              child: RoutineMasteryCard(
+                                habits: widget.habits,
+                                height: sideCardHeight + 10,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
 
-                    // 6. Card 7 (Full Width): Daily Routine Balance (Radar Chart)
+                    // 6. Card 7 (Full Width): Daily Routine Balance
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 120),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                         child: RadarChartCard(
                           habits: widget.habits,
                           categories: categories,

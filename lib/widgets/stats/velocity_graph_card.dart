@@ -14,10 +14,10 @@ class VelocityGraphCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -26,42 +26,41 @@ class VelocityGraphCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Weekly Velocity",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+              Expanded(
+                child: Text(
+                  "Weekly Velocity",
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  Text(
-                    "Momentum Builder",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white38,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.cyanAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  "Last 7 Days",
-                  style: GoogleFonts.outfit(color: Colors.cyanAccent, fontSize: 10),
+                  "+28%",
+                  style: GoogleFonts.outfit(
+                    color: Colors.cyanAccent,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 2),
+          Text(
+            "Momentum vs last week",
+            style: GoogleFonts.outfit(color: Colors.white24, fontSize: 9),
+          ),
+          const Spacer(),
           SizedBox(
-            height: 120, // Slightly more compact
+            height: 60, // Shrunk from 100 to fit rectangle
             child: StreamBuilder<List<HabitLog>>(
               stream: _logService.getUserLogsStream(userId),
               builder: (context, snapshot) {
@@ -90,15 +89,12 @@ class VelocityGraphCard extends StatelessWidget {
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
                             final date = now.subtract(Duration(days: 6 - value.toInt()));
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                DateFormat('E').format(date).substring(0, 1),
-                                style: const TextStyle(color: Colors.white24, fontSize: 10),
-                              ),
+                            return Text(
+                              DateFormat('E').format(date).substring(0, 1),
+                              style: const TextStyle(color: Colors.white24, fontSize: 8),
                             );
                           },
-                          reservedSize: 22,
+                          reservedSize: 14,
                         ),
                       ),
                     ),
@@ -108,18 +104,13 @@ class VelocityGraphCard extends StatelessWidget {
                         spots: spots,
                         isCurved: true,
                         color: Colors.cyanAccent,
-                        barWidth: 3,
+                        barWidth: 2,
                         isStrokeCapRound: true,
-                        dotData: const FlDotData(show: true, 
-                          getDotPainter: _getDotPainter,
-                        ),
+                        dotData: const FlDotData(show: false), // Hide dots to save space
                         belowBarData: BarAreaData(
                           show: true,
                           gradient: LinearGradient(
-                            colors: [
-                              Colors.cyanAccent.withOpacity(0.2),
-                              Colors.cyanAccent.withOpacity(0.0),
-                            ],
+                            colors: [Colors.cyanAccent.withOpacity(0.15), Colors.cyanAccent.withOpacity(0)],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
@@ -133,15 +124,6 @@ class VelocityGraphCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  static FlDotPainter _getDotPainter(FlSpot spot, double xPercentage, LineChartBarData bar, int index) {
-    return FlDotCirclePainter(
-      radius: 3,
-      color: Colors.cyanAccent,
-      strokeWidth: 1,
-      strokeColor: Colors.black26,
     );
   }
 }

@@ -1,110 +1,126 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:habit_spark/models/habit.dart';
-import 'package:habit_spark/models/habit_log.dart';
-import 'package:habit_spark/services/habit_log_service.dart';
+import 'package:habit_spark/services/streak_service.dart';
 
 class TodayFocusCard extends StatelessWidget {
   final List<Habit> habits;
   final String userId;
-  final HabitLogService _logService = HabitLogService();
+  final StreakService streakService;
 
-  TodayFocusCard({
+  const TodayFocusCard({
     super.key,
     required this.habits,
     required this.userId,
+    required this.streakService,
   });
 
   @override
   Widget build(BuildContext context) {
-    final remainingTasks = habits.where((h) => !h.isDone).length;
     final completedToday = habits.where((h) => h.isDone).length;
+    final totalHabits = habits.length;
+    final remainingTasks = totalHabits - completedToday;
+    final progress = totalHabits > 0 ? completedToday / totalHabits : 0.0;
 
-    return StreamBuilder<List<HabitLog>>(
-      stream: _logService.getUserLogsStream(userId),
-      builder: (context, snapshot) {
-        final logs = snapshot.data ?? [];
-        String insights = "Focusing on your goals...";
-
-        if (remainingTasks > 0) {
-          insights = "You are $remainingTasks ${remainingTasks == 1 ? 'task' : 'tasks'} away from your daily goal!";
-        } else if (completedToday > 0) {
-          // Calculate most productive time if all done
-          if (logs.isNotEmpty) {
-            final Map<int, int> hourCounts = {};
-            for (var log in logs) {
-              final hour = log.completedAt.hour;
-              hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
-            }
-            
-            var bestHour = -1;
-            var maxCount = 0;
-            hourCounts.forEach((hour, count) {
-              if (count > maxCount) {
-                maxCount = count;
-                bestHour = hour;
-              }
-            });
-
-            if (bestHour != -1) {
-              final period = bestHour >= 12 ? 'PM' : 'AM';
-              final displayHour = bestHour == 0 ? 12 : (bestHour > 12 ? bestHour - 12 : bestHour);
-              insights = "Most productive time: $displayHour:00 $period";
-            }
-          } else {
-            insights = "Amazing! You've crushed all your tasks today!";
-          }
-        }
-
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.orangeAccent.withOpacity(0.15),
-                Colors.orange.withOpacity(0.05),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), // Minimal vertical padding
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          // Left: Icon (Smaller)
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.orangeAccent.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.orangeAccent.withOpacity(0.2)),
+            child: const Icon(Icons.lightbulb_rounded, color: Colors.orangeAccent, size: 18),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.orangeAccent.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.lightbulb_rounded,
-                  color: Colors.orangeAccent,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  insights,
+          const SizedBox(width: 10),
+          
+          // Middle: Text and Progress (Force single line)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  remainingTasks > 0 
+                    ? "You are $remainingTasks task away from your daily goal!"
+                    : "Daily goal achieved!",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 12, // Slightly smaller to fit in line
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
                   ),
                 ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.white24,
-              ),
-            ],
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      "$completedToday / $totalHabits habits completed",
+                      style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
+                    ),
+                    const Spacer(),
+                    Text(
+                      "${(progress * 100).toInt()}%",
+                      style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.white.withOpacity(0.05),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+                    minHeight: 3,
+                  ),
+                ),
+              ],
+            ),
           ),
-        );
-      },
+          
+          // Divider
+          Container(
+            height: 24,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            color: Colors.white.withOpacity(0.05),
+          ),
+
+          // Right: Streak (Horizontal layout to save height)
+          StreamBuilder<Map<String, dynamic>>(
+            stream: streakService.getStreakStream(userId),
+            builder: (context, snapshot) {
+              final streak = snapshot.data?['currentStreak'] ?? 0;
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 18),
+                  const SizedBox(width: 4),
+                  Text(
+                    "$streak",
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

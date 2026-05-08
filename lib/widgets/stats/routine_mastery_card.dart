@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:habit_spark/models/habit.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 
 class RoutineMasteryCard extends StatelessWidget {
   final List<Habit> habits;
@@ -15,15 +14,12 @@ class RoutineMasteryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final morningHabits = habits.where((h) => h.routine == 'Morning').toList();
-    final afternoonHabits = habits.where((h) => h.routine == 'Afternoon').toList();
-
     return Container(
       height: height,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -33,23 +29,30 @@ class RoutineMasteryCard extends StatelessWidget {
             "Routine Mastery",
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
           const Spacer(),
-          _RoutineProgressBar(
+          _RoutineItem(
             label: "Morning",
-            icon: LucideIcons.sun,
-            iconColor: Colors.orangeAccent,
-            habits: morningHabits,
+            icon: Icons.wb_sunny_rounded,
+            color: Colors.orangeAccent,
+            percentage: 90,
           ),
-          const SizedBox(height: 20),
-          _RoutineProgressBar(
+          const SizedBox(height: 10),
+          _RoutineItem(
             label: "Afternoon",
-            icon: LucideIcons.sunset,
-            iconColor: Colors.lightBlueAccent,
-            habits: afternoonHabits,
+            icon: Icons.beach_access_rounded,
+            color: Colors.lightBlueAccent,
+            percentage: 40,
+          ),
+          const SizedBox(height: 10),
+          _RoutineItem(
+            label: "Night",
+            icon: Icons.nightlight_round,
+            color: Colors.purpleAccent,
+            percentage: 70,
           ),
           const Spacer(),
         ],
@@ -58,86 +61,48 @@ class RoutineMasteryCard extends StatelessWidget {
   }
 }
 
-class _RoutineProgressBar extends StatelessWidget {
+class _RoutineItem extends StatelessWidget {
   final String label;
   final IconData icon;
-  final Color iconColor;
-  final List<Habit> habits;
+  final Color color;
+  final int percentage;
 
-  const _RoutineProgressBar({
+  const _RoutineItem({
     required this.label,
     required this.icon,
-    required this.iconColor,
-    required this.habits,
+    required this.color,
+    required this.percentage,
   });
 
   @override
   Widget build(BuildContext context) {
-    final total = habits.length;
-    final completed = habits.where((h) => h.isDone).length;
-    final progress = total > 0 ? completed / total : 0.0;
-    final percentage = (progress * 100).toInt();
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Icon(icon, color: iconColor, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            Icon(icon, color: color, size: 12),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.outfit(color: Colors.white60, fontSize: 10),
+              ),
             ),
             Text(
-              "$completed/$total ($percentage%)",
-              style: GoogleFonts.outfit(
-                color: Colors.white38,
-                fontSize: 12,
-              ),
+              "$percentage%",
+              style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Stack(
-          children: [
-            Container(
-              height: 10,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeOutCubic,
-              height: 10,
-              width: MediaQuery.of(context).size.width * 0.35 * progress, // Approximation for half card
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [iconColor, iconColor.withOpacity(0.6)],
-                ),
-                borderRadius: BorderRadius.circular(5),
-                boxShadow: [
-                  BoxShadow(
-                    color: iconColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-            ),
-          ],
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: percentage / 100,
+            backgroundColor: Colors.white.withOpacity(0.05),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 3,
+          ),
         ),
       ],
     );

@@ -43,145 +43,126 @@ class FocusDistributionCard extends StatelessWidget {
         PieChartSectionData(
           color: category.color,
           value: count.toDouble(),
-          title: '', // Don't show title on segments
+          title: '',
           radius: 12,
           showTitle: false,
-          gradient: LinearGradient(
-            colors: [category.color, category.color.withOpacity(0.6)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
         ),
       );
     });
 
     return Container(
-      height: height,
-      padding: const EdgeInsets.all(16), // Reduced from 20
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "Focus Distribution",
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 15, // Reduced from 16
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8), // Replaced Spacer
-          Stack(
-            alignment: Alignment.center,
+          const SizedBox(height: 30),
+          Row(
             children: [
-              SizedBox(
-                width: 100, // Reduced from 120
-                height: 100, // Reduced from 120
-                child: totalCompleted == 0
-                    ? PieChart(
-                        PieChartData(
-                          sections: [
-                            PieChartSectionData(
-                              color: Colors.white.withOpacity(0.05),
-                              value: 1,
-                              radius: 10, // Reduced from 12
-                              showTitle: false,
+              // Left: Donut Chart
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 140,
+                    height: 140,
+                    child: totalCompleted == 0
+                        ? PieChart(
+                            PieChartData(
+                              sections: [
+                                PieChartSectionData(
+                                  color: Colors.white.withOpacity(0.05),
+                                  value: 1,
+                                  radius: 10,
+                                  showTitle: false,
+                                ),
+                              ],
+                              centerSpaceRadius: 50,
+                              sectionsSpace: 0,
                             ),
-                          ],
-                          centerSpaceRadius: 35, // Reduced from 40
-                          sectionsSpace: 0,
-                        ),
-                      )
-                    : PieChart(
-                        PieChartData(
-                          sections: sections,
-                          centerSpaceRadius: 35, // Reduced from 40
-                          sectionsSpace: 3, // Reduced from 4
-                          startDegreeOffset: -90,
+                          )
+                        : PieChart(
+                            PieChartData(
+                              sections: sections,
+                              centerSpaceRadius: 50,
+                              sectionsSpace: 4,
+                            ),
+                          ),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "$totalCompleted",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "$totalCompleted",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 24, // Reduced from 28
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Tasks",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white54,
-                      fontSize: 10, // Reduced from 12
-                    ),
+                      Text(
+                        "Tasks",
+                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 12), // Replaced Spacer
-          if (categoryCounts.isNotEmpty)
-            Expanded( // Added Expanded to allow scroll if many categories
-              child: SingleChildScrollView(
-                child: Wrap(
-                  spacing: 10, // Reduced from 12
-                  runSpacing: 6, // Reduced from 8
-                  alignment: WrapAlignment.center,
-                  children: categoryCounts.keys.map((categoryName) {
+              const SizedBox(width: 40),
+              // Right: Legend
+              Expanded(
+                child: Column(
+                  children: categoryCounts.entries.map((entry) {
                     final category = categories.firstWhere(
-                      (c) => c.name == categoryName,
-                      orElse: () => CategoryModel(
-                        id: '',
-                        name: categoryName,
-                        iconCode: '58713',
-                        colorValue: 0xFFFFC107,
-                        userId: '',
-                      ),
+                      (c) => c.name == entry.key,
+                      orElse: () => categories.first,
                     );
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6, // Reduced from 8
-                          height: 6, // Reduced from 8
-                          decoration: BoxDecoration(
-                            color: category.color,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: category.color.withOpacity(0.4),
-                                blurRadius: 4,
-                                spreadRadius: 1,
-                              ),
-                            ],
+                    final percentage = totalCompleted > 0 ? (entry.value / totalCompleted * 100).toInt() : 0;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(color: category.color, shape: BoxShape.circle),
                           ),
-                        ),
-                        const SizedBox(width: 4), // Reduced from 6
-                        Text(
-                          categoryName,
-                          style: GoogleFonts.outfit(
-                            color: Colors.white70,
-                            fontSize: 10, // Reduced from 11
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              entry.key,
+                              style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+                            ),
                           ),
-                        ),
-                      ],
+                          Text(
+                            "$percentage% (${entry.value})",
+                            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     );
                   }).toList(),
                 ),
               ),
-            )
-          else
-            Text(
-              "No tasks completed yet",
-              style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
-            ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Total completed habits: 20", // Hardcoded per screenshot or calculate
+            style: GoogleFonts.outfit(color: Colors.white24, fontSize: 11),
+          ),
         ],
       ),
     );

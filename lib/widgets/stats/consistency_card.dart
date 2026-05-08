@@ -25,7 +25,7 @@ class ConsistencyCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -35,58 +35,72 @@ class ConsistencyCard extends StatelessWidget {
             "Consistency",
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: StreamBuilder<List<HabitLog>>(
-              stream: _logService.getUserLogsStream(userId),
-              builder: (context, snapshot) {
-                final logs = snapshot.data ?? [];
-                
-                // Get Mon-Sun of current week
-                final now = DateTime.now();
-                final monday = now.subtract(Duration(days: now.weekday - 1));
-                
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Wrap(
-                      spacing: 8,
-                      runSpacing: 12,
-                      alignment: WrapAlignment.center,
-                      children: List.generate(7, (index) {
-                        final day = DateTime(monday.year, monday.month, monday.day).add(Duration(days: index));
-                        final dayLogs = logs.where((log) {
-                          final logDate = DateTime(log.completedAt.year, log.completedAt.month, log.completedAt.day);
-                          return log.isCompleted && logDate.isAtSameMomentAs(day);
-                        }).toList();
+          const Spacer(),
+          StreamBuilder<List<HabitLog>>(
+            stream: _logService.getUserLogsStream(userId),
+            builder: (context, snapshot) {
+              final logs = snapshot.data ?? [];
+              final now = DateTime.now();
+              final monday = now.subtract(Duration(days: now.weekday - 1));
+              
+              int consistentCount = 0;
+              List<Widget> dayWidgets = [];
 
-                        // Get icon from first completed habit of that day
-                        IconData? displayIcon;
-                        Color? displayColor;
-                        
-                        if (dayLogs.isNotEmpty) {
-                          final firstLogHabitId = dayLogs.first.habitId;
-                          final habit = habits.firstWhere((h) => h.id == firstLogHabitId, orElse: () => habits.first);
-                          displayIcon = habit.icon != null ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') : Icons.check;
-                          displayColor = Colors.orange; // Default or category color
-                        }
+              for (int i = 0; i < 7; i++) {
+                final day = DateTime(monday.year, monday.month, monday.day).add(Duration(days: i));
+                final dayLogs = logs.where((log) {
+                  final logDate = DateTime(log.completedAt.year, log.completedAt.month, log.completedAt.day);
+                  return log.isCompleted && logDate.isAtSameMomentAs(day);
+                }).toList();
 
-                        return _DayIcon(
-                          dayName: DateFormat('E').format(day).substring(0, 2),
-                          icon: displayIcon,
-                          isCompleted: dayLogs.isNotEmpty,
-                          color: displayColor ?? Colors.white.withOpacity(0.05),
-                        );
-                      }),
-                    );
-                  },
+                if (dayLogs.isNotEmpty) consistentCount++;
+
+                dayWidgets.add(
+                  Expanded(
+                    child: _DayIcon(
+                      dayName: DateFormat('E').format(day).substring(0, 2),
+                      isCompleted: dayLogs.isNotEmpty,
+                    ),
+                  ),
                 );
-              },
-            ),
+              }
+
+              return Column(
+                children: [
+                  Row(children: dayWidgets),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Weekly consistency",
+                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
+                      ),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: "$consistentCount ",
+                              style: GoogleFonts.outfit(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 11),
+                            ),
+                            TextSpan(
+                              text: "/ 7",
+                              style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
           ),
+          const Spacer(),
         ],
       ),
     );
@@ -95,15 +109,11 @@ class ConsistencyCard extends StatelessWidget {
 
 class _DayIcon extends StatelessWidget {
   final String dayName;
-  final IconData? icon;
   final bool isCompleted;
-  final Color color;
 
   const _DayIcon({
     required this.dayName,
-    this.icon,
     required this.isCompleted,
-    required this.color,
   });
 
   @override
@@ -112,36 +122,25 @@ class _DayIcon extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 34,
-          height: 34,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
-            color: isCompleted ? color.withOpacity(0.2) : Colors.white.withOpacity(0.02),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isCompleted ? color : Colors.white.withOpacity(0.05),
+              color: isCompleted ? Colors.orange : Colors.white10,
               width: 1.5,
             ),
-            boxShadow: isCompleted ? [
-              BoxShadow(
-                color: color.withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              )
-            ] : null,
           ),
-          child: Icon(
-            icon ?? Icons.circle,
-            size: 16,
-            color: isCompleted ? color : Colors.white10,
-          ),
+          child: isCompleted 
+            ? const Center(child: Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 14))
+            : null,
         ),
         const SizedBox(height: 6),
         Text(
           dayName,
           style: GoogleFonts.outfit(
-            color: isCompleted ? Colors.white : Colors.white24,
-            fontSize: 10,
-            fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
+            color: isCompleted ? Colors.white70 : Colors.white24,
+            fontSize: 9,
           ),
         ),
       ],
