@@ -6,15 +6,11 @@ import 'package:intl/intl.dart';
 class StatsHeader extends StatelessWidget {
   final String userName;
   final String userInitial;
-  final String selectedTimeFrame;
-  final ValueChanged<String> onTimeFrameChanged;
 
   const StatsHeader({
     super.key,
     required this.userName,
     required this.userInitial,
-    required this.selectedTimeFrame,
-    required this.onTimeFrameChanged,
   });
 
   @override
@@ -56,57 +52,7 @@ class StatsHeader extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        _TimeFrameToggle(
-          selected: selectedTimeFrame,
-          onChanged: onTimeFrameChanged,
-        ),
       ],
-    );
-  }
-}
-
-class _TimeFrameToggle extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onChanged;
-
-  const _TimeFrameToggle({required this.selected, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: ['Week', 'Month', 'Year'].map((time) {
-          bool isSelected = selected == time;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(time),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    time,
-                    style: GoogleFonts.outfit(
-                      color: isSelected ? Colors.white : Colors.white38,
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
     );
   }
 }
