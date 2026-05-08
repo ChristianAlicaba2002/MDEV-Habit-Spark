@@ -6,10 +6,9 @@ import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/category_service.dart';
-import 'package:habit_spark/services/session_timer_service.dart';
 import 'package:habit_spark/widgets/stats/stats_header.dart';
 import 'package:habit_spark/widgets/stats/trends_card.dart';
-import 'package:habit_spark/widgets/stats/timer_card.dart';
+import 'package:habit_spark/widgets/stats/focus_distribution_card.dart';
 import 'package:habit_spark/widgets/stats/consistency_card.dart';
 import 'package:habit_spark/widgets/stats/streak_card.dart';
 import 'package:habit_spark/widgets/stats/records_card.dart';
@@ -41,7 +40,6 @@ class _StatsTabState extends State<StatsTab> {
   String _selectedTrendsCategory = 'Fitness';
   final HealthService _healthService = HealthService();
   final CategoryService _categoryService = CategoryService();
-  final SessionTimerService _timerService = SessionTimerService();
   bool _isRefreshing = false;
 
   Future<void> _onRefresh() async {
@@ -175,8 +173,9 @@ class _StatsTabState extends State<StatsTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: TimerCard(
-                                  timerService: _timerService,
+                                child: FocusDistributionCard(
+                                  habits: widget.habits,
+                                  categories: categories,
                                   height: cardHeight,
                                 ),
                               ),
