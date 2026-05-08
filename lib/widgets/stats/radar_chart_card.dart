@@ -16,26 +16,19 @@ class RadarChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate completion percentage per category
     final Map<String, double> categoryProgress = {};
     for (var cat in categories) {
       final catHabits = habits.where((h) => h.category == cat.name).toList();
-      if (catHabits.isEmpty) {
-        categoryProgress[cat.name] = 0.0;
-      } else {
-        final done = catHabits.where((h) => h.isDone).length;
-        categoryProgress[cat.name] = (done / catHabits.length) * 100;
-      }
+      categoryProgress[cat.name] = catHabits.isEmpty ? 0.0 : (catHabits.where((h) => h.isDone).length / catHabits.length) * 100;
     }
 
-    final List<RadarDataSet> dataSets = [
+    final radarCategories = categories.take(4).toList(); // Matching screenshot's 4 axes
+    final dataSets = [
       RadarDataSet(
         fillColor: Colors.cyanAccent.withOpacity(0.2),
         borderColor: Colors.cyanAccent,
         entryRadius: 3,
-        dataEntries: categories.map((cat) {
-          return RadarEntry(value: categoryProgress[cat.name] ?? 0);
-        }).toList(),
+        dataEntries: radarCategories.map((cat) => RadarEntry(value: categoryProgress[cat.name] ?? 0)).toList(),
       ),
     ];
 
@@ -46,40 +39,62 @@ class RadarChartCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            "Daily Routine Balance",
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          // Left: Info & Legend
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Daily Routine Balance",
+                  style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Your category focus across the board",
+                  style: GoogleFonts.outfit(color: Colors.white24, fontSize: 10),
+                ),
+                const SizedBox(height: 30),
+                ...radarCategories.map((cat) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(color: cat.color, shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        cat.name,
+                        style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                )).toList(),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            "Your category focus across the board",
-            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 250,
-            child: RadarChart(
-              RadarChartData(
-                dataSets: dataSets,
-                radarBackgroundColor: Colors.transparent,
-                borderData: FlBorderData(show: false),
-                radarBorderData: const BorderSide(color: Colors.white10),
-                titlePositionPercentageOffset: 0.2,
-                titleTextStyle: GoogleFonts.outfit(color: Colors.white54, fontSize: 10),
-                getTitle: (index, angle) {
-                  if (index >= categories.length) return const RadarChartTitle(text: '');
-                  return RadarChartTitle(text: categories[index].name);
-                },
-                tickCount: 5,
-                ticksTextStyle: const TextStyle(color: Colors.transparent),
-                gridBorderData: const BorderSide(color: Colors.white10, width: 1),
+          // Right: Radar Chart
+          Expanded(
+            flex: 3,
+            child: SizedBox(
+              height: 180,
+              child: RadarChart(
+                RadarChartData(
+                  dataSets: dataSets,
+                  radarBackgroundColor: Colors.transparent,
+                  borderData: FlBorderData(show: false),
+                  radarBorderData: const BorderSide(color: Colors.white10),
+                  titlePositionPercentageOffset: 0.15,
+                  titleTextStyle: GoogleFonts.outfit(color: Colors.white38, fontSize: 9),
+                  getTitle: (index, angle) => RadarChartTitle(text: radarCategories[index].name),
+                  tickCount: 3,
+                  ticksTextStyle: const TextStyle(color: Colors.transparent),
+                  gridBorderData: const BorderSide(color: Colors.white10, width: 1),
+                ),
               ),
             ),
           ),
