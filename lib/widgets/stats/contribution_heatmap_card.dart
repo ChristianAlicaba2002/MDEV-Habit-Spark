@@ -35,95 +35,72 @@ class ContributionHeatmapCard extends StatelessWidget {
           }
         }
 
+        final now = DateTime.now();
+        // Starting from the first Sunday of Jan to avoid the "Dec" label overlap
+        final startDate = DateTime(now.year, 1, 4); 
+        final endDate = DateTime(now.year, 12, 31);
+
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withOpacity(0.05)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.grid_view_rounded, color: Colors.cyanAccent, size: 20),
-                  const SizedBox(width: 12),
-                  Text(
-                    "Contribution Activity",
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: ['Mar', 'Apr', 'May']
-                                .map((m) => Padding(
-                                      padding: const EdgeInsets.only(right: 60),
-                                      child: Text(m, style: const TextStyle(color: Colors.white24, fontSize: 10)),
-                                    ))
-                                .toList(),
-                          ),
-                          const SizedBox(height: 8),
-                          HeatMap(
-                            datasets: datasets,
-                            colorMode: ColorMode.color,
-                            defaultColor: Colors.white.withOpacity(0.02),
-                            textColor: Colors.white38,
-                            showColorTip: false,
-                            showText: false,
-                            scrollable: false,
-                            size: 18,
-                            fontSize: 10,
-                            colorsets: {
-                              1: const Color(0xFF9575CD), // Light Purple
-                              4: const Color(0xFF00E5FF), // Glowing Cyan
-                            },
-                            startDate: DateTime.now().subtract(const Duration(days: 90)),
-                            endDate: DateTime.now(),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      const SizedBox(height: 32),
+                      const Icon(Icons.grid_view_rounded, color: Colors.cyanAccent, size: 16),
+                      const SizedBox(width: 8),
                       Text(
-                        "Your consistency\noverview",
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10, height: 1.4),
+                        "Contribution Activity",
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      _LegendItem(color: Colors.white.withOpacity(0.02), label: "0"),
+                      const SizedBox(width: 8),
+                      _LegendItem(color: const Color(0xFF9575CD), label: "1-3"),
+                      const SizedBox(width: 8),
+                      _LegendItem(color: const Color(0xFF00E5FF), label: "All"),
                     ],
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _LegendItem(color: Colors.white.withOpacity(0.02), label: "0"),
-                  const SizedBox(width: 12),
-                  _LegendItem(color: const Color(0xFF9575CD), label: "1-3"),
-                  const SizedBox(width: 12),
-                  _LegendItem(color: const Color(0xFF00E5FF), label: "All"),
-                ],
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: HeatMap(
+                  datasets: datasets,
+                  colorMode: ColorMode.color,
+                  defaultColor: Colors.white.withOpacity(0.02),
+                  textColor: Colors.white38,
+                  showColorTip: false,
+                  showText: false,
+                  scrollable: false,
+                  size: 16,
+                  fontSize: 10,
+                  // Using built-in labels to avoid duplicates
+                  startDate: startDate,
+                  endDate: endDate,
+                  colorsets: {
+                    1: const Color(0xFF9575CD),
+                    4: const Color(0xFF00E5FF),
+                  },
+                ),
               ),
             ],
           ),
@@ -143,12 +120,12 @@ class _LegendItem extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
         ),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9)),
       ],
     );
   }

@@ -22,10 +22,10 @@ class StreakCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16), // Reduced padding
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(20), // More consistent radius
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -35,7 +35,7 @@ class StreakCard extends StatelessWidget {
             "Highest Habit Streak",
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 14, // Smaller title
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -44,8 +44,6 @@ class StreakCard extends StatelessWidget {
             stream: _logService.getUserLogsStream(userId),
             builder: (context, snapshot) {
               final logs = snapshot.data ?? [];
-              
-              // Calculate streaks for each habit
               String bestHabitName = "No active streak";
               int maxStreak = 0;
 
@@ -56,8 +54,7 @@ class StreakCard extends StatelessWidget {
                       .map((l) => DateTime(l.completedAt.year, l.completedAt.month, l.completedAt.day))
                       .toSet()
                       .toList();
-                  
-                  habitLogs.sort((a, b) => b.compareTo(a)); // Newest first
+                  habitLogs.sort((a, b) => b.compareTo(a));
 
                   int streak = 0;
                   if (habitLogs.isNotEmpty) {
@@ -65,7 +62,6 @@ class StreakCard extends StatelessWidget {
                     final today = DateTime(now.year, now.month, now.day);
                     final yesterday = today.subtract(const Duration(days: 1));
 
-                    // Check if streak is still active (today or yesterday)
                     if (habitLogs.first.isAtSameMomentAs(today) || habitLogs.first.isAtSameMomentAs(yesterday)) {
                       streak = 1;
                       for (int i = 0; i < habitLogs.length - 1; i++) {
@@ -77,7 +73,6 @@ class StreakCard extends StatelessWidget {
                       }
                     }
                   }
-
                   if (streak > maxStreak) {
                     maxStreak = streak;
                     bestHabitName = habit.name;
@@ -87,6 +82,7 @@ class StreakCard extends StatelessWidget {
 
               return Center(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
@@ -97,15 +93,15 @@ class StreakCard extends StatelessWidget {
                       child: const Icon(
                         CupertinoIcons.flame_fill,
                         color: Colors.white,
-                        size: 64,
+                        size: 40, // Reduced from 64
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 4), // Reduced gap
                     Text(
                       "$maxStreak",
                       style: GoogleFonts.outfit(
                         color: Colors.white,
-                        fontSize: 42,
+                        fontSize: 28, // Reduced from 42
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -113,10 +109,12 @@ class StreakCard extends StatelessWidget {
                       "Days — $bestHabitName",
                       style: GoogleFonts.outfit(
                         color: Colors.white70,
-                        fontSize: 12,
+                        fontSize: 10, // Reduced from 12
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
