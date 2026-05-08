@@ -13,6 +13,7 @@ import 'package:habit_spark/widgets/stats/consistency_card.dart';
 import 'package:habit_spark/widgets/stats/streak_card.dart';
 import 'package:habit_spark/widgets/stats/routine_mastery_card.dart';
 import 'package:habit_spark/widgets/stats/contribution_heatmap_card.dart';
+import 'package:habit_spark/widgets/stats/today_focus_card.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 
@@ -214,6 +215,17 @@ class _StatsTabState extends State<StatsTab> {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+
+                      // Today's Focus (Summary)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                          child: TodayFocusCard(
+                            habits: widget.habits,
+                            userId: widget.userId,
                           ),
                         ),
                       ),
