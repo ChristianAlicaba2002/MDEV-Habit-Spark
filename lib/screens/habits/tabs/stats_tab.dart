@@ -182,6 +182,7 @@ class _StatsTabState extends State<StatsTab> {
                               Expanded(
                                 child: ConsistencyCard(
                                   habits: widget.habits,
+                                  userId: widget.userId,
                                   height: cardHeight,
                                 ),
                               ),
