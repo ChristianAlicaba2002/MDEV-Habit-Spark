@@ -57,7 +57,7 @@ class FocusDistributionCard extends StatelessWidget {
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16), // Reduced from 20
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(30),
@@ -69,17 +69,17 @@ class FocusDistributionCard extends StatelessWidget {
             "Focus Distribution",
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 15, // Reduced from 16
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 8), // Replaced Spacer
           Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 120,
-                height: 120,
+                width: 100, // Reduced from 120
+                height: 100, // Reduced from 120
                 child: totalCompleted == 0
                     ? PieChart(
                         PieChartData(
@@ -87,19 +87,19 @@ class FocusDistributionCard extends StatelessWidget {
                             PieChartSectionData(
                               color: Colors.white.withOpacity(0.05),
                               value: 1,
-                              radius: 12,
+                              radius: 10, // Reduced from 12
                               showTitle: false,
                             ),
                           ],
-                          centerSpaceRadius: 40,
+                          centerSpaceRadius: 35, // Reduced from 40
                           sectionsSpace: 0,
                         ),
                       )
                     : PieChart(
                         PieChartData(
                           sections: sections,
-                          centerSpaceRadius: 40,
-                          sectionsSpace: 4,
+                          centerSpaceRadius: 35, // Reduced from 40
+                          sectionsSpace: 3, // Reduced from 4
                           startDegreeOffset: -90,
                         ),
                       ),
@@ -111,7 +111,7 @@ class FocusDistributionCard extends StatelessWidget {
                     "$totalCompleted",
                     style: GoogleFonts.outfit(
                       color: Colors.white,
-                      fontSize: 28,
+                      fontSize: 24, // Reduced from 28
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -119,64 +119,68 @@ class FocusDistributionCard extends StatelessWidget {
                     "Tasks",
                     style: GoogleFonts.outfit(
                       color: Colors.white54,
-                      fontSize: 12,
+                      fontSize: 10, // Reduced from 12
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const Spacer(),
+          const SizedBox(height: 12), // Replaced Spacer
           if (categoryCounts.isNotEmpty)
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: categoryCounts.keys.map((categoryName) {
-                final category = categories.firstWhere(
-                  (c) => c.name == categoryName,
-                  orElse: () => CategoryModel(
-                    id: '',
-                    name: categoryName,
-                    iconCode: '58713',
-                    colorValue: 0xFFFFC107,
-                    userId: '',
-                  ),
-                );
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: category.color,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: category.color.withOpacity(0.4),
-                            blurRadius: 4,
-                            spreadRadius: 1,
+            Expanded( // Added Expanded to allow scroll if many categories
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 10, // Reduced from 12
+                  runSpacing: 6, // Reduced from 8
+                  alignment: WrapAlignment.center,
+                  children: categoryCounts.keys.map((categoryName) {
+                    final category = categories.firstWhere(
+                      (c) => c.name == categoryName,
+                      orElse: () => CategoryModel(
+                        id: '',
+                        name: categoryName,
+                        iconCode: '58713',
+                        colorValue: 0xFFFFC107,
+                        userId: '',
+                      ),
+                    );
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6, // Reduced from 8
+                          height: 6, // Reduced from 8
+                          decoration: BoxDecoration(
+                            color: category.color,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: category.color.withOpacity(0.4),
+                                blurRadius: 4,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      categoryName,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white70,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
+                        ),
+                        const SizedBox(width: 4), // Reduced from 6
+                        Text(
+                          categoryName,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white70,
+                            fontSize: 10, // Reduced from 11
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
             )
           else
             Text(
               "No tasks completed yet",
-              style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
+              style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
             ),
         ],
       ),

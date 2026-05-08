@@ -6,7 +6,7 @@ import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/widgets/stats/stats_header.dart';
-import 'package:habit_spark/widgets/stats/velocity_graph_card.dart';
+import 'package:habit_spark/widgets/stats/trends_card.dart';
 import 'package:habit_spark/widgets/stats/focus_distribution_card.dart';
 import 'package:habit_spark/widgets/stats/consistency_card.dart';
 import 'package:habit_spark/widgets/stats/streak_card.dart';
@@ -37,6 +37,7 @@ class StatsTab extends StatefulWidget {
 
 class _StatsTabState extends State<StatsTab> {
   String _selectedTimeFrame = 'Week';
+  String _selectedTrendsCategory = 'Fitness';
   final CategoryService _categoryService = CategoryService();
   bool _isRefreshing = false;
 
@@ -44,6 +45,56 @@ class _StatsTabState extends State<StatsTab> {
     setState(() => _isRefreshing = true);
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) setState(() => _isRefreshing = false);
+  }
+
+  void _showCategoryPicker(List<CategoryModel> categories) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF2C3E3E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Category',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: cat.color.withOpacity(0.1),
+                      child: Icon(cat.icon, color: cat.color, size: 20),
+                    ),
+                    title: Text(
+                      cat.name,
+                      style: GoogleFonts.outfit(color: Colors.white),
+                    ),
+                    onTap: () {
+                      setState(() => _selectedTrendsCategory = cat.name);
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -98,11 +149,18 @@ class _StatsTabState extends State<StatsTab> {
                         ),
                       ),
 
-                      // Velocity Card (Line Graph)
+                      // Trends Card
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-                          child: VelocityGraphCard(userId: widget.userId),
+                          child: GestureDetector(
+                            onLongPress: () => _showCategoryPicker(categories),
+                            child: TrendsCard(
+                              category: _selectedTrendsCategory,
+                              habits: widget.habits,
+                              categories: categories,
+                            ),
+                          ),
                         ),
                       ),
 
