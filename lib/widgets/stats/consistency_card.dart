@@ -17,7 +17,7 @@ class ConsistencyCard extends StatelessWidget {
     final displayHabits = habits.take(6).toList();
     return Container(
       height: height,
-      padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+      padding: const EdgeInsets.fromLTRB(10, 16, 10, 10), // Reduced from 12
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(24),
@@ -36,13 +36,13 @@ class ConsistencyCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8), // Reduced from 12
           if (displayHabits.isEmpty)
             const Expanded(
               child: Center(
                 child: Text(
                   "No habits",
-                  style: TextStyle(color: Colors.white24, fontSize: 12),
+                  style: TextStyle(color: Colors.white24, fontSize: 11),
                 ),
               ),
             )
@@ -50,8 +50,8 @@ class ConsistencyCard extends StatelessWidget {
             Expanded(
               child: GridView.count(
                 crossAxisCount: 3,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 4,
+                mainAxisSpacing: 4, // Reduced from 8
+                crossAxisSpacing: 2, // Reduced from 4
                 physics: const NeverScrollableScrollPhysics(),
                 children: displayHabits.map((h) => _ConsistencyItem(
                   icon: h.icon != null ? IconData(int.parse(h.icon!), fontFamily: 'MaterialIcons') : Icons.check,
@@ -80,8 +80,8 @@ class _ConsistencyItem extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 32, // Reduced slightly to ensure no overflow
-              height: 32,
+              width: 28, // Reduced from 32
+              height: 28, // Reduced from 32
               child: CircularProgressIndicator(
                 value: progress,
                 strokeWidth: 2.0,
@@ -90,15 +90,15 @@ class _ConsistencyItem extends StatelessWidget {
                 strokeCap: StrokeCap.round,
               ),
             ),
-            Icon(icon, color: Colors.orange.withOpacity(0.8), size: 14),
+            Icon(icon, color: Colors.orange.withOpacity(0.8), size: 12), // Reduced from 14
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2), // Reduced from 4
         Text(
           "${(progress * 100).toInt()}%",
           style: GoogleFonts.outfit(
             color: Colors.white70,
-            fontSize: 8, // Reduced slightly to ensure no overflow
+            fontSize: 7, // Reduced from 8
             fontWeight: FontWeight.bold,
           ),
         ),

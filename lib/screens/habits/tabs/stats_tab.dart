@@ -4,15 +4,14 @@ import 'package:intl/intl.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/category_model.dart';
 import 'package:habit_spark/services/streak_service.dart';
-import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/services/category_service.dart';
-import 'package:habit_spark/services/session_timer_service.dart';
 import 'package:habit_spark/widgets/stats/stats_header.dart';
 import 'package:habit_spark/widgets/stats/trends_card.dart';
-import 'package:habit_spark/widgets/stats/timer_card.dart';
+import 'package:habit_spark/widgets/stats/focus_distribution_card.dart';
 import 'package:habit_spark/widgets/stats/consistency_card.dart';
 import 'package:habit_spark/widgets/stats/streak_card.dart';
-import 'package:habit_spark/widgets/stats/records_card.dart';
+import 'package:habit_spark/widgets/stats/routine_mastery_card.dart';
+import 'package:habit_spark/widgets/stats/contribution_heatmap_card.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 
@@ -39,9 +38,7 @@ class StatsTab extends StatefulWidget {
 class _StatsTabState extends State<StatsTab> {
   String _selectedTimeFrame = 'Week';
   String _selectedTrendsCategory = 'Fitness';
-  final HealthService _healthService = HealthService();
   final CategoryService _categoryService = CategoryService();
-  final SessionTimerService _timerService = SessionTimerService();
   bool _isRefreshing = false;
 
   Future<void> _onRefresh() async {
@@ -175,8 +172,9 @@ class _StatsTabState extends State<StatsTab> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: TimerCard(
-                                  timerService: _timerService,
+                                child: FocusDistributionCard(
+                                  habits: widget.habits,
+                                  categories: categories,
                                   height: cardHeight,
                                 ),
                               ),
@@ -195,7 +193,7 @@ class _StatsTabState extends State<StatsTab> {
                       // Streak & Records Row
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -208,12 +206,23 @@ class _StatsTabState extends State<StatsTab> {
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: RecordsCard(
-                                  healthService: _healthService,
+                                child: RoutineMasteryCard(
+                                  habits: widget.habits,
                                   height: cardHeight,
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+
+                      // Contribution Heatmap
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+                          child: ContributionHeatmapCard(
+                            userId: widget.userId,
+                            habits: widget.habits,
                           ),
                         ),
                       ),

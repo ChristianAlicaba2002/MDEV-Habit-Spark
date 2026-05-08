@@ -21,6 +21,17 @@ class HabitLogService {
     });
   }
 
+  // Get all habit logs for a user
+  Stream<List<HabitLog>> getUserLogsStream(String userId) {
+    return _firestore
+        .collection('habit_logs')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => HabitLog.fromMap(doc.data(), doc.id)).toList();
+    });
+  }
+
   // Add a habit log entry
   Future<void> addHabitLog({
     required String habitId,
