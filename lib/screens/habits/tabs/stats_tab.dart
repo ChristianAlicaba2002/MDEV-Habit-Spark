@@ -7,6 +7,7 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/widgets/stats/stats_header.dart';
 import 'package:habit_spark/widgets/stats/trends_card.dart';
+import 'package:habit_spark/widgets/stats/velocity_graph_card.dart';
 import 'package:habit_spark/widgets/stats/focus_distribution_card.dart';
 import 'package:habit_spark/widgets/stats/consistency_card.dart';
 import 'package:habit_spark/widgets/stats/streak_card.dart';
@@ -200,8 +201,8 @@ class _StatsTabState extends State<StatsTab> {
                             children: [
                               Expanded(
                                 child: StreakCard(
-                                  streakService: widget.streakService,
                                   userId: widget.userId,
+                                  habits: widget.habits,
                                   height: cardHeight,
                                 ),
                               ),
@@ -214,6 +215,14 @@ class _StatsTabState extends State<StatsTab> {
                               ),
                             ],
                           ),
+                        ),
+                      ),
+
+                      // Velocity Graph (The Weekly Trend)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                          child: VelocityGraphCard(userId: widget.userId),
                         ),
                       ),
 
