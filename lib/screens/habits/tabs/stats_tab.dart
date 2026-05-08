@@ -220,7 +220,10 @@ class _StatsTabState extends State<StatsTab> {
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-                          child: ContributionHeatmapCard(userId: widget.userId),
+                          child: ContributionHeatmapCard(
+                            userId: widget.userId,
+                            habits: widget.habits,
+                          ),
                         ),
                       ),
                     ],
