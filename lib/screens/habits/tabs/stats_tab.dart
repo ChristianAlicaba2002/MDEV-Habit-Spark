@@ -51,8 +51,8 @@ class _StatsTabState extends State<StatsTab> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final sideCardWidth = (screenWidth - 56) / 2; // 20 padding each side + 16 spacing
-    final sideCardHeight = 220.0;
+    final sideCardWidth = (screenWidth - 40) / 2; // 12 padding each side + 16 spacing
+    final sideCardHeight = 150.0;
 
     return StreamBuilder<List<CategoryModel>>(
       stream: _categoryService.getCategoriesStream(widget.userId),

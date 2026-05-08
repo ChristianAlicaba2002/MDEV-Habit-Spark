@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:cupertino_icons/cupertino_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:habit_spark/models/habit.dart';
 import 'package:habit_spark/models/habit_log.dart';
@@ -22,10 +22,10 @@ class StreakCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      padding: const EdgeInsets.all(16), // Reduced padding
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20), // More consistent radius
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -35,7 +35,7 @@ class StreakCard extends StatelessWidget {
             "Highest Habit Streak",
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 14, // Smaller title
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -80,44 +80,57 @@ class StreakCard extends StatelessWidget {
                 }
               }
 
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Colors.orange, Colors.red],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ).createShader(bounds),
-                      child: const Icon(
-                        CupertinoIcons.flame_fill,
-                        color: Colors.white,
-                        size: 40, // Reduced from 64
+              return Row(
+                children: [
+                  // Left Side: Flame in Ring
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white10, width: 2),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.local_fire_department_rounded,
+                        color: Colors.orange,
+                        size: 32,
                       ),
                     ),
-                    const SizedBox(height: 4), // Reduced gap
-                    Text(
-                      "$maxStreak",
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 28, // Reduced from 42
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Right Side: Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "$maxStreak",
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "Days",
+                          style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          bestHabitName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      "Days — $bestHabitName",
-                      style: GoogleFonts.outfit(
-                        color: Colors.white70,
-                        fontSize: 10, // Reduced from 12
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               );
             },
           ),

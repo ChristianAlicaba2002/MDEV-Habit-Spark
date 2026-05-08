@@ -15,10 +15,11 @@ class RoutineMasteryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      height: height,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
@@ -28,31 +29,32 @@ class RoutineMasteryCard extends StatelessWidget {
             "Routine Mastery",
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 20),
+          const Spacer(),
           _RoutineItem(
-            label: "Morning Routine",
+            label: "Morning",
             icon: Icons.wb_sunny_rounded,
             color: Colors.orangeAccent,
             percentage: 90,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           _RoutineItem(
-            label: "Afternoon Routine",
+            label: "Afternoon",
             icon: Icons.beach_access_rounded,
             color: Colors.lightBlueAccent,
             percentage: 40,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           _RoutineItem(
-            label: "Night Routine",
+            label: "Night",
             icon: Icons.nightlight_round,
             color: Colors.purpleAccent,
             percentage: 70,
           ),
+          const Spacer(),
         ],
       ),
     );
@@ -78,28 +80,28 @@ class _RoutineItem extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, color: color, size: 14),
-            const SizedBox(width: 8),
+            Icon(icon, color: color, size: 12),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11),
+                style: GoogleFonts.outfit(color: Colors.white60, fontSize: 10),
               ),
             ),
             Text(
               "$percentage%",
-              style: GoogleFonts.outfit(color: Colors.white70, fontSize: 11),
+              style: GoogleFonts.outfit(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: percentage / 100,
             backgroundColor: Colors.white.withOpacity(0.05),
             valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 6,
+            minHeight: 3,
           ),
         ),
       ],
