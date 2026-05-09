@@ -9,6 +9,9 @@ import 'package:habit_spark/services/category_service.dart';
 import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
+import 'package:habit_spark/services/notification_service.dart';
+import 'package:habit_spark/screens/misc/notifications_page.dart';
+import 'package:flutter/services.dart';
 
 class CheckInTab extends StatefulWidget {
   final List<Habit> habits;
@@ -33,7 +36,6 @@ class CheckInTab extends StatefulWidget {
 }
 
 class _CheckInTabState extends State<CheckInTab> {
-  String? _expandedRoutine = 'Morning';
   String? _selectedCategoryFilter;
   bool _expandedActivities = false;
   bool _isRefreshing = false;
@@ -49,6 +51,8 @@ class _CheckInTabState extends State<CheckInTab> {
     super.initState();
     // Seed default categories if needed
     widget.categoryService.seedDefaultCategories(widget.userId);
+    // Reset daily habits if it's a new day (after midnight)
+    widget.habitService.checkAndResetDailyHabits(widget.userId);
   }
 
   Color _getCategoryColor(String category) {
@@ -130,6 +134,30 @@ class _CheckInTabState extends State<CheckInTab> {
                   );
                 }
               }
+            },
+            child: Text('Delete', style: GoogleFonts.outfit(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteHabitDialog(Habit habit) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text('Delete Task', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text('Are you sure you want to delete "${habit.name}"?', style: GoogleFonts.outfit()),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.blue)),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context);
+              widget.habitService.deleteHabit(habit.id);
             },
             child: Text('Delete', style: GoogleFonts.outfit(color: Colors.red)),
           ),
@@ -310,6 +338,13 @@ class _CheckInTabState extends State<CheckInTab> {
     final midnightHabits = allHabits.where((h) => h.routine == 'Midnight').toList();
     final generalHabits = allHabits.where((h) => h.routine == 'General' || h.routine == '').toList();
 
+    // Time logic for auto-expansion
+    final hour = DateTime.now().hour;
+    final isMorning = hour >= 5 && hour < 12;
+    final isAfternoon = hour >= 12 && hour < 17;
+    final isEvening = hour >= 17 && hour < 22;
+    final isMidnight = hour >= 22 || hour < 5;
+
     final healthService = HealthService();
 
     return StreamBuilder<List<CategoryModel>>(
@@ -354,7 +389,26 @@ class _CheckInTabState extends State<CheckInTab> {
                             ),
                           ),
                         ),
-                        _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+                        StreamBuilder<int>(
+                          stream: NotificationService().getUnreadCountStream(widget.userId),
+                          builder: (context, snapshot) {
+                            final unreadCount = snapshot.data ?? 0;
+                            return _HeaderIcon(
+                              icon: CupertinoIcons.bell, 
+                              hasNotification: unreadCount > 0,
+                              notificationCount: unreadCount,
+                              onTap: () {
+                                HapticFeedback.mediumImpact();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => NotificationsPage(),
+                                  ),
+                                );
+                              },
+                            );
+                          }
+                        ),
                         const SizedBox(width: 12),
                         _HeaderIcon(
                           child: Text(
@@ -390,52 +444,52 @@ class _CheckInTabState extends State<CheckInTab> {
                             _ExpandableRoutineCard(
                               title: 'Morning Routine',
                               habits: morningHabits,
-                              isExpanded: _expandedRoutine == 'Morning',
-                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Morning' ? null : 'Morning'),
+                              initiallyExpanded: isMorning,
+                              onDeleteHabit: _showDeleteHabitDialog,
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
                           ],
                           if (afternoonHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
                               title: 'Afternoon Routine',
                               habits: afternoonHabits,
-                              isExpanded: _expandedRoutine == 'Afternoon',
-                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Afternoon' ? null : 'Afternoon'),
+                              initiallyExpanded: isAfternoon,
+                              onDeleteHabit: _showDeleteHabitDialog,
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
                           ],
                           if (eveningHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
                               title: 'Evening Routine',
                               habits: eveningHabits,
-                              isExpanded: _expandedRoutine == 'Evening',
-                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Evening' ? null : 'Evening'),
+                              initiallyExpanded: isEvening || isMidnight,
+                              onDeleteHabit: _showDeleteHabitDialog,
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                           ],
                           if (midnightHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
                               title: 'Midnight Routine',
                               habits: midnightHabits,
-                              isExpanded: _expandedRoutine == 'Midnight',
-                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'Midnight' ? null : 'Midnight'),
+                              initiallyExpanded: isMidnight,
+                              onDeleteHabit: _showDeleteHabitDialog,
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                           ],
                           if (generalHabits.isNotEmpty) ...[
                             _ExpandableRoutineCard(
                               title: 'General Tasks',
                               habits: generalHabits,
-                              isExpanded: _expandedRoutine == 'General',
-                              onToggle: () => setState(() => _expandedRoutine = _expandedRoutine == 'General' ? null : 'General'),
+                              initiallyExpanded: false,
+                              onDeleteHabit: _showDeleteHabitDialog,
                               habitService: widget.habitService,
                               userId: widget.userId,
                             ),
@@ -2076,55 +2130,85 @@ class _HeaderIcon extends StatelessWidget {
   final IconData? icon;
   final Widget? child;
   final bool hasNotification;
-  const _HeaderIcon({this.icon, this.child, this.hasNotification = false});
+  final int notificationCount;
+  final VoidCallback? onTap;
+
+  const _HeaderIcon({
+    this.icon, 
+    this.child, 
+    this.hasNotification = false,
+    this.notificationCount = 0,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (icon != null) Icon(icon, color: Colors.white, size: 20),
-          if (child != null) child!,
-          if (hasNotification)
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (icon != null) Icon(icon, color: Colors.white, size: 20),
+            if (child != null) child!,
+            if (hasNotification)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  alignment: Alignment.center,
+                  child: Text(
+                    notificationCount > 9 ? '!' : notificationCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ExpandableRoutineCard extends StatelessWidget {
+class _ExpandableRoutineCard extends StatefulWidget {
   final String title;
   final List<Habit> habits;
-  final bool isExpanded;
-  final VoidCallback onToggle;
+  final bool initiallyExpanded;
+  final Function(Habit) onDeleteHabit;
   final HabitService habitService;
   final String userId;
 
   const _ExpandableRoutineCard({
     required this.title,
     required this.habits,
-    required this.isExpanded,
-    required this.onToggle,
+    required this.initiallyExpanded,
+    required this.onDeleteHabit,
     required this.habitService,
     required this.userId,
   });
+
+  @override
+  State<_ExpandableRoutineCard> createState() => _ExpandableRoutineCardState();
+}
+
+class _ExpandableRoutineCardState extends State<_ExpandableRoutineCard> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
 
   Color _getRoutineColor(String title) {
     if (title.contains('Morning')) return const Color(0xFFD4A574);
@@ -2152,12 +2236,12 @@ class _ExpandableRoutineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final done = habits.where((h) => h.isDone).length;
-    final total = habits.length;
+    final done = widget.habits.where((h) => h.isDone).length;
+    final total = widget.habits.length;
     final progress = total > 0 ? done / total : 0.0;
-    final routineColor = _getRoutineColor(title);
-    final routineBgColor = _getRoutineBgColor(title);
-    final routineIcon = _getRoutineIcon(title);
+    final routineColor = _getRoutineColor(widget.title);
+    final routineBgColor = _getRoutineBgColor(widget.title);
+    final routineIcon = _getRoutineIcon(widget.title);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -2170,7 +2254,7 @@ class _ExpandableRoutineCard extends StatelessWidget {
       child: Column(
         children: [
           GestureDetector(
-            onTap: onToggle,
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.all(12), // Reduced padding
@@ -2193,7 +2277,7 @@ class _ExpandableRoutineCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          title,
+                          widget.title,
                           style: GoogleFonts.outfit(
                             color: Colors.white,
                             fontSize: 16,
@@ -2236,7 +2320,7 @@ class _ExpandableRoutineCard extends StatelessWidget {
                         ),
                       ),
                       Icon(
-                        isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
+                        _isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.chevron_down,
                         color: Colors.white38,
                         size: 16,
                       ),
@@ -2246,13 +2330,14 @@ class _ExpandableRoutineCard extends StatelessWidget {
               ),
             ),
           ),
-          if (isExpanded)
+          if (_isExpanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Column(
-                children: habits.map((habit) => _RoutineHabitItem(
+                children: widget.habits.map((habit) => _RoutineHabitItem(
                   habit: habit,
-                  onToggle: () => habitService.toggleHabit(habit.id, habit.isDone, userId),
+                  onToggle: () => widget.habitService.toggleHabit(habit.id, habit.isDone, widget.userId),
+                  onDelete: () => widget.onDeleteHabit(habit),
                 )).toList(),
               ),
             ),
@@ -2265,8 +2350,9 @@ class _ExpandableRoutineCard extends StatelessWidget {
 class _RoutineHabitItem extends StatelessWidget {
   final Habit habit;
   final VoidCallback onToggle;
+  final VoidCallback onDelete;
 
-  const _RoutineHabitItem({required this.habit, required this.onToggle});
+  const _RoutineHabitItem({required this.habit, required this.onToggle, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -2300,6 +2386,13 @@ class _RoutineHabitItem extends StatelessWidget {
                 fontSize: 15,
                 decoration: habit.isDone ? TextDecoration.lineThrough : null,
               ),
+            ),
+          ),
+          GestureDetector(
+            onTap: onDelete,
+            child: const Padding(
+              padding: EdgeInsets.all(4.0),
+              child: Icon(CupertinoIcons.trash, color: Colors.white24, size: 16),
             ),
           ),
         ],

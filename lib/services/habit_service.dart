@@ -274,6 +274,28 @@ class HabitService {
     await batch.commit();
   }
 
+  /// Checks if the day has changed since the last reset, and resets all habits if so.
+  /// Should be called on app open / tab entry. Safe to call multiple times.
+  Future<void> checkAndResetDailyHabits(String userId) async {
+    final today = DateTime.now();
+    final todayStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    final resetRef = _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('meta')
+        .doc('daily_reset');
+
+    final doc = await resetRef.get();
+
+    if (!doc.exists || doc.data()?['lastResetDate'] != todayStr) {
+      // New day — reset all habits and record today's date
+      await resetDailyHabits(userId);
+      await resetRef.set({'lastResetDate': todayStr});
+    }
+  }
+
   // Seed default running habits for new users
   Future<void> seedDefaultHabits(String userId) async {
     final existingHabits = await _firestore

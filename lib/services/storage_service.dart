@@ -26,6 +26,41 @@ class StorageService {
     }
   }
 
+  /// Upload profile image to Firebase Storage
+  /// Returns the download URL of the uploaded image
+  Future<String> uploadProfileImage({
+    required String userId,
+    required File imageFile,
+  }) async {
+    try {
+      // 1. Validate file
+      if (!await imageFile.exists()) throw 'File not found at path';
+      if (await imageFile.length() == 0) throw 'File is empty';
+
+      // 2. Simplify path
+      final ref = _storage.ref().child('profile_pictures/$userId.jpg');
+      
+      // 3. Upload with explicit metadata
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      final uploadTask = ref.putFile(imageFile, metadata);
+      
+      // 4. Wait for completion
+      final snapshot = await uploadTask;
+      
+      // 5. Small delay to allow for backend propagation
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // 6. Get URL from the snapshot ref
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      if (e is FirebaseException) {
+        throw 'Storage Error [${e.code}]: ${e.message}';
+      }
+      throw 'Upload Error: $e';
+    }
+  }
+
   /// Delete image from Firebase Storage
   Future<void> deleteHabitImage({
     required String userId,
