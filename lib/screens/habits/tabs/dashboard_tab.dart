@@ -13,6 +13,9 @@ import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:habit_spark/screens/habits/recent_activity_page.dart';
+import 'package:habit_spark/services/notification_service.dart';
+import 'package:habit_spark/screens/misc/notifications_page.dart';
+import 'package:flutter/services.dart';
 
 class DashboardTab extends StatefulWidget {
   final String userId;
@@ -45,35 +48,11 @@ class _DashboardTabState extends State<DashboardTab> {
     if (mounted) setState(() => _isRefreshing = false);
   }
 
-  void _confirmDelete(BuildContext context, Habit habit) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2E2E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: Colors.white.withOpacity(0.1)),
-        ),
-        title: Text('Delete Habit?', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-        content: Text(
-          'Are you sure you want to delete "${habit.name}"?',
-          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70)),
-          ),
-          TextButton(
-            onPressed: () {
-              widget.habitService.deleteHabit(habit.id);
-              Navigator.pop(ctx);
-            },
-            child: Text('Delete', style: GoogleFonts.outfit(color: AppColors.secondaryLight, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    // Reset daily habits if it's a new day (after midnight)
+    widget.habitService.checkAndResetDailyHabits(widget.userId);
   }
 
   @override
@@ -84,6 +63,14 @@ class _DashboardTabState extends State<DashboardTab> {
     final afternoonHabits = habits.where((h) => h.routine == 'Afternoon').toList();
     final eveningHabits = habits.where((h) => h.routine == 'Evening').toList();
     final otherHabits = habits.where((h) => !['Morning', 'Afternoon', 'Evening'].contains(h.routine)).toList();
+
+    // Calculate current time for auto-expansion
+    final hour = DateTime.now().hour;
+    final isMorning = hour >= 5 && hour < 12;
+    final isAfternoon = hour >= 12 && hour < 17;
+    final isEvening = hour >= 17 && hour < 22;
+    // For anything outside (10pm - 4:59am), expand Midnight or fallback to Evening if Midnight isn't a specific section, or expand general
+    final isMidnight = hour >= 22 || hour < 5;
 
     return Container(
       decoration: const BoxDecoration(
@@ -123,7 +110,28 @@ class _DashboardTabState extends State<DashboardTab> {
                         ),
                       ),
                     ),
-                    _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+                    StreamBuilder<int>(
+                      stream: NotificationService().getUnreadCountStream(widget.userId),
+                      builder: (context, snapshot) {
+                        final unreadCount = snapshot.data ?? 0;
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => NotificationsPage(),
+                              ),
+                            );
+                          },
+                          child: _HeaderIcon(
+                            icon: CupertinoIcons.bell, 
+                            hasNotification: unreadCount > 0,
+                            notificationCount: unreadCount,
+                          ),
+                        );
+                      }
+                    ),
                     const SizedBox(width: 12),
                     _HeaderIcon(
                       child: Text(
@@ -148,51 +156,49 @@ class _DashboardTabState extends State<DashboardTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   if (morningHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'Morning Routine',
                       habits: morningHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max_fill,
                       iconColor: const Color(0xFFD4A574),
                       iconBgColor: const Color(0xFF6B5344),
+                      initiallyExpanded: isMorning,
                     ),
-                  if (morningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (morningHabits.isNotEmpty) const SizedBox(height: 8),
                   if (afternoonHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'Afternoon Routine',
                       habits: afternoonHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max,
                       iconColor: const Color(0xFFFFD700),
                       iconBgColor: const Color(0xFF8B7500),
-                      initiallyExpanded: true,
+                      initiallyExpanded: isAfternoon,
                     ),
-                  if (afternoonHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (afternoonHabits.isNotEmpty) const SizedBox(height: 8),
                   if (eveningHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'Evening Routine',
                       habits: eveningHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.moon_stars_fill,
                       iconColor: const Color(0xFF9B7EBD),
                       iconBgColor: const Color(0xFF4A3F5C),
+                      initiallyExpanded: isEvening || isMidnight, // Fallback to Evening if midnight
                     ),
-                  if (eveningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (eveningHabits.isNotEmpty) const SizedBox(height: 8),
                   if (otherHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'General Habits',
                       habits: otherHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.arrow_2_circlepath,
                       iconColor: const Color(0xFF7FD8BE),
                       iconBgColor: const Color(0xFF3F6B5C),
@@ -251,34 +257,51 @@ class _HeaderIcon extends StatelessWidget {
   final IconData? icon;
   final Widget? child;
   final bool hasNotification;
-  const _HeaderIcon({this.icon, this.child, this.hasNotification = false});
+  final int notificationCount;
+  final VoidCallback? onTap;
+
+  const _HeaderIcon({
+    this.icon, 
+    this.child, 
+    this.hasNotification = false,
+    this.notificationCount = 0,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (icon != null) Icon(icon, color: Colors.white, size: 20),
-          if (child != null) child!,
-          if (hasNotification)
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (icon != null) Icon(icon, color: Colors.white, size: 20),
+            if (child != null) child!,
+            if (hasNotification)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  alignment: Alignment.center,
+                  child: Text(
+                    notificationCount > 9 ? '!' : notificationCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -664,7 +687,7 @@ class _ActivityCard extends StatelessWidget {
 }
 
 // Wrapper widget that handles modify mode with shake and blur effects
-class _ActivityCardWithModify extends StatelessWidget {
+class _ActivityCardWithModify extends StatefulWidget {
   final int position;
   final String activityType;
   final HealthService healthService;
@@ -686,6 +709,44 @@ class _ActivityCardWithModify extends StatelessWidget {
     required this.shakeController,
     required this.onModifyPressed,
   });
+
+  @override
+  State<_ActivityCardWithModify> createState() => _ActivityCardWithModifyState();
+}
+
+class _ActivityCardWithModifyState extends State<_ActivityCardWithModify> {
+  late Stream<bool> _goalStream;
+  late Stream<dynamic> _activityStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _initStreams();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ActivityCardWithModify oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activityType != widget.activityType) {
+      _initStreams();
+    }
+  }
+
+  void _initStreams() {
+    _goalStream = widget.healthService.getGoalDoneStream(widget.activityType);
+    _activityStream = _getStreamForActivity(widget.activityType);
+  }
+
+  Stream<dynamic> _getStreamForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return widget.streakService.getStreakStream(widget.userId);
+      case 'completed tasks':
+        return widget.healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      default:
+        return widget.healthService.getActivityMonthlyStats(type);
+    }
+  }
 
   IconData _getIconForActivity(String type) {
     switch (type.toLowerCase()) {
@@ -747,46 +808,39 @@ class _ActivityCardWithModify extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final color = _getColorForActivity(activityType);
+    final color = _getColorForActivity(widget.activityType);
 
-    return AnimatedBuilder(
-      animation: shakeController,
-      builder: (context, child) {
-        // iOS-style shake: small offset that alternates
-        final shakeOffset = isModifyMode ? (shakeController.value - 0.5) * 3 : 0.0;
+    // Provide the static tree to the AnimatedBuilder to prevent inner rebuilds during animation
+    final Widget staticCard = Stack(
+      children: [
+        // Main card
+        StreamBuilder<bool>(
+          stream: _goalStream,
+          builder: (context, goalSnapshot) {
+            final bool isDone = goalSnapshot.data ?? false;
 
-        return Transform.translate(
-          offset: Offset(shakeOffset, shakeOffset * 0.3),
-          child: Stack(
-            children: [
-              // Main card
-              StreamBuilder<bool>(
-                stream: healthService.getGoalDoneStream(activityType),
-                builder: (context, goalSnapshot) {
-                  final bool isDone = goalSnapshot.data ?? false;
-
-                  return StreamBuilder<dynamic>(
-                    stream: _getStreamForActivity(activityType),
+            return StreamBuilder<dynamic>(
+              stream: _activityStream,
                     builder: (context, snapshot) {
                       String value = '0';
                       String unit = '';
-                      String title = activityType;
+                      String title = widget.activityType;
                       String category = '';
 
                       if (snapshot.hasData) {
-                        if (activityType.toLowerCase() == 'day streak') {
+                        if (widget.activityType.toLowerCase() == 'day streak') {
                           final data = snapshot.data as Map<String, dynamic>;
                           value = (data['currentStreak'] ?? 0).toString();
                           unit = 'days';
-                          category = _getCategoryForActivity(activityType);
-                        } else if (activityType.toLowerCase() == 'completed tasks') {
+                          category = _getCategoryForActivity(widget.activityType);
+                        } else if (widget.activityType.toLowerCase() == 'completed tasks') {
                           final logs = snapshot.data as List<HealthLog>;
                           value = logs
                               .where((log) => log.type.toLowerCase() == 'completed tasks')
                               .length
                               .toString();
                           unit = 'tasks';
-                          category = _getCategoryForActivity(activityType);
+                          category = _getCategoryForActivity(widget.activityType);
                         } else {
                           final data = snapshot.data as Map<String, dynamic>;
                           value = (data['total'] as double).toStringAsFixed(1);
@@ -800,7 +854,7 @@ class _ActivityCardWithModify extends StatelessWidget {
                           : title[0].toUpperCase() + title.substring(1).toLowerCase();
 
                       return _ActivityCardNew(
-                        icon: _getIconForActivity(activityType),
+                        icon: _getIconForActivity(widget.activityType),
                         iconColor: color,
                         iconBgColor: color.withOpacity(0.2),
                         title: capitalizedTitle,
@@ -809,16 +863,16 @@ class _ActivityCardWithModify extends StatelessWidget {
                         subtitle: category.isNotEmpty ? category : capitalizedTitle,
                         trend: '↑ 0%',
                         trendColor: Colors.greenAccent,
-                        visual: _getVisualForActivity(activityType),
+                        visual: _getVisualForActivity(widget.activityType),
                         isDone: isDone,
-                        onDoubleTap: isModifyMode ? null : () => healthService.toggleGoalDone(activityType, !isDone),
+                        onDoubleTap: widget.isModifyMode ? null : () => widget.healthService.toggleGoalDone(widget.activityType, !isDone),
                       );
                     },
                   );
                 },
               ),
               // Blur overlay when card is selected for modification
-              if (isModifyMode && isSelected)
+              if (widget.isModifyMode && widget.isSelected)
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(28),
@@ -831,11 +885,11 @@ class _ActivityCardWithModify extends StatelessWidget {
                   ),
                 ),
               // Modify button - centered on card
-              if (isModifyMode)
+              if (widget.isModifyMode)
                 Positioned.fill(
                   child: Center(
                     child: GestureDetector(
-                      onTap: onModifyPressed,
+                      onTap: widget.onModifyPressed,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
@@ -862,21 +916,23 @@ class _ActivityCardWithModify extends StatelessWidget {
                   ),
                 ),
             ],
-          ),
-        );
-      },
     );
-  }
 
-  Stream<dynamic> _getStreamForActivity(String type) {
-    switch (type.toLowerCase()) {
-      case 'day streak':
-        return streakService.getStreakStream(userId);
-      case 'completed tasks':
-        return healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
-      default:
-        return healthService.getActivityMonthlyStats(type);
-    }
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: widget.shakeController,
+        child: staticCard, // Pass staticCard as child to prevent rebuilding the streams during animation
+        builder: (context, child) {
+          // iOS-style shake: small offset that alternates
+          final shakeOffset = widget.isModifyMode ? (widget.shakeController.value - 0.5) * 3 : 0.0;
+  
+          return Transform.translate(
+            offset: Offset(shakeOffset, shakeOffset * 0.3),
+            child: child,
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -1424,11 +1480,10 @@ class _RoutineSectionState extends State<_RoutineSection> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
-                children: widget.habits.map((habit) => _HabitCheckItem(
+                children: widget.habits.map<Widget>((habit) => _HabitCheckItem(
                   habit: habit,
                   userId: widget.userId,
                   habitService: widget.habitService,
-                  onDelete: () => widget.onConfirmDelete(habit),
                 )).toList(),
               ),
             ),
@@ -1447,43 +1502,42 @@ class _HabitCheckItem extends StatelessWidget {
   final Habit habit;
   final String userId;
   final HabitService habitService;
-  final VoidCallback onDelete;
 
-  const _HabitCheckItem({required this.habit, required this.userId, required this.habitService, required this.onDelete});
+  const _HabitCheckItem({required this.habit, required this.userId, required this.habitService});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
+          const SizedBox(width: 26), // Indent to align with title
           GestureDetector(
             onTap: () => habitService.toggleHabit(habit.id, habit.isDone, userId),
             child: Container(
-              width: 24,
-              height: 24,
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.orangeAccent, width: 2),
                 color: habit.isDone ? Colors.orangeAccent : Colors.transparent,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(
+                  color: habit.isDone ? Colors.orangeAccent : Colors.white24,
+                  width: 1.5,
+                ),
               ),
-              child: habit.isDone ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+              child: habit.isDone ? const Icon(Icons.check, color: Colors.black, size: 14) : null,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               habit.name,
               style: GoogleFonts.outfit(
                 color: habit.isDone ? Colors.white54 : Colors.white,
-                fontSize: 16,
+                fontSize: 15,
                 decoration: habit.isDone ? TextDecoration.lineThrough : null,
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(CupertinoIcons.trash, color: Colors.white24, size: 16),
-            onPressed: onDelete,
           ),
         ],
       ),
@@ -1496,7 +1550,6 @@ class _RoutineCardWithIcon extends StatefulWidget {
   final List<Habit> habits;
   final String userId;
   final HabitService habitService;
-  final Function(Habit) onConfirmDelete;
   final IconData icon;
   final Color iconColor;
   final Color iconBgColor;
@@ -1507,7 +1560,6 @@ class _RoutineCardWithIcon extends StatefulWidget {
     required this.habits,
     required this.userId,
     required this.habitService,
-    required this.onConfirmDelete,
     required this.icon,
     required this.iconColor,
     required this.iconBgColor,
@@ -1600,7 +1652,6 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
                   habit: habit,
                   userId: widget.userId,
                   habitService: widget.habitService,
-                  onDelete: () => widget.onConfirmDelete(habit),
                 )).toList(),
               ),
             ),
