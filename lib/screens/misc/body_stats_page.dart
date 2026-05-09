@@ -26,10 +26,29 @@ class BodyStatsPage extends StatefulWidget {
 class _BodyStatsPageState extends State<BodyStatsPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
+  bool _isHeightInCm = true;
 
   late final TextEditingController _heightCtrl;
   late final TextEditingController _weightCtrl;
   late final TextEditingController _ageCtrl;
+
+  void _toggleHeightUnit() {
+    setState(() {
+      if (_heightCtrl.text.isNotEmpty) {
+        final val = double.tryParse(_heightCtrl.text.trim());
+        if (val != null) {
+          if (_isHeightInCm) {
+            // Convert cm to ft
+            _heightCtrl.text = (val * 0.0328084).toStringAsFixed(2);
+          } else {
+            // Convert ft to cm
+            _heightCtrl.text = (val * 30.48).toStringAsFixed(1);
+          }
+        }
+      }
+      _isHeightInCm = !_isHeightInCm;
+    });
+  }
 
   @override
   void initState() {
@@ -54,7 +73,9 @@ class _BodyStatsPageState extends State<BodyStatsPage> {
     try {
       final fields = <String, dynamic>{
         if (_heightCtrl.text.trim().isNotEmpty)
-          'height': double.tryParse(_heightCtrl.text.trim()),
+          'height': _isHeightInCm 
+              ? double.tryParse(_heightCtrl.text.trim()) 
+              : ((double.tryParse(_heightCtrl.text.trim()) ?? 0) * 30.48),
         if (_weightCtrl.text.trim().isNotEmpty)
           'weight': double.tryParse(_weightCtrl.text.trim()),
         if (_ageCtrl.text.trim().isNotEmpty)
@@ -143,7 +164,7 @@ class _BodyStatsPageState extends State<BodyStatsPage> {
                         color: AppColors.primary.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(CupertinoIcons.heart_fill, color: AppColors.primary, size: 30),
+                      child: const Icon(Icons.fitness_center_rounded, color: AppColors.primary, size: 30),
                     ),
                     const SizedBox(width: 20),
                     const Expanded(
@@ -189,7 +210,27 @@ class _BodyStatsPageState extends State<BodyStatsPage> {
                           controller: _heightCtrl,
                           label: 'Height',
                           icon: CupertinoIcons.arrow_up_arrow_down,
-                          suffix: 'cm',
+                          suffixWidget: GestureDetector(
+                            onTap: _toggleHeightUnit,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _isHeightInCm ? 'cm' : 'ft',
+                                    style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(CupertinoIcons.arrow_up_arrow_down, color: AppColors.primary, size: 12),
+                                ],
+                              ),
+                            ),
+                          ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         ),
                         const SizedBox(height: 16),
@@ -246,7 +287,8 @@ class _StatsInputTile extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final IconData icon;
-  final String suffix;
+  final String? suffix;
+  final Widget? suffixWidget;
   final TextInputType keyboardType;
   final List<TextInputFormatter>? inputFormatters;
 
@@ -254,7 +296,8 @@ class _StatsInputTile extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.icon,
-    required this.suffix,
+    this.suffix,
+    this.suffixWidget,
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
   });
@@ -262,18 +305,18 @@ class _StatsInputTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       borderRadius: 24,
       opacity: 0.1,
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 20),
+            child: Icon(icon, color: AppColors.primary, size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -282,27 +325,48 @@ class _StatsInputTile extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                  style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500),
                 ),
-                TextFormField(
-                  controller: controller,
-                  keyboardType: keyboardType,
-                  inputFormatters: inputFormatters,
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                    border: InputBorder.none,
-                    hintText: '0',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: controller,
+                          keyboardType: keyboardType,
+                          inputFormatters: inputFormatters,
+                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          cursorColor: AppColors.primary,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            border: InputBorder.none,
+                            hintText: '0',
+                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                          ),
+                        ),
+                      ),
+                      if (suffixWidget != null)
+                        suffixWidget!
+                      else if (suffix != null)
+                        Text(
+                          suffix!,
+                          style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      const SizedBox(width: 8),
+                      Icon(CupertinoIcons.pencil, color: Colors.white.withOpacity(0.3), size: 16),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-          Text(
-            suffix,
-            style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),
