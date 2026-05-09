@@ -45,37 +45,6 @@ class _DashboardTabState extends State<DashboardTab> {
     if (mounted) setState(() => _isRefreshing = false);
   }
 
-  void _confirmDelete(BuildContext context, Habit habit) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2E2E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: Colors.white.withOpacity(0.1)),
-        ),
-        title: Text('Delete Habit?', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-        content: Text(
-          'Are you sure you want to delete "${habit.name}"?',
-          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white70)),
-          ),
-          TextButton(
-            onPressed: () {
-              widget.habitService.deleteHabit(habit.id);
-              Navigator.pop(ctx);
-            },
-            child: Text('Delete', style: GoogleFonts.outfit(color: AppColors.secondaryLight, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final habits = widget.habits;
@@ -84,6 +53,14 @@ class _DashboardTabState extends State<DashboardTab> {
     final afternoonHabits = habits.where((h) => h.routine == 'Afternoon').toList();
     final eveningHabits = habits.where((h) => h.routine == 'Evening').toList();
     final otherHabits = habits.where((h) => !['Morning', 'Afternoon', 'Evening'].contains(h.routine)).toList();
+
+    // Calculate current time for auto-expansion
+    final hour = DateTime.now().hour;
+    final isMorning = hour >= 5 && hour < 12;
+    final isAfternoon = hour >= 12 && hour < 17;
+    final isEvening = hour >= 17 && hour < 22;
+    // For anything outside (10pm - 4:59am), expand Midnight or fallback to Evening if Midnight isn't a specific section, or expand general
+    final isMidnight = hour >= 22 || hour < 5;
 
     return Container(
       decoration: const BoxDecoration(
@@ -148,51 +125,49 @@ class _DashboardTabState extends State<DashboardTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Daily Tasks', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   if (morningHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'Morning Routine',
                       habits: morningHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max_fill,
                       iconColor: const Color(0xFFD4A574),
                       iconBgColor: const Color(0xFF6B5344),
+                      initiallyExpanded: isMorning,
                     ),
-                  if (morningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (morningHabits.isNotEmpty) const SizedBox(height: 8),
                   if (afternoonHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'Afternoon Routine',
                       habits: afternoonHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.sun_max,
                       iconColor: const Color(0xFFFFD700),
                       iconBgColor: const Color(0xFF8B7500),
-                      initiallyExpanded: true,
+                      initiallyExpanded: isAfternoon,
                     ),
-                  if (afternoonHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (afternoonHabits.isNotEmpty) const SizedBox(height: 8),
                   if (eveningHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'Evening Routine',
                       habits: eveningHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.moon_stars_fill,
                       iconColor: const Color(0xFF9B7EBD),
                       iconBgColor: const Color(0xFF4A3F5C),
+                      initiallyExpanded: isEvening || isMidnight, // Fallback to Evening if midnight
                     ),
-                  if (eveningHabits.isNotEmpty) const SizedBox(height: 12),
+                  if (eveningHabits.isNotEmpty) const SizedBox(height: 8),
                   if (otherHabits.isNotEmpty)
                     _RoutineCardWithIcon(
                       title: 'General Habits',
                       habits: otherHabits,
                       userId: widget.userId,
                       habitService: widget.habitService,
-                      onConfirmDelete: (h) => _confirmDelete(context, h),
                       icon: CupertinoIcons.arrow_2_circlepath,
                       iconColor: const Color(0xFF7FD8BE),
                       iconBgColor: const Color(0xFF3F6B5C),
@@ -1457,11 +1432,10 @@ class _RoutineSectionState extends State<_RoutineSection> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Column(
-                children: widget.habits.map((habit) => _HabitCheckItem(
+                children: widget.habits.map<Widget>((habit) => _HabitCheckItem(
                   habit: habit,
                   userId: widget.userId,
                   habitService: widget.habitService,
-                  onDelete: () => widget.onConfirmDelete(habit),
                 )).toList(),
               ),
             ),
@@ -1480,43 +1454,42 @@ class _HabitCheckItem extends StatelessWidget {
   final Habit habit;
   final String userId;
   final HabitService habitService;
-  final VoidCallback onDelete;
 
-  const _HabitCheckItem({required this.habit, required this.userId, required this.habitService, required this.onDelete});
+  const _HabitCheckItem({required this.habit, required this.userId, required this.habitService});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
+          const SizedBox(width: 26), // Indent to align with title
           GestureDetector(
             onTap: () => habitService.toggleHabit(habit.id, habit.isDone, userId),
             child: Container(
-              width: 24,
-              height: 24,
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.orangeAccent, width: 2),
                 color: habit.isDone ? Colors.orangeAccent : Colors.transparent,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(
+                  color: habit.isDone ? Colors.orangeAccent : Colors.white24,
+                  width: 1.5,
+                ),
               ),
-              child: habit.isDone ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+              child: habit.isDone ? const Icon(Icons.check, color: Colors.black, size: 14) : null,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               habit.name,
               style: GoogleFonts.outfit(
                 color: habit.isDone ? Colors.white54 : Colors.white,
-                fontSize: 16,
+                fontSize: 15,
                 decoration: habit.isDone ? TextDecoration.lineThrough : null,
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(CupertinoIcons.trash, color: Colors.white24, size: 16),
-            onPressed: onDelete,
           ),
         ],
       ),
@@ -1529,7 +1502,6 @@ class _RoutineCardWithIcon extends StatefulWidget {
   final List<Habit> habits;
   final String userId;
   final HabitService habitService;
-  final Function(Habit) onConfirmDelete;
   final IconData icon;
   final Color iconColor;
   final Color iconBgColor;
@@ -1540,7 +1512,6 @@ class _RoutineCardWithIcon extends StatefulWidget {
     required this.habits,
     required this.userId,
     required this.habitService,
-    required this.onConfirmDelete,
     required this.icon,
     required this.iconColor,
     required this.iconBgColor,
@@ -1633,7 +1604,6 @@ class _RoutineCardWithIconState extends State<_RoutineCardWithIcon> {
                   habit: habit,
                   userId: widget.userId,
                   habitService: widget.habitService,
-                  onDelete: () => widget.onConfirmDelete(habit),
                 )).toList(),
               ),
             ),
