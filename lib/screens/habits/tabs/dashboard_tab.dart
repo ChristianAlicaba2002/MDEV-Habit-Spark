@@ -2011,6 +2011,7 @@ class _ActivityLogItem extends StatelessWidget {
 
   IconData _getIcon() {
     final type = log.type.toLowerCase();
+    if (log.unit == 'goal reached') return LucideIcons.circle_check;
     if (type.contains('steps')) return LucideIcons.footprints;
     if (type.contains('calor')) return LucideIcons.flame;
     if (type.contains('dist')) return LucideIcons.map_pin;
@@ -2022,6 +2023,7 @@ class _ActivityLogItem extends StatelessWidget {
 
   Color _getColor() {
     final type = log.type.toLowerCase();
+    if (log.unit == 'goal reached') return Colors.orangeAccent;
     if (type.contains('steps')) return Colors.orangeAccent;
     if (type.contains('calor')) return Colors.redAccent;
     if (type.contains('dist')) return Colors.blueAccent;
@@ -2069,7 +2071,9 @@ class _ActivityLogItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isGoalCompletion ? 'GOAL COMPLETED' : log.type.toUpperCase(),
+                  log.metadata?['habitName']?.toString().toUpperCase() ?? 
+                  log.metadata?['activityName']?.toString().toUpperCase() ??
+                  (isGoalCompletion ? 'GOAL REACHED' : log.type.toUpperCase()),
                   style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontSize: 14,
@@ -2079,9 +2083,11 @@ class _ActivityLogItem extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isGoalCompletion ? 'Target ${log.type} reached' : '${log.value.toStringAsFixed(1)} ${log.unit}',
+                  isGoalCompletion 
+                      ? 'Target reached' 
+                      : (log.unit == 'goal reached' ? 'Task completed' : '${log.value.toStringAsFixed(1)} ${log.unit}'),
                   style: GoogleFonts.outfit(
-                    color: isGoalCompletion ? Colors.greenAccent : color,
+                    color: isGoalCompletion ? Colors.greenAccent : (log.unit == 'goal reached' ? Colors.orangeAccent : color),
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
