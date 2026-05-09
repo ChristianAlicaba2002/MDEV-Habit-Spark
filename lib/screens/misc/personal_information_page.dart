@@ -28,16 +28,12 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
   bool _isSaving = false;
 
   bool _isAccountExpanded = true;
-  bool _isBodyStatsExpanded = false;
   bool _isSecurityExpanded = true;
 
   late final TextEditingController _usernameCtrl;
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
   late final TextEditingController _emailCtrl;
-  late final TextEditingController _heightCtrl;
-  late final TextEditingController _weightCtrl;
-  late final TextEditingController _ageCtrl;
 
   late final TextEditingController _currentPassCtrl;
   late final TextEditingController _newPassCtrl;
@@ -56,12 +52,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     _firstNameCtrl = TextEditingController(text: d?.firstName ?? '');
     _lastNameCtrl = TextEditingController(text: d?.lastName ?? '');
     _emailCtrl = TextEditingController(text: d?.email ?? '');
-    _heightCtrl =
-        TextEditingController(text: d?.height != null ? '${d!.height}' : '');
-    _weightCtrl =
-        TextEditingController(text: d?.weight != null ? '${d!.weight}' : '');
-    _ageCtrl =
-        TextEditingController(text: d?.age != null ? '${d!.age}' : '');
 
     _currentPassCtrl = TextEditingController();
     _newPassCtrl = TextEditingController();
@@ -74,9 +64,6 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
     _emailCtrl.dispose();
-    _heightCtrl.dispose();
-    _weightCtrl.dispose();
-    _ageCtrl.dispose();
     _currentPassCtrl.dispose();
     _newPassCtrl.dispose();
     _confirmPassCtrl.dispose();
@@ -91,17 +78,11 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         'firstName': _firstNameCtrl.text.trim(),
         'lastName': _lastNameCtrl.text.trim(),
         'username': _usernameCtrl.text.trim(),
-        if (_heightCtrl.text.trim().isNotEmpty)
-          'height': double.tryParse(_heightCtrl.text.trim()),
-        if (_weightCtrl.text.trim().isNotEmpty)
-          'weight': double.tryParse(_weightCtrl.text.trim()),
-        if (_ageCtrl.text.trim().isNotEmpty)
-          'age': int.tryParse(_ageCtrl.text.trim()),
       };
       await widget.authService.updateProfile(widget.userId, fields);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!')),
+          const SnackBar(content: Text('Account information updated!')),
         );
         Navigator.pop(context);
       }
@@ -172,271 +153,211 @@ class _PersonalInformationPageState extends State<PersonalInformationPage> {
         ),
         child: SafeArea(
           child: Column(
-          children: [
-            // ── Header ───────────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.2)),
-                        ),
-                        child: const Icon(
-                          CupertinoIcons.arrow_left,
-                          color: Colors.white,
-                          size: 18,
+            children: [
+              // ── Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withOpacity(0.2)),
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.arrow_left,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const Text(
-                    'Personal Information',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    const Text(
+                      'Personal Information',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // ── Form ─────────────────────────────────────────────────────────
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
+              // ── Form
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 8),
 
-                      // ── Account section
-                      _SectionHeader(
-                        text: 'Account',
-                        isExpanded: _isAccountExpanded,
-                        onTap: () => setState(() => _isAccountExpanded = !_isAccountExpanded),
-                      ),
-                      _CollapsibleSection(
-                        isExpanded: _isAccountExpanded,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-                            _ProfileField(
-                              controller: _usernameCtrl,
-                              label: 'Username',
-                              icon: CupertinoIcons.at,
-                              hint: 'Enter your username',
-                            ),
-                            const SizedBox(height: 8),
-                            _ProfileField(
-                              controller: _firstNameCtrl,
-                              label: 'First Name',
-                              icon: CupertinoIcons.person,
-                              hint: 'Enter your first name',
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Required'
-                                  : null,
-                            ),
-                            const SizedBox(height: 8),
-                            _ProfileField(
-                              controller: _lastNameCtrl,
-                              label: 'Last Name',
-                              icon: CupertinoIcons.person,
-                              hint: 'Enter your last name',
-                              validator: (v) => v == null || v.trim().isEmpty
-                                  ? 'Required'
-                                  : null,
-                            ),
-                            const SizedBox(height: 8),
-                            _ProfileField(
-                              controller: _emailCtrl,
-                              label: 'Email',
-                              icon: CupertinoIcons.mail,
-                              hint: 'your@email.com',
-                              readOnly: true, // Email change requires re-auth
-                              suffixText: 'Read-only',
-                            ),
-                          ],
+                        // ── Account section
+                        _SectionHeader(
+                          text: 'Account',
+                          isExpanded: _isAccountExpanded,
+                          onTap: () => setState(() => _isAccountExpanded = !_isAccountExpanded),
                         ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // ── Body stats section
-                      _SectionHeader(
-                        text: 'Body Stats',
-                        isExpanded: _isBodyStatsExpanded,
-                        onTap: () => setState(() => _isBodyStatsExpanded = !_isBodyStatsExpanded),
-                      ),
-                      _CollapsibleSection(
-                        isExpanded: _isBodyStatsExpanded,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _ProfileField(
-                                    controller: _ageCtrl,
-                                    label: 'Age',
-                                    icon: CupertinoIcons.calendar,
-                                    hint: 'e.g. 25',
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _ProfileField(
-                                    controller: _heightCtrl,
-                                    label: 'Height (cm)',
-                                    icon: CupertinoIcons.arrow_up_arrow_down,
-                                    hint: 'e.g. 170',
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                            decimal: true),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            _ProfileField(
-                              controller: _weightCtrl,
-                              label: 'Weight (kg)',
-                              icon: CupertinoIcons.circle,
-                              hint: 'e.g. 65',
-                              keyboardType: const TextInputType.numberWithOptions(
-                                  decimal: true),
-                            ),
-                          ],
+                        _CollapsibleSection(
+                          isExpanded: _isAccountExpanded,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              _ProfileField(
+                                controller: _usernameCtrl,
+                                label: 'Username',
+                                icon: CupertinoIcons.at,
+                                hint: 'Enter your username',
+                              ),
+                              const SizedBox(height: 8),
+                              _ProfileField(
+                                controller: _firstNameCtrl,
+                                label: 'First Name',
+                                icon: CupertinoIcons.person,
+                                hint: 'Enter your first name',
+                                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                              ),
+                              const SizedBox(height: 8),
+                              _ProfileField(
+                                controller: _lastNameCtrl,
+                                label: 'Last Name',
+                                icon: CupertinoIcons.person,
+                                hint: 'Enter your last name',
+                                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                              ),
+                              const SizedBox(height: 8),
+                              _ProfileField(
+                                controller: _emailCtrl,
+                                label: 'Email',
+                                icon: CupertinoIcons.mail,
+                                hint: 'your@email.com',
+                                readOnly: true,
+                                suffixText: 'Read-only',
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // ── Security section
-                      _SectionHeader(
-                        text: 'Security',
-                        isExpanded: _isSecurityExpanded,
-                        onTap: () => setState(() => _isSecurityExpanded = !_isSecurityExpanded),
-                      ),
-                      _CollapsibleSection(
-                        isExpanded: _isSecurityExpanded,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-                            _DialogField(
-                              controller: _currentPassCtrl,
-                              label: 'Current Password',
-                              obscure: _obscureCurrent,
-                              onToggleObscure: () => setState(() => _obscureCurrent = !_obscureCurrent),
-                            ),
-                            const SizedBox(height: 12),
-                            _DialogField(
-                              controller: _newPassCtrl,
-                              label: 'New Password',
-                              obscure: _obscureNew,
-                              onToggleObscure: () => setState(() => _obscureNew = !_obscureNew),
-                            ),
-                            const SizedBox(height: 12),
-                            _DialogField(
-                              controller: _confirmPassCtrl,
-                              label: 'Confirm Password',
-                              obscure: _obscureConfirm,
-                              onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                            ),
-                            const SizedBox(height: 16),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: ElevatedButton(
-                                onPressed: _isUpdatingPassword ? null : _updatePassword,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white.withOpacity(0.15),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                        // ── Security section
+                        _SectionHeader(
+                          text: 'Security',
+                          isExpanded: _isSecurityExpanded,
+                          onTap: () => setState(() => _isSecurityExpanded = !_isSecurityExpanded),
+                        ),
+                        _CollapsibleSection(
+                          isExpanded: _isSecurityExpanded,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              _DialogField(
+                                controller: _currentPassCtrl,
+                                label: 'Current Password',
+                                obscure: _obscureCurrent,
+                                onToggleObscure: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                              ),
+                              const SizedBox(height: 12),
+                              _DialogField(
+                                controller: _newPassCtrl,
+                                label: 'New Password',
+                                obscure: _obscureNew,
+                                onToggleObscure: () => setState(() => _obscureNew = !_obscureNew),
+                              ),
+                              const SizedBox(height: 12),
+                              _DialogField(
+                                controller: _confirmPassCtrl,
+                                label: 'Confirm Password',
+                                obscure: _obscureConfirm,
+                                onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                              ),
+                              const SizedBox(height: 16),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton(
+                                  onPressed: _isUpdatingPassword ? null : _updatePassword,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white.withOpacity(0.15),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  child: _isUpdatingPassword
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                        )
+                                      : const Text(
+                                          'Update Password',
+                                          style: TextStyle(fontWeight: FontWeight.w600),
+                                        ),
                                 ),
-                                child: _isUpdatingPassword
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                      )
-                                    : const Text(
-                                        'Update Password',
-                                        style: TextStyle(fontWeight: FontWeight.w600),
-                                      ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // ── Save Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: _isSaving ? null : _save,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.white.withAlpha(100),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // ── Save Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: _isSaving ? null : _save,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            disabledBackgroundColor:
-                                Colors.white.withAlpha(100),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.black,
+                                    ),
+                                  )
+                                : Text(
+                                    'Save Changes',
+                                    style: GoogleFonts.poppins(
+                                      color: const Color(0xFF0A1F1F),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
-                          child: _isSaving
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.black,
-                                  ),
-                                )
-                              : Text(
-                                  'Save Changes',
-                                  style: GoogleFonts.poppins(
-                                    color: const Color(0xFF0A1F1F),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
                         ),
-                      ),
 
-                      const SizedBox(height: 40),
-                    ],
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         ),
       ),
     );

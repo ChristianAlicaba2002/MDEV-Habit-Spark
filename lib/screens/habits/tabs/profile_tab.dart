@@ -11,6 +11,7 @@ import 'package:habit_spark/screens/misc/user_reminders_page.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/constants/app_colors.dart';
+import 'package:habit_spark/screens/misc/body_stats_page.dart';
 
 class ProfileTab extends StatefulWidget {
   final String userId;
@@ -74,6 +75,7 @@ class _ProfileTabState extends State<ProfileTab> {
         final user = widget.authService.currentUser;
         final displayName = '${userData?.firstName ?? ''} ${userData?.lastName ?? ''}'.trim();
         final name = displayName.isEmpty ? user?.email?.split('@')[0] ?? 'User' : displayName;
+        final username = '@${userData?.email.split('@')[0] ?? 'user123'}';
 
         return Container(
           decoration: const BoxDecoration(
@@ -81,229 +83,354 @@ class _ProfileTabState extends State<ProfileTab> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF2C3E3E),
-                Color(0xFF4A6666),
+                Color(0xFF0D1B1B),
+                Color(0xFF162A2A),
+                Color(0xFF1A3333),
               ],
+              stops: [0.0, 0.5, 1.0],
             ),
           ),
-          child: SafeArea(
-            child: Stack(
-            children: [
-              RefreshIndicator(
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              child: RefreshIndicator(
                 onRefresh: _onRefresh,
-                color: AppColors.warning,
+                color: AppColors.primary,
                 backgroundColor: const Color(0xFF1E2E2E),
                 child: CustomScrollView(
                   physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   slivers: _isRefreshing
                     ? [const SliverProfileSkeleton()]
                     : [
-                    // ── Custom Header
+                    // ── Modern Header
                     SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          RoundIconButton(
-                            icon: CupertinoIcons.arrow_left,
-                            onTap: widget.onBackTap,
-                            outlined: true,
-                            isSquare: true,
-                          ),
-                          const Text(
-                            'Profile',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          RoundIconButton(
-                            icon: CupertinoIcons.bell,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NotificationsPage(),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const SizedBox(width: 44), // Spacer for centering
+                            const Text(
+                              'Profile',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
                               ),
                             ),
-                            outlined: true,
-                            isSquare: true,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // ── Profile Glass Card
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      child: GlassCard(
-                        padding: const EdgeInsets.all(24),
-                        borderRadius: 30,
-                        blur: 20,
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 40,
-                                  backgroundColor: Colors.white.withOpacity(0.1),
-                                  backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
-                                      ? NetworkImage(userData!.photoUrl)
-                                      : null,
-                                  child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
-                                      ? Text(
-                                          (user?.email?.substring(0, 1).toUpperCase()) ?? 'U',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 32,
-                                          ),
-                                        )
-                                      : null,
+                            RoundIconButton(
+                              icon: CupertinoIcons.bell,
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const NotificationsPage(),
                                 ),
-                                const SizedBox(width: 20),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        userData?.email.isNotEmpty == true ? userData!.email.split('@')[0] : 'London, United Kingdom',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.6),
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                _StatPill(
-                                  label: 'Age',
-                                  value: userData?.age != null ? '${userData!.age}' : '27',
-                                  unit: 'y.o',
-                                ),
-                                const SizedBox(width: 12),
-                                _StatPill(
-                                  label: 'Height',
-                                  value: userData?.height != null ? '${userData!.height!.toInt()}' : '170',
-                                  unit: 'cm',
-                                ),
-                                const SizedBox(width: 12),
-                                _StatPill(
-                                  label: 'Weight',
-                                  value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '52',
-                                  unit: 'kg',
-                                ),
-                              ],
+                              ),
+                              outlined: true,
+                              isSquare: true,
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
 
-                  // ── Account Settings
-                  const _SectionHeader(title: 'Account settings'),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _GlassPillItem(
-                          icon: CupertinoIcons.person,
-                          label: 'Personal Information',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => PersonalInformationPage(
-                                userId: widget.userId,
-                                authService: widget.authService,
-                                initialData: userData,
+                    // ── Premium Profile Card
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: GlassCard(
+                          padding: const EdgeInsets.all(24),
+                          borderRadius: 32,
+                          blur: 25,
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppColors.primary.withOpacity(0.3),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 45,
+                                          backgroundColor: Colors.white.withOpacity(0.05),
+                                          backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
+                                              ? NetworkImage(userData!.photoUrl)
+                                              : null,
+                                          child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
+                                              ? Text(
+                                                  (user?.email?.substring(0, 1).toUpperCase()) ?? 'U',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 36,
+                                                  ),
+                                                )
+                                              : null,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: const Color(0xFF1A3333), width: 2),
+                                          ),
+                                          child: const Icon(
+                                            CupertinoIcons.camera_fill,
+                                            size: 14,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          username,
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(0.5),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _ProfileCompletionBar(progress: 0.8),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 28),
+                              Row(
+                                children: [
+                                  _StatPill(
+                                    label: 'Age',
+                                    value: userData?.age != null ? '${userData!.age}' : '21',
+                                    unit: 'y.o',
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _StatPill(
+                                    label: 'Height',
+                                    value: userData?.height != null ? '${userData!.height!.toInt()}' : '165',
+                                    unit: 'cm',
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _StatPill(
+                                    label: 'Weight',
+                                    value: userData?.weight != null ? '${userData!.weight!.toInt()}' : '63',
+                                    unit: 'kg',
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // ── Settings Sections
+                    const _SectionHeader(title: 'Account Settings'),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          _GlassSettingTile(
+                            icon: CupertinoIcons.person,
+                            title: 'Personal Information',
+                            subtitle: 'Update your personal details',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PersonalInformationPage(
+                                  userId: widget.userId,
+                                  authService: widget.authService,
+                                  initialData: userData,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        _GlassPillItem(
-                          icon: CupertinoIcons.list_bullet_indent,
-                          label: 'Reminder',
-                          onTap: () {
-                            Navigator.push(
+                          _GlassSettingTile(
+                            icon: CupertinoIcons.briefcase,
+                            title: 'Body Stats',
+                            subtitle: 'Manage your body statistics',
+                            onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => UserRemindersPage(
+                                builder: (_) => BodyStatsPage(
                                   userId: widget.userId,
+                                  authService: widget.authService,
+                                  initialData: userData,
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        _GlassPillItem(
-                          icon: CupertinoIcons.speaker_2,
-                          label: 'Sound',
-                          hasToggle: true,
-                          onTap: () {},
-                        ),
-                        const SizedBox(height: 12),
-                        _GlassPillItem(
-                          icon: CupertinoIcons.arrow_right_arrow_left,
-                          label: 'Logout',
-                          isLogout: true,
+                            ),
+                          ),
+                          _GlassSettingTile(
+                            icon: CupertinoIcons.calendar_badge_minus,
+                            title: 'Reminder',
+                            subtitle: 'Set your reminders',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => UserRemindersPage(
+                                    userId: widget.userId,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          _GlassSettingTile(
+                            icon: CupertinoIcons.speaker_2,
+                            title: 'Sound',
+                            subtitle: 'App sound',
+                            hasToggle: true,
+                          ),
+                        ]),
+                      ),
+                    ),
+
+                    // ── Logout Section
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+                        child: GestureDetector(
                           onTap: () => _showLogoutConfirmation(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.red.withOpacity(0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(CupertinoIcons.arrow_right_to_line, color: Colors.red, size: 20),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Logout',
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Sign out from your account',
+                                        style: TextStyle(
+                                          color: Colors.red.withOpacity(0.6),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(CupertinoIcons.chevron_right, color: Colors.red.withOpacity(0.4), size: 18),
+                              ],
+                            ),
+                          ),
                         ),
-                      ]),
+                      ),
                     ),
-                  ),
-
-                  // ── Preferences
-                  const _SectionHeader(title: 'Preferences'),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _GlassPillItem(
-                          icon: CupertinoIcons.person_2,
-                          label: 'Experience level',
-                          onTap: () {},
-                        ),
-                        const SizedBox(height: 12),
-                        _GlassPillItem(
-                          icon: CupertinoIcons.exclamationmark_triangle,
-                          label: 'Caution areas',
-                          onTap: () {},
-                        ),
-                      ]),
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 140)),
-                ],
+                  ],
+                ),
               ),
-              ),
-            ],
-          ),
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _ProfileCompletionBar extends StatelessWidget {
+  final double progress;
+  const _ProfileCompletionBar({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Profile Completion',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            Text(
+              '${(progress * 100).toInt()}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 8,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: FractionallySizedBox(
+            widthFactor: progress,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, AppColors.primaryDark],
+                ),
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -316,13 +443,14 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
         child: Text(
           title,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -341,9 +469,9 @@ class _StatPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.05)),
         ),
@@ -352,31 +480,33 @@ class _StatPill extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withOpacity(0.5),
                 fontSize: 12,
               ),
             ),
-            const SizedBox(height: 4),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: value,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  TextSpan(
-                    text: ' $unit',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 10,
-                    ),
+                ),
+                const SizedBox(width: 2),
+                Text(
+                  unit,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 11,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -385,88 +515,66 @@ class _StatPill extends StatelessWidget {
   }
 }
 
-class _GlassPillItem extends StatelessWidget {
+class _GlassSettingTile extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
   final bool hasToggle;
-  final bool isLogout;
-  final VoidCallback onTap;
 
-  const _GlassPillItem({
+  const _GlassSettingTile({
     required this.icon,
-    required this.label,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
     this.hasToggle = false,
-    this.isLogout = false,
-    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(35),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: GestureDetector(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassCard(
+        padding: EdgeInsets.zero,
+        borderRadius: 24,
+        opacity: 0.08,
+        child: ListTile(
           onTap: onTap,
-          child: Container(
-            height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isLogout 
-                  ? Colors.red.withOpacity(0.15)
-                  : Colors.white.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(35),
-              border: Border.all(
-                color: isLogout 
-                    ? Colors.red.withOpacity(0.3)
-                    : Colors.white.withOpacity(0.1),
-              ),
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isLogout 
-                        ? Colors.red.withOpacity(0.2)
-                        : Colors.white.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon, 
-                    color: isLogout ? Colors.red : Colors.white, 
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isLogout ? Colors.red : Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                if (hasToggle)
-                  Switch(
-                    value: true,
-                    onChanged: (v) {},
-                    activeColor: Colors.white,
-                    activeTrackColor: const Color(0xFF1D3D3D),
-                  )
-                else
-                  Icon(
-                    CupertinoIcons.chevron_right,
-                    color: isLogout 
-                        ? Colors.red.withOpacity(0.6)
-                        : Colors.white.withOpacity(0.4),
-                    size: 16,
-                  ),
-              ],
+            child: Icon(icon, color: Colors.white.withOpacity(0.9), size: 22),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 13,
+            ),
+          ),
+          trailing: hasToggle
+              ? CupertinoSwitch(
+                  value: true,
+                  onChanged: (v) {},
+                  activeColor: AppColors.primary,
+                )
+              : Icon(
+                  CupertinoIcons.chevron_right,
+                  color: Colors.white.withOpacity(0.3),
+                  size: 18,
+                ),
         ),
       ),
     );
