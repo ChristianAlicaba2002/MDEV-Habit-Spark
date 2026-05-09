@@ -7,7 +7,7 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
-import 'package:habit_spark/screens/misc/user_reminders_page.dart';
+import 'package:habit_spark/screens/misc/smart_nudges_page.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/constants/app_colors.dart';
@@ -291,14 +291,14 @@ class _ProfileTabState extends State<ProfileTab> {
                             ),
                           ),
                           _GlassSettingTile(
-                            icon: CupertinoIcons.calendar_badge_minus,
-                            title: 'Reminder',
-                            subtitle: 'Set your reminders',
+                            icon: CupertinoIcons.sparkles,
+                            title: 'Smart Nudges',
+                            subtitle: 'Align with your natural flow',
                             onTap: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => UserRemindersPage(
+                                  builder: (_) => SmartNudgesPage(
                                     userId: widget.userId,
                                   ),
                                 ),
