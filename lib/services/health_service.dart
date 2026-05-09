@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/health_log_model.dart';
+import 'notification_service.dart';
 
 class HealthService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -335,10 +336,17 @@ class HealthService {
         'unit': 'goal reached',
         'timestamp': now, // Use local now for immediate stream updates
         'metadata': {
-          'isGoalCompletion': true,
           'activityName': type,
         },
       });
+
+      // 3. Trigger a real notification for the "physical" achievement
+      await NotificationService().createNotification(
+        userId: _userId,
+        title: '🎯 Goal Reached: $type',
+        message: 'Fantastic! You reached your goal for ${type.toLowerCase()} today! 🚀',
+        type: 'health',
+      );
     } else {
       // UNDO: Delete both completion status and the activity log
       await _db.collection('goal_completions').doc(docId).delete();

@@ -15,6 +15,7 @@ import 'package:habit_spark/screens/misc/body_stats_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:habit_spark/services/storage_service.dart';
+import 'package:habit_spark/services/notification_service.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -257,16 +258,61 @@ class _ProfileTabState extends State<ProfileTab> {
                                 letterSpacing: -0.5,
                               ),
                             ),
-                            RoundIconButton(
-                              icon: CupertinoIcons.bell,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const NotificationsPage(),
-                                ),
-                              ),
-                              outlined: true,
-                              isSquare: true,
+                            StreamBuilder<int>(
+                              stream: NotificationService().getUnreadCountStream(widget.userId),
+                              builder: (context, snapshot) {
+                                final unreadCount = snapshot.data ?? 0;
+                                return Stack(
+                                  children: [
+                                    RoundIconButton(
+                                      icon: CupertinoIcons.bell,
+                                      onTap: () {
+                                        HapticFeedback.mediumImpact();
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => NotificationsPage(),
+                                          ),
+                                        );
+                                      },
+                                      outlined: true,
+                                      isSquare: true,
+                                    ),
+                                    if (unreadCount > 0)
+                                      Positioned(
+                                        right: 8,
+                                        top: 8,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: AppColors.primary.withOpacity(0.5),
+                                                blurRadius: 4,
+                                                spreadRadius: 1,
+                                              ),
+                                            ],
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 16,
+                                            minHeight: 16,
+                                          ),
+                                          child: Text(
+                                            unreadCount > 9 ? '9+' : unreadCount.toString(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              }
                             ),
                           ],
                         ),

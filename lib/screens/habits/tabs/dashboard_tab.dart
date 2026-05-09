@@ -13,6 +13,9 @@ import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:habit_spark/screens/habits/recent_activity_page.dart';
+import 'package:habit_spark/services/notification_service.dart';
+import 'package:habit_spark/screens/misc/notifications_page.dart';
+import 'package:flutter/services.dart';
 
 class DashboardTab extends StatefulWidget {
   final String userId;
@@ -107,7 +110,28 @@ class _DashboardTabState extends State<DashboardTab> {
                         ),
                       ),
                     ),
-                    _HeaderIcon(icon: CupertinoIcons.bell, hasNotification: true),
+                    StreamBuilder<int>(
+                      stream: NotificationService().getUnreadCountStream(widget.userId),
+                      builder: (context, snapshot) {
+                        final unreadCount = snapshot.data ?? 0;
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => NotificationsPage(),
+                              ),
+                            );
+                          },
+                          child: _HeaderIcon(
+                            icon: CupertinoIcons.bell, 
+                            hasNotification: unreadCount > 0,
+                            notificationCount: unreadCount,
+                          ),
+                        );
+                      }
+                    ),
                     const SizedBox(width: 12),
                     _HeaderIcon(
                       child: Text(
@@ -233,34 +257,51 @@ class _HeaderIcon extends StatelessWidget {
   final IconData? icon;
   final Widget? child;
   final bool hasNotification;
-  const _HeaderIcon({this.icon, this.child, this.hasNotification = false});
+  final int notificationCount;
+  final VoidCallback? onTap;
+
+  const _HeaderIcon({
+    this.icon, 
+    this.child, 
+    this.hasNotification = false,
+    this.notificationCount = 0,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (icon != null) Icon(icon, color: Colors.white, size: 20),
-          if (child != null) child!,
-          if (hasNotification)
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (icon != null) Icon(icon, color: Colors.white, size: 20),
+            if (child != null) child!,
+            if (hasNotification)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  alignment: Alignment.center,
+                  child: Text(
+                    notificationCount > 9 ? '!' : notificationCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
