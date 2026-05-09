@@ -82,6 +82,7 @@ class _StatsTabState extends State<StatsTab> {
                       child: StatsHeader(
                         userName: widget.userName,
                         userInitial: widget.userInitial,
+                        userId: widget.userId,
                       ),
                     ),
                   ),
