@@ -63,6 +63,10 @@ class _ProfileTabState extends State<ProfileTab> {
       // Crop the image
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: pickedFile.path,
+        maxWidth: 400,
+        maxHeight: 400,
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 70,
         aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         uiSettings: [
           AndroidUiSettings(
