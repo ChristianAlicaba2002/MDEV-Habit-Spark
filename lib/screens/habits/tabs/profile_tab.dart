@@ -12,6 +12,12 @@ import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/screens/misc/body_stats_page.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:habit_spark/services/storage_service.dart';
+import 'package:flutter/services.dart';
+import 'dart:io';
+import 'dart:convert';
 
 class ProfileTab extends StatefulWidget {
   final String userId;
@@ -35,11 +41,134 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> {
   bool _isRefreshing = false;
+  bool _isUploading = false;
+  final StorageService _storageService = StorageService();
+  final ImagePicker _picker = ImagePicker();
 
   Future<void> _onRefresh() async {
     setState(() => _isRefreshing = true);
     await Future.delayed(const Duration(milliseconds: 1200));
     if (mounted) setState(() => _isRefreshing = false);
+  }
+
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+      );
+
+      if (pickedFile == null) return;
+
+      // Crop the image
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Profile Picture',
+            toolbarColor: const Color(0xFF1A3333),
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            activeControlsWidgetColor: AppColors.primary,
+          ),
+          IOSUiSettings(
+            title: 'Crop Profile Picture',
+            aspectRatioLockEnabled: true,
+            resetButtonHidden: true,
+          ),
+        ],
+      );
+
+      if (croppedFile == null) return;
+
+      setState(() => _isUploading = true);
+
+      // Convert image to Base64 to bypass Storage billing requirements
+      final bytes = await File(croppedFile.path).readAsBytes();
+      final base64String = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+      // Update Firestore directly
+      await widget.authService.updateProfile(widget.userId, {'photoUrl': base64String});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  void _showImageSourceSelection() {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GlassCard(
+        borderRadius: 32,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Profile Picture',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.camera, color: AppColors.primary),
+              ),
+              title: const Text('Take Photo', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(CupertinoIcons.photo, color: AppColors.primary),
+              ),
+              title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadImage(ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showLogoutConfirmation(BuildContext context) {
@@ -155,45 +284,84 @@ class _ProfileTabState extends State<ProfileTab> {
                                   Stack(
                                     children: [
                                       Container(
+                                        padding: const EdgeInsets.all(2),
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: AppColors.primary.withOpacity(0.3),
-                                            width: 2,
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              const Color(0xFF7dcfff).withOpacity(0.8),
+                                              const Color(0xFFbb9af7).withOpacity(0.8),
+                                            ],
                                           ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0xFF7dcfff).withOpacity(0.25),
+                                              blurRadius: 15,
+                                              spreadRadius: 2,
+                                            ),
+                                          ],
                                         ),
-                                        child: CircleAvatar(
-                                          radius: 45,
-                                          backgroundColor: Colors.white.withOpacity(0.05),
-                                          backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
-                                              ? NetworkImage(userData!.photoUrl)
-                                              : null,
-                                          child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
-                                              ? Text(
-                                                  (user?.email?.substring(0, 1).toUpperCase()) ?? 'U',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 36,
-                                                  ),
-                                                )
-                                              : null,
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF1A3333),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: CircleAvatar(
+                                            radius: 45,
+                                            backgroundColor: Colors.white.withOpacity(0.05),
+                                            backgroundImage: (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
+                                                ? (userData!.photoUrl.startsWith('data:image')
+                                                    ? MemoryImage(base64Decode(userData!.photoUrl.split(',').last)) as ImageProvider
+                                                    : NetworkImage(userData!.photoUrl) as ImageProvider)
+                                                : null,
+                                            child: (userData?.photoUrl == null || userData!.photoUrl.isEmpty)
+                                                ? Text(
+                                                    (user?.email?.substring(0, 1).toUpperCase()) ?? 'U',
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 36,
+                                                    ),
+                                                  )
+                                                : null,
+                                          ),
                                         ),
                                       ),
                                       Positioned(
                                         bottom: 0,
                                         right: 0,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primary,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: const Color(0xFF1A3333), width: 2),
-                                          ),
-                                          child: const Icon(
-                                            CupertinoIcons.camera_fill,
-                                            size: 14,
-                                            color: Colors.white,
+                                        child: GestureDetector(
+                                          onTap: _showImageSourceSelection,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: const Color(0xFF1A3333), width: 2),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: AppColors.primary.withOpacity(0.5),
+                                                  blurRadius: 10,
+                                                  spreadRadius: 2,
+                                                ),
+                                              ],
+                                            ),
+                                            child: _isUploading
+                                                ? const SizedBox(
+                                                    width: 14,
+                                                    height: 14,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.cyan),
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    CupertinoIcons.camera_fill,
+                                                    size: 14,
+                                                    color: Colors.white,
+                                                  ),
                                           ),
                                         ),
                                       ),
