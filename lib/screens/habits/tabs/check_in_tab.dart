@@ -48,6 +48,8 @@ class _CheckInTabState extends State<CheckInTab> {
     super.initState();
     // Seed default categories if needed
     widget.categoryService.seedDefaultCategories(widget.userId);
+    // Reset daily habits if it's a new day (after midnight)
+    widget.habitService.checkAndResetDailyHabits(widget.userId);
   }
 
   Color _getCategoryColor(String category) {

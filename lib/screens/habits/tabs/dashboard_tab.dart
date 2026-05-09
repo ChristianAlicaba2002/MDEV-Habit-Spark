@@ -46,6 +46,13 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Reset daily habits if it's a new day (after midnight)
+    widget.habitService.checkAndResetDailyHabits(widget.userId);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final habits = widget.habits;
     // Group habits by routine
