@@ -109,7 +109,12 @@ class _ProfileTabState extends State<ProfileTab> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const SizedBox(width: 44), // Spacer for centering
+                            RoundIconButton(
+                              icon: CupertinoIcons.arrow_left,
+                              onTap: widget.onBackTap,
+                              outlined: true,
+                              isSquare: true,
+                            ),
                             const Text(
                               'Profile',
                               style: TextStyle(
@@ -538,6 +543,7 @@ class _GlassSettingTile extends StatelessWidget {
         padding: EdgeInsets.zero,
         borderRadius: 24,
         opacity: 0.08,
+        blur: 0,
         child: ListTile(
           onTap: onTap,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
