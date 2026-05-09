@@ -664,7 +664,7 @@ class _ActivityCard extends StatelessWidget {
 }
 
 // Wrapper widget that handles modify mode with shake and blur effects
-class _ActivityCardWithModify extends StatelessWidget {
+class _ActivityCardWithModify extends StatefulWidget {
   final int position;
   final String activityType;
   final HealthService healthService;
@@ -686,6 +686,44 @@ class _ActivityCardWithModify extends StatelessWidget {
     required this.shakeController,
     required this.onModifyPressed,
   });
+
+  @override
+  State<_ActivityCardWithModify> createState() => _ActivityCardWithModifyState();
+}
+
+class _ActivityCardWithModifyState extends State<_ActivityCardWithModify> {
+  late Stream<bool> _goalStream;
+  late Stream<dynamic> _activityStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _initStreams();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ActivityCardWithModify oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.activityType != widget.activityType) {
+      _initStreams();
+    }
+  }
+
+  void _initStreams() {
+    _goalStream = widget.healthService.getGoalDoneStream(widget.activityType);
+    _activityStream = _getStreamForActivity(widget.activityType);
+  }
+
+  Stream<dynamic> _getStreamForActivity(String type) {
+    switch (type.toLowerCase()) {
+      case 'day streak':
+        return widget.streakService.getStreakStream(widget.userId);
+      case 'completed tasks':
+        return widget.healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
+      default:
+        return widget.healthService.getActivityMonthlyStats(type);
+    }
+  }
 
   IconData _getIconForActivity(String type) {
     switch (type.toLowerCase()) {
@@ -747,46 +785,39 @@ class _ActivityCardWithModify extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final color = _getColorForActivity(activityType);
+    final color = _getColorForActivity(widget.activityType);
 
-    return AnimatedBuilder(
-      animation: shakeController,
-      builder: (context, child) {
-        // iOS-style shake: small offset that alternates
-        final shakeOffset = isModifyMode ? (shakeController.value - 0.5) * 3 : 0.0;
+    // Provide the static tree to the AnimatedBuilder to prevent inner rebuilds during animation
+    final Widget staticCard = Stack(
+      children: [
+        // Main card
+        StreamBuilder<bool>(
+          stream: _goalStream,
+          builder: (context, goalSnapshot) {
+            final bool isDone = goalSnapshot.data ?? false;
 
-        return Transform.translate(
-          offset: Offset(shakeOffset, shakeOffset * 0.3),
-          child: Stack(
-            children: [
-              // Main card
-              StreamBuilder<bool>(
-                stream: healthService.getGoalDoneStream(activityType),
-                builder: (context, goalSnapshot) {
-                  final bool isDone = goalSnapshot.data ?? false;
-
-                  return StreamBuilder<dynamic>(
-                    stream: _getStreamForActivity(activityType),
+            return StreamBuilder<dynamic>(
+              stream: _activityStream,
                     builder: (context, snapshot) {
                       String value = '0';
                       String unit = '';
-                      String title = activityType;
+                      String title = widget.activityType;
                       String category = '';
 
                       if (snapshot.hasData) {
-                        if (activityType.toLowerCase() == 'day streak') {
+                        if (widget.activityType.toLowerCase() == 'day streak') {
                           final data = snapshot.data as Map<String, dynamic>;
                           value = (data['currentStreak'] ?? 0).toString();
                           unit = 'days';
-                          category = _getCategoryForActivity(activityType);
-                        } else if (activityType.toLowerCase() == 'completed tasks') {
+                          category = _getCategoryForActivity(widget.activityType);
+                        } else if (widget.activityType.toLowerCase() == 'completed tasks') {
                           final logs = snapshot.data as List<HealthLog>;
                           value = logs
                               .where((log) => log.type.toLowerCase() == 'completed tasks')
                               .length
                               .toString();
                           unit = 'tasks';
-                          category = _getCategoryForActivity(activityType);
+                          category = _getCategoryForActivity(widget.activityType);
                         } else {
                           final data = snapshot.data as Map<String, dynamic>;
                           value = (data['total'] as double).toStringAsFixed(1);
@@ -800,7 +831,7 @@ class _ActivityCardWithModify extends StatelessWidget {
                           : title[0].toUpperCase() + title.substring(1).toLowerCase();
 
                       return _ActivityCardNew(
-                        icon: _getIconForActivity(activityType),
+                        icon: _getIconForActivity(widget.activityType),
                         iconColor: color,
                         iconBgColor: color.withOpacity(0.2),
                         title: capitalizedTitle,
@@ -809,16 +840,16 @@ class _ActivityCardWithModify extends StatelessWidget {
                         subtitle: category.isNotEmpty ? category : capitalizedTitle,
                         trend: '↑ 0%',
                         trendColor: Colors.greenAccent,
-                        visual: _getVisualForActivity(activityType),
+                        visual: _getVisualForActivity(widget.activityType),
                         isDone: isDone,
-                        onDoubleTap: isModifyMode ? null : () => healthService.toggleGoalDone(activityType, !isDone),
+                        onDoubleTap: widget.isModifyMode ? null : () => widget.healthService.toggleGoalDone(widget.activityType, !isDone),
                       );
                     },
                   );
                 },
               ),
               // Blur overlay when card is selected for modification
-              if (isModifyMode && isSelected)
+              if (widget.isModifyMode && widget.isSelected)
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(28),
@@ -831,11 +862,11 @@ class _ActivityCardWithModify extends StatelessWidget {
                   ),
                 ),
               // Modify button - centered on card
-              if (isModifyMode)
+              if (widget.isModifyMode)
                 Positioned.fill(
                   child: Center(
                     child: GestureDetector(
-                      onTap: onModifyPressed,
+                      onTap: widget.onModifyPressed,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
@@ -862,21 +893,23 @@ class _ActivityCardWithModify extends StatelessWidget {
                   ),
                 ),
             ],
-          ),
-        );
-      },
     );
-  }
 
-  Stream<dynamic> _getStreamForActivity(String type) {
-    switch (type.toLowerCase()) {
-      case 'day streak':
-        return streakService.getStreakStream(userId);
-      case 'completed tasks':
-        return healthService.getDailyLogs(DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day));
-      default:
-        return healthService.getActivityMonthlyStats(type);
-    }
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: widget.shakeController,
+        child: staticCard, // Pass staticCard as child to prevent rebuilding the streams during animation
+        builder: (context, child) {
+          // iOS-style shake: small offset that alternates
+          final shakeOffset = widget.isModifyMode ? (widget.shakeController.value - 0.5) * 3 : 0.0;
+  
+          return Transform.translate(
+            offset: Offset(shakeOffset, shakeOffset * 0.3),
+            child: child,
+          );
+        },
+      ),
+    );
   }
 }
 

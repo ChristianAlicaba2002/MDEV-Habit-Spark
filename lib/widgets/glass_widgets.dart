@@ -13,7 +13,7 @@ class GlassCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.borderRadius = 24,
-    this.blur = 10,
+    this.blur = 0, // Disabled by default for maximum performance
     this.opacity = 0.12,
   });
 
@@ -30,7 +30,8 @@ class GlassCard extends StatelessWidget {
     );
 
     if (blur <= 0) {
-      return container;
+      // RepaintBoundary isolates expensive repaints (like charts and scroll lists)
+      return RepaintBoundary(child: container);
     }
 
     return ClipRRect(

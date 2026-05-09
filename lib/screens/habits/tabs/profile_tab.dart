@@ -8,7 +8,6 @@ import 'package:habit_spark/services/streak_service.dart';
 import 'package:habit_spark/screens/misc/personal_information_page.dart';
 import 'package:habit_spark/widgets/glass_widgets.dart';
 import 'package:habit_spark/screens/misc/smart_nudges_page.dart';
-import 'package:habit_spark/screens/misc/feedback_settings_page.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/constants/app_colors.dart';
@@ -302,19 +301,6 @@ class _ProfileTabState extends State<ProfileTab> {
                                   builder: (_) => SmartNudgesPage(
                                     userId: widget.userId,
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-                          _GlassSettingTile(
-                            icon: CupertinoIcons.speaker_3_fill,
-                            title: 'Feedback',
-                            subtitle: 'Haptics & Sound Settings',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const FeedbackSettingsPage(),
                                 ),
                               );
                             },
