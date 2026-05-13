@@ -19,7 +19,6 @@
 ## 📦 Deployment & Downloads
 
 - **Android**: Download the latest APK from the [Releases](https://github.com/YOUR_USERNAME/Habit-Spark/releases) section.
-- **Web Preview**: Visit our live demo at [https://YOUR_USERNAME.github.io/Habit-Spark/](https://YOUR_USERNAME.github.io/Habit-Spark/).
 
 ## 🛠️ Tech Stack
 
