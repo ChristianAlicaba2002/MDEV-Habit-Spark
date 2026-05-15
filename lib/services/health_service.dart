@@ -99,7 +99,9 @@ class HealthService {
         final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) && 
             timestamp.isBefore(end)) {
-          total += (data['value'] ?? 0).toDouble();
+          if (data['unit'] != 'goal reached') {
+            total += (data['value'] ?? 0).toDouble();
+          }
         }
       }
       return total;
@@ -127,8 +129,12 @@ class HealthService {
         final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
             timestamp.isBefore(end)) {
-          total += (data['value'] ?? 0).toDouble();
-          if (unit.isEmpty) unit = (data['unit'] ?? '').toString();
+          // Only add to total if it's not a marker log
+          if (data['unit'] != 'goal reached') {
+            total += (data['value'] ?? 0).toDouble();
+            if (unit.isEmpty) unit = (data['unit'] ?? '').toString();
+          }
+          
           // Get category from metadata on first matching log
           if (category.isEmpty && data['metadata'] != null && data['metadata'] is Map) {
             category = data['metadata']['category'] ?? '';
@@ -280,8 +286,10 @@ class HealthService {
         final timestamp = (data['timestamp'] as Timestamp).toDate();
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
             timestamp.isBefore(end)) {
-          final day = timestamp.day;
-          dailyTotals[day] = (dailyTotals[day] ?? 0) + (data['value'] ?? 0).toDouble();
+          if (data['unit'] != 'goal reached') {
+            final day = timestamp.day;
+            dailyTotals[day] = (dailyTotals[day] ?? 0) + (data['value'] ?? 0).toDouble();
+          }
         }
       }
       return dailyTotals;
@@ -329,10 +337,11 @@ class HealthService {
       });
 
       // 2. Add to health_logs with a fixed ID to avoid duplicates
+      // We use value 0.0 because the goal reached status should not increment the actual activity count/value
       await _db.collection('health_logs').doc(goalLogId).set({
         'userId': _userId,
         'type': type.toLowerCase(),
-        'value': 1.0,
+        'value': 0.0,
         'unit': 'goal reached',
         'timestamp': now, // Use local now for immediate stream updates
         'metadata': {

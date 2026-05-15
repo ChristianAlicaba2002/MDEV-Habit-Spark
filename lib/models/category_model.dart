@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/icon_resolver.dart';
 
 class CategoryModel {
   final String id;
@@ -38,6 +39,6 @@ class CategoryModel {
     };
   }
 
-  IconData get icon => IconData(int.parse(iconCode), fontFamily: 'MaterialIcons');
+  IconData get icon => IconResolver.getIcon(iconCode, fallback: Icons.category);
   Color get color => Color(colorValue);
 }

@@ -10,6 +10,8 @@ import 'package:habit_spark/services/health_service.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
 import 'package:habit_spark/services/notification_service.dart';
+import 'package:habit_spark/utils/icon_resolver.dart';
+import 'package:habit_spark/screens/habits/recent_activity_page.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:flutter/services.dart';
 
@@ -1412,6 +1414,10 @@ class _HabitListItem extends StatelessWidget {
     required this.onToggle,
   });
 
+  IconData _getHabitIcon(String? iconCode) {
+    return IconResolver.getIcon(iconCode, fallback: Icons.check_circle_outline);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1430,7 +1436,7 @@ class _HabitListItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              habit.icon != null ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') : Icons.check_circle_outline,
+              _getHabitIcon(habit.icon),
               color: categoryColor,
               size: 20,
             ),
@@ -1509,6 +1515,8 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
     Icons.fitness_center, Icons.work, Icons.spa, Icons.self_improvement,
     Icons.book, Icons.water_drop, Icons.restaurant, Icons.nightlight_round,
     Icons.star, Icons.favorite, Icons.pets, Icons.commute,
+    Icons.home, Icons.person, Icons.history, Icons.settings,
+    Icons.edit, Icons.search, Icons.notifications,
   ];
 
   final List<Color> _colors = [
@@ -1621,22 +1629,35 @@ class _CreateCategoryModalState extends State<_CreateCategoryModal> {
                     child: ElevatedButton(
                       onPressed: () async {
                         if (_nameController.text.isNotEmpty) {
-                          if (isEditing) {
-                            await widget.categoryService.updateCategory(
-                              widget.category!.id,
-                              _nameController.text,
-                              '${_selectedIcon.codePoint}',
-                              _selectedColor.value,
-                            );
-                          } else {
-                            await widget.categoryService.addCategory(
-                              widget.userId,
-                              _nameController.text,
-                              '${_selectedIcon.codePoint}',
-                              _selectedColor.value,
-                            );
+                          try {
+                            if (isEditing) {
+                              await widget.categoryService.updateCategory(
+                                widget.category!.id,
+                                _nameController.text,
+                                '${_selectedIcon.codePoint}',
+                                _selectedColor.value,
+                              );
+                            } else {
+                              await widget.categoryService.addCategory(
+                                widget.userId,
+                                _nameController.text,
+                                '${_selectedIcon.codePoint}',
+                                _selectedColor.value,
+                              );
+                            }
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Category saved successfully!'), backgroundColor: Colors.green),
+                              );
+                              Navigator.pop(context);
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to save category: $e'), backgroundColor: Colors.red),
+                              );
+                            }
                           }
-                          Navigator.pop(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(
