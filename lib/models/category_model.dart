@@ -38,6 +38,12 @@ class CategoryModel {
     };
   }
 
-  IconData get icon => IconData(int.parse(iconCode), fontFamily: 'MaterialIcons');
+  IconData get icon {
+    try {
+      return IconData(int.parse(iconCode), fontFamily: 'MaterialIcons');
+    } catch (e) {
+      return Icons.category; // Fallback icon
+    }
+  }
   Color get color => Color(colorValue);
 }

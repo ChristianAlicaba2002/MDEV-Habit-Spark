@@ -1412,6 +1412,15 @@ class _HabitListItem extends StatelessWidget {
     required this.onToggle,
   });
 
+  IconData _getHabitIcon(String? iconCode) {
+    if (iconCode == null) return Icons.check_circle_outline;
+    try {
+      return IconData(int.parse(iconCode), fontFamily: 'MaterialIcons');
+    } catch (e) {
+      return Icons.check_circle_outline;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1430,7 +1439,7 @@ class _HabitListItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              habit.icon != null ? IconData(int.parse(habit.icon!), fontFamily: 'MaterialIcons') : Icons.check_circle_outline,
+              _getHabitIcon(habit.icon),
               color: categoryColor,
               size: 20,
             ),
