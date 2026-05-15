@@ -129,10 +129,10 @@ class CategoryService {
 
       if (existing.docs.isEmpty) {
         final defaults = [
-          {'name': 'Fitness', 'icon': '58713', 'color': 0xFFFFC107}, // fitness_center
-          {'name': 'Productivity', 'icon': '58933', 'color': 0xFF00B0FF}, // work
-          {'name': 'Wellness', 'icon': '58374', 'color': 0xFF4CAF50}, // spa
-          {'name': 'Mindfulness', 'icon': '62590', 'color': 0xFF7C4DFF}, // self_improvement
+          {'name': 'Fitness', 'icon': '57924', 'color': 0xFFFFC107}, // fitness_center
+          {'name': 'Productivity', 'icon': '58355', 'color': 0xFF00B0FF}, // work
+          {'name': 'Wellness', 'icon': '60232', 'color': 0xFF4CAF50}, // spa
+          {'name': 'Mindfulness', 'icon': '58757', 'color': 0xFF7C4DFF}, // self_improvement
         ];
 
         for (var cat in defaults) {
