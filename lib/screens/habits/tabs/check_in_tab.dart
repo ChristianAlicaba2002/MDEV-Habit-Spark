@@ -1778,6 +1778,8 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
   
   // Activity form fields
   final _activityNameController = TextEditingController();
+  final _targetGoalController = TextEditingController(text: "3");
+  final _activityTargetController = TextEditingController(text: "1");
   String _selectedActivityUnit = 'km';
   double _activityTargetValue = 1.0;
   IconData _selectedActivityIcon = Icons.directions_run;
@@ -1813,7 +1815,10 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
     Icons.skateboarding,
   ];
 
-  final List<String> _units = ['km', 'kcal', 'sessions', 'minutes', 'hours', 'reps', 'sets', 'lbs'];
+  final List<String> _units = [
+    'km', 'miles', 'steps', 'laps', 'mins', 'secs', 'reps', 'sets', 'skips', 
+    'ml', 'cups', 'kcal', 'g', 'hours', 'pages', 'sessions', 'lbs'
+  ];
 
   @override
   void initState() {
@@ -1828,6 +1833,8 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
     _tabController.dispose();
     _habitNameController.dispose();
     _activityNameController.dispose();
+    _targetGoalController.dispose();
+    _activityTargetController.dispose();
     super.dispose();
   }
 
@@ -2006,7 +2013,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                 children: [
                   Text("Goal & Frequency", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 8),
-                  Text("Target: $_targetGoal times / day", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
+                  Text("Target: $_targetGoal times / session", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
                 ],
               ),
               Row(
@@ -2032,7 +2039,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                           setState(() => _targetGoal = parsed);
                         }
                       },
-                      controller: TextEditingController(text: "$_targetGoal")..selection = TextSelection.collapsed(offset: "$_targetGoal".length),
+                      controller: _targetGoalController,
                     ),
                   ),
                 ],
@@ -2168,7 +2175,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                 children: [
                   Text("Target Value", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 8),
-                  Text("${_activityTargetValue.toStringAsFixed(1)} $_selectedActivityUnit", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
+                  Text("${_activityTargetValue.toString().replaceAll(RegExp(r'\.0$'), '')} $_selectedActivityUnit", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
                 ],
               ),
               Row(
@@ -2194,7 +2201,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                           setState(() => _activityTargetValue = parsed);
                         }
                       },
-                      controller: TextEditingController(text: "${_activityTargetValue.toStringAsFixed(1)}")..selection = TextSelection.collapsed(offset: "${_activityTargetValue.toStringAsFixed(1)}".length),
+                      controller: _activityTargetController,
                     ),
                   ),
                 ],
