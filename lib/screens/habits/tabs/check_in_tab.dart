@@ -597,6 +597,7 @@ class _CheckInTabState extends State<CheckInTab> {
                                     child: _CompactActivityCard(
                                       title: activityType.toUpperCase(),
                                       unit: unit,
+                                      iconCode: activity['icon'] ?? '',
                                       healthService: healthService,
                                       userId: widget.userId,
                                       onEdit: () => _showRenameActivityDialog(activityType, healthService),
@@ -1041,7 +1042,7 @@ class _CategoryCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              _getCategoryStatsIcon(category.name),
+                              IconResolver.getIcon(category.iconCode),
                               color: accentColor,
                               size: 12,
                             ),
@@ -1363,28 +1364,38 @@ class _CategoryDetailModal extends StatelessWidget {
             ),
           ),
           
-          // Habits List
+          // Habits & Activities List
           Expanded(
-            child: habits.isEmpty
-                ? Center(
+            child: StreamBuilder<List<Map<String, String>>>(
+              stream: HealthService().getAllActivityTypes(),
+              builder: (context, snapshot) {
+                final categoryActivities = snapshot.hasData 
+                    ? snapshot.data!.where((a) => a['category'] == category.name).toList()
+                    : <Map<String, String>>[];
+
+                if (habits.isEmpty && categoryActivities.isEmpty) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(LucideIcons.sparkles, color: Colors.white24, size: 48),
                         const SizedBox(height: 16),
                         Text(
-                          'No habits in this category yet',
+                          'No habits or activities in this category yet',
                           style: GoogleFonts.outfit(color: Colors.white38),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: habits.length,
-                    itemBuilder: (context, index) {
-                      final habit = habits[index];
-                      return Padding(
+                  );
+                }
+
+                return ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    if (habits.isNotEmpty) ...[
+                      Text("TASKS", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      const SizedBox(height: 16),
+                      ...habits.map((habit) => Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: _HabitListItem(
                           habit: habit,
@@ -1393,9 +1404,31 @@ class _CategoryDetailModal extends StatelessWidget {
                             habitService.toggleHabit(habit.id, habit.isDone, userId);
                           },
                         ),
-                      );
-                    },
-                  ),
+                      )).toList(),
+                    ],
+                    if (categoryActivities.isNotEmpty) ...[
+                      if (habits.isNotEmpty) const SizedBox(height: 24),
+                      Text("ACTIVITIES", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      const SizedBox(height: 16),
+                      ...categoryActivities.map((activity) {
+                        final activityType = activity['type'] ?? '';
+                        final unit = activity['unit'] ?? '';
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _CompactActivityCard(
+                            title: activityType.toUpperCase(),
+                            unit: unit,
+                            iconCode: activity['icon'] ?? '',
+                            healthService: HealthService(),
+                            userId: userId,
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ],
+                );
+              }
+            ),
           ),
         ],
       ),
@@ -1446,14 +1479,32 @@ class _HabitListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  habit.name,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    decoration: habit.isDone ? TextDecoration.lineThrough : null,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        habit.name,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          decoration: habit.isDone ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                    if ((habit.targetValue ?? 0) > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          'x${(habit.targetValue ?? 1).toInt()}',
+                          style: GoogleFonts.outfit(
+                            color: habit.isDone ? Colors.white24 : Colors.orangeAccent.withOpacity(0.8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 Text(
                   habit.routine,
@@ -1727,6 +1778,8 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
   
   // Activity form fields
   final _activityNameController = TextEditingController();
+  final _targetGoalController = TextEditingController(text: "3");
+  final _activityTargetController = TextEditingController(text: "1");
   String _selectedActivityUnit = 'km';
   double _activityTargetValue = 1.0;
   IconData _selectedActivityIcon = Icons.directions_run;
@@ -1762,7 +1815,10 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
     Icons.skateboarding,
   ];
 
-  final List<String> _units = ['km', 'kcal', 'sessions', 'minutes', 'hours', 'reps', 'sets', 'lbs'];
+  final List<String> _units = [
+    'km', 'miles', 'steps', 'laps', 'mins', 'secs', 'reps', 'sets', 'skips', 
+    'ml', 'cups', 'kcal', 'g', 'hours', 'pages', 'sessions', 'lbs'
+  ];
 
   @override
   void initState() {
@@ -1777,6 +1833,8 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
     _tabController.dispose();
     _habitNameController.dispose();
     _activityNameController.dispose();
+    _targetGoalController.dispose();
+    _activityTargetController.dispose();
     super.dispose();
   }
 
@@ -1955,14 +2013,35 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                 children: [
                   Text("Goal & Frequency", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 8),
-                  Text("Target: $_targetGoal times / day", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
+                  Text("Target: $_targetGoal times / session", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
                 ],
               ),
               Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal = _targetGoal > 1 ? _targetGoal - 1 : 1)),
-                  Text("$_targetGoal", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal++)),
+                  Container(
+                    width: 70,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (val) {
+                        final parsed = int.tryParse(val);
+                        if (parsed != null) {
+                          setState(() => _targetGoal = parsed);
+                        }
+                      },
+                      controller: _targetGoalController,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -2096,19 +2175,34 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
                 children: [
                   Text("Target Value", style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 8),
-                  Text("${_activityTargetValue.toStringAsFixed(1)} $_selectedActivityUnit", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
+                  Text("${_activityTargetValue.toString().replaceAll(RegExp(r'\.0$'), '')} $_selectedActivityUnit", style: GoogleFonts.outfit(color: Colors.white, fontSize: 14)),
                 ],
               ),
               Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning),
-                    onPressed: () => setState(() => _activityTargetValue = _activityTargetValue > 0.1 ? _activityTargetValue - 0.1 : 0.1),
-                  ),
-                  Text("${_activityTargetValue.toStringAsFixed(1)}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: AppColors.warning),
-                    onPressed: () => setState(() => _activityTargetValue += 0.1),
+                  Container(
+                    width: 70,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (val) {
+                        final parsed = double.tryParse(val);
+                        if (parsed != null) {
+                          setState(() => _activityTargetValue = parsed);
+                        }
+                      },
+                      controller: _activityTargetController,
+                    ),
                   ),
                 ],
               ),
@@ -2400,13 +2494,31 @@ class _RoutineHabitItem extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              habit.name,
-              style: GoogleFonts.outfit(
-                color: habit.isDone ? Colors.white54 : Colors.white,
-                fontSize: 15,
-                decoration: habit.isDone ? TextDecoration.lineThrough : null,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    habit.name,
+                    style: GoogleFonts.outfit(
+                      color: habit.isDone ? Colors.white54 : Colors.white,
+                      fontSize: 15,
+                      decoration: habit.isDone ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                ),
+                if ((habit.targetValue ?? 0) > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Text(
+                      'x${(habit.targetValue ?? 1).toInt()}',
+                      style: GoogleFonts.outfit(
+                        color: habit.isDone ? Colors.white24 : Colors.orangeAccent.withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           GestureDetector(
@@ -2425,6 +2537,7 @@ class _RoutineHabitItem extends StatelessWidget {
 class _CompactActivityCard extends StatelessWidget {
   final String title;
   final String unit;
+  final String iconCode;
   final HealthService healthService;
   final String userId;
   final VoidCallback? onEdit;
@@ -2433,6 +2546,7 @@ class _CompactActivityCard extends StatelessWidget {
   const _CompactActivityCard({
     required this.title,
     required this.unit,
+    required this.iconCode,
     required this.healthService,
     required this.userId,
     this.onEdit,

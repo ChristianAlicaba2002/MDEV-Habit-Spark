@@ -123,25 +123,25 @@ class HealthService {
       double total = 0;
       String unit = '';
       String category = '';
+      String icon = '';
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final tsData = data['timestamp'];
         final timestamp = tsData is Timestamp ? tsData.toDate() : (tsData is DateTime ? tsData : DateTime.now());
         if (timestamp.isAfter(start.subtract(const Duration(seconds: 1))) &&
             timestamp.isBefore(end)) {
-          // Only add to total if it's not a marker log
           if (data['unit'] != 'goal reached') {
             total += (data['value'] ?? 0).toDouble();
             if (unit.isEmpty) unit = (data['unit'] ?? '').toString();
           }
           
-          // Get category from metadata on first matching log
-          if (category.isEmpty && data['metadata'] != null && data['metadata'] is Map) {
-            category = data['metadata']['category'] ?? '';
+          if (data['metadata'] != null && data['metadata'] is Map) {
+            if (category.isEmpty) category = data['metadata']['category'] ?? '';
+            if (icon.isEmpty) icon = data['metadata']['icon']?.toString() ?? '';
           }
         }
       }
-      return {'total': total, 'unit': unit, 'category': category};
+      return {'total': total, 'unit': unit, 'category': category, 'icon': icon};
     });
   }
 
@@ -260,9 +260,18 @@ class HealthService {
         final data = doc.data();
         final type = (data['type'] ?? '').toString().toLowerCase();
         final unit = (data['unit'] ?? '').toString();
+        final metadata = data['metadata'] as Map<String, dynamic>?;
+        final icon = metadata?['icon']?.toString() ?? '';
+        final category = metadata?['category']?.toString() ?? '';
+
         if (type.isNotEmpty && !seen.contains(type)) {
           seen.add(type);
-          result.add({'type': type, 'unit': unit});
+          result.add({
+            'type': type, 
+            'unit': unit,
+            'icon': icon,
+            'category': category,
+          });
         }
       }
       return result;
