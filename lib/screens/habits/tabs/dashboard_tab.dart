@@ -16,6 +16,7 @@ import 'package:habit_spark/screens/habits/recent_activity_page.dart';
 import 'package:habit_spark/services/notification_service.dart';
 import 'package:habit_spark/screens/misc/notifications_page.dart';
 import 'package:flutter/services.dart';
+import 'package:habit_spark/utils/icon_resolver.dart';
 
 class DashboardTab extends StatefulWidget {
   final String userId;
@@ -748,7 +749,10 @@ class _ActivityCardWithModifyState extends State<_ActivityCardWithModify> {
     }
   }
 
-  IconData _getIconForActivity(String type) {
+  IconData _getIconForActivity(String type, String metadataIconCode) {
+    if (metadataIconCode.isNotEmpty) {
+      return IconResolver.getIcon(metadataIconCode);
+    }
     switch (type.toLowerCase()) {
       case 'distance run':
         return LucideIcons.zap;
@@ -826,6 +830,7 @@ class _ActivityCardWithModifyState extends State<_ActivityCardWithModify> {
                       String unit = '';
                       String title = widget.activityType;
                       String category = '';
+                      String iconCode = '';
 
                       if (snapshot.hasData) {
                         if (widget.activityType.toLowerCase() == 'day streak') {
@@ -846,6 +851,7 @@ class _ActivityCardWithModifyState extends State<_ActivityCardWithModify> {
                           value = (data['total'] as double).toStringAsFixed(1);
                           unit = data['unit'] ?? '';
                           category = data['category'] ?? '';
+                          iconCode = data['icon'] ?? '';
                         }
                       }
 
@@ -854,7 +860,7 @@ class _ActivityCardWithModifyState extends State<_ActivityCardWithModify> {
                           : title[0].toUpperCase() + title.substring(1).toLowerCase();
 
                       return _ActivityCardNew(
-                        icon: _getIconForActivity(widget.activityType),
+                        icon: _getIconForActivity(widget.activityType, iconCode),
                         iconColor: color,
                         iconBgColor: color.withOpacity(0.2),
                         title: capitalizedTitle,
@@ -954,7 +960,10 @@ class _ActivityCardWrapper extends StatelessWidget {
     required this.onLongPress,
   });
 
-  IconData _getIconForActivity(String type) {
+  IconData _getIconForActivity(String type, String metadataIconCode) {
+    if (metadataIconCode.isNotEmpty) {
+      return IconResolver.getIcon(metadataIconCode);
+    }
     switch (type.toLowerCase()) {
       case 'distance run':
         return LucideIcons.zap;
@@ -1013,6 +1022,7 @@ class _ActivityCardWrapper extends StatelessWidget {
           String value = '0';
           String unit = '';
           String title = activityType;
+          String iconCode = '';
 
           if (snapshot.hasData) {
             if (activityType.toLowerCase() == 'day streak') {
@@ -1030,11 +1040,12 @@ class _ActivityCardWrapper extends StatelessWidget {
               final data = snapshot.data as Map<String, dynamic>;
               value = (data['total'] as double).toStringAsFixed(1);
               unit = data['unit'] ?? '';
+              iconCode = data['icon'] ?? '';
             }
           }
 
           return _ActivityCardNew(
-            icon: _getIconForActivity(activityType),
+            icon: _getIconForActivity(activityType, iconCode),
             iconColor: color,
             iconBgColor: color.withOpacity(0.2),
             title: title,

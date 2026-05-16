@@ -597,6 +597,7 @@ class _CheckInTabState extends State<CheckInTab> {
                                     child: _CompactActivityCard(
                                       title: activityType.toUpperCase(),
                                       unit: unit,
+                                      iconCode: activity['icon'] ?? '',
                                       healthService: healthService,
                                       userId: widget.userId,
                                       onEdit: () => _showRenameActivityDialog(activityType, healthService),
@@ -1041,7 +1042,7 @@ class _CategoryCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              _getCategoryStatsIcon(category.name),
+                              IconResolver.getIcon(category.iconCode),
                               color: accentColor,
                               size: 12,
                             ),
@@ -1363,28 +1364,38 @@ class _CategoryDetailModal extends StatelessWidget {
             ),
           ),
           
-          // Habits List
+          // Habits & Activities List
           Expanded(
-            child: habits.isEmpty
-                ? Center(
+            child: StreamBuilder<List<Map<String, String>>>(
+              stream: HealthService().getAllActivityTypes(),
+              builder: (context, snapshot) {
+                final categoryActivities = snapshot.hasData 
+                    ? snapshot.data!.where((a) => a['category'] == category.name).toList()
+                    : <Map<String, String>>[];
+
+                if (habits.isEmpty && categoryActivities.isEmpty) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(LucideIcons.sparkles, color: Colors.white24, size: 48),
                         const SizedBox(height: 16),
                         Text(
-                          'No habits in this category yet',
+                          'No habits or activities in this category yet',
                           style: GoogleFonts.outfit(color: Colors.white38),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(24),
-                    itemCount: habits.length,
-                    itemBuilder: (context, index) {
-                      final habit = habits[index];
-                      return Padding(
+                  );
+                }
+
+                return ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    if (habits.isNotEmpty) ...[
+                      Text("TASKS", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      const SizedBox(height: 16),
+                      ...habits.map((habit) => Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: _HabitListItem(
                           habit: habit,
@@ -1393,9 +1404,31 @@ class _CategoryDetailModal extends StatelessWidget {
                             habitService.toggleHabit(habit.id, habit.isDone, userId);
                           },
                         ),
-                      );
-                    },
-                  ),
+                      )).toList(),
+                    ],
+                    if (categoryActivities.isNotEmpty) ...[
+                      if (habits.isNotEmpty) const SizedBox(height: 24),
+                      Text("ACTIVITIES", style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      const SizedBox(height: 16),
+                      ...categoryActivities.map((activity) {
+                        final activityType = activity['type'] ?? '';
+                        final unit = activity['unit'] ?? '';
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _CompactActivityCard(
+                            title: activityType.toUpperCase(),
+                            unit: unit,
+                            iconCode: activity['icon'] ?? '',
+                            healthService: HealthService(),
+                            userId: userId,
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ],
+                );
+              }
+            ),
           ),
         ],
       ),
@@ -1960,9 +1993,30 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
               ),
               Row(
                 children: [
-                  IconButton(icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal = _targetGoal > 1 ? _targetGoal - 1 : 1)),
-                  Text("$_targetGoal", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(icon: const Icon(Icons.add_circle_outline, color: AppColors.warning), onPressed: () => setState(() => _targetGoal++)),
+                  Container(
+                    width: 70,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (val) {
+                        final parsed = int.tryParse(val);
+                        if (parsed != null) {
+                          setState(() => _targetGoal = parsed);
+                        }
+                      },
+                      controller: TextEditingController(text: "$_targetGoal")..selection = TextSelection.collapsed(offset: "$_targetGoal".length),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -2101,14 +2155,29 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
               ),
               Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline, color: AppColors.warning),
-                    onPressed: () => setState(() => _activityTargetValue = _activityTargetValue > 0.1 ? _activityTargetValue - 0.1 : 0.1),
-                  ),
-                  Text("${_activityTargetValue.toStringAsFixed(1)}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: AppColors.warning),
-                    onPressed: () => setState(() => _activityTargetValue += 0.1),
+                  Container(
+                    width: 90,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (val) {
+                        final parsed = double.tryParse(val);
+                        if (parsed != null) {
+                          setState(() => _activityTargetValue = parsed);
+                        }
+                      },
+                      controller: TextEditingController(text: "${_activityTargetValue.toStringAsFixed(1)}")..selection = TextSelection.collapsed(offset: "${_activityTargetValue.toStringAsFixed(1)}".length),
+                    ),
                   ),
                 ],
               ),
@@ -2425,6 +2494,7 @@ class _RoutineHabitItem extends StatelessWidget {
 class _CompactActivityCard extends StatelessWidget {
   final String title;
   final String unit;
+  final String iconCode;
   final HealthService healthService;
   final String userId;
   final VoidCallback? onEdit;
@@ -2433,6 +2503,7 @@ class _CompactActivityCard extends StatelessWidget {
   const _CompactActivityCard({
     required this.title,
     required this.unit,
+    required this.iconCode,
     required this.healthService,
     required this.userId,
     this.onEdit,

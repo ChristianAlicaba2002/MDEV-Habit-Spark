@@ -119,7 +119,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  void _showImageSourceSelection() {
+  void _showImageSourceSelection(UserModel? userData) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
       context: context,
@@ -169,6 +169,42 @@ class _ProfileTabState extends State<ProfileTab> {
                 _pickAndUploadImage(ImageSource.gallery);
               },
             ),
+            if (userData?.photoUrl != null && userData!.photoUrl.isNotEmpty)
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(CupertinoIcons.trash, color: Colors.red),
+                ),
+                title: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  HapticFeedback.mediumImpact();
+                  try {
+                    setState(() => _isUploading = true);
+                    await widget.authService.updateProfile(widget.userId, {'photoUrl': ''});
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Profile picture removed!'),
+                          backgroundColor: Colors.orange,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isUploading = false);
+                  }
+                },
+              ),
             const SizedBox(height: 12),
           ],
         ),
@@ -383,7 +419,7 @@ class _ProfileTabState extends State<ProfileTab> {
                                         bottom: 0,
                                         right: 0,
                                         child: GestureDetector(
-                                          onTap: _showImageSourceSelection,
+                                          onTap: () => _showImageSourceSelection(userData),
                                           child: Container(
                                             padding: const EdgeInsets.all(6),
                                             decoration: BoxDecoration(
