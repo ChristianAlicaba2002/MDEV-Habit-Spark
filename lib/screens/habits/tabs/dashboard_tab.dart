@@ -1541,13 +1541,31 @@ class _HabitCheckItem extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              habit.name,
-              style: GoogleFonts.outfit(
-                color: habit.isDone ? Colors.white54 : Colors.white,
-                fontSize: 15,
-                decoration: habit.isDone ? TextDecoration.lineThrough : null,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    habit.name,
+                    style: GoogleFonts.outfit(
+                      color: habit.isDone ? Colors.white54 : Colors.white,
+                      fontSize: 15,
+                      decoration: habit.isDone ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                ),
+                if ((habit.targetValue ?? 0) > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Text(
+                      'x${(habit.targetValue ?? 1).toInt()}',
+                      style: GoogleFonts.outfit(
+                        color: habit.isDone ? Colors.white24 : Colors.orangeAccent.withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],

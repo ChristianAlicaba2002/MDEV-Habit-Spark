@@ -1479,14 +1479,32 @@ class _HabitListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  habit.name,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    decoration: habit.isDone ? TextDecoration.lineThrough : null,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        habit.name,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          decoration: habit.isDone ? TextDecoration.lineThrough : null,
+                        ),
+                      ),
+                    ),
+                    if ((habit.targetValue ?? 0) > 1)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          'x${(habit.targetValue ?? 1).toInt()}',
+                          style: GoogleFonts.outfit(
+                            color: habit.isDone ? Colors.white24 : Colors.orangeAccent.withOpacity(0.8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 Text(
                   habit.routine,
@@ -2156,7 +2174,7 @@ class _CreateHabitModalState extends State<_CreateHabitModal> with SingleTickerP
               Row(
                 children: [
                   Container(
-                    width: 90,
+                    width: 70,
                     height: 48,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.05),
@@ -2469,13 +2487,31 @@ class _RoutineHabitItem extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              habit.name,
-              style: GoogleFonts.outfit(
-                color: habit.isDone ? Colors.white54 : Colors.white,
-                fontSize: 15,
-                decoration: habit.isDone ? TextDecoration.lineThrough : null,
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    habit.name,
+                    style: GoogleFonts.outfit(
+                      color: habit.isDone ? Colors.white54 : Colors.white,
+                      fontSize: 15,
+                      decoration: habit.isDone ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                ),
+                if ((habit.targetValue ?? 0) > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Text(
+                      'x${(habit.targetValue ?? 1).toInt()}',
+                      style: GoogleFonts.outfit(
+                        color: habit.isDone ? Colors.white24 : Colors.orangeAccent.withOpacity(0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           GestureDetector(
