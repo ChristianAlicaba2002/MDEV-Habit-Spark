@@ -13,10 +13,17 @@ class HabitService {
 
   // Get habits stream for a user
   Stream<List<Habit>> getHabitsStream(String userId) {
+    if (userId.isEmpty) {
+      return Stream.value([]);
+    }
     return _firestore
         .collection('habits')
         .where('userId', isEqualTo: userId)
         .snapshots()
+        .handleError((error) {
+          // Ignore permission denied on logout to prevent flash of ErrorView
+          return [];
+        })
         .map((snapshot) {
       final habits = snapshot.docs.map((doc) {
         return Habit.fromMap(doc.data(), doc.id);
