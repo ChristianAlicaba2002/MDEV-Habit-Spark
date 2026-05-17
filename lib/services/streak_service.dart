@@ -7,6 +7,14 @@ class StreakService {
 
   // Get or create user streak data
   Future<Map<String, dynamic>> getUserStreak(String userId) async {
+    if (userId.isEmpty) {
+      return {
+        'userId': userId,
+        'currentStreak': 0,
+        'longestStreak': 0,
+        'lastCompletionDate': null,
+      };
+    }
     final doc = await _firestore.collection('streaks').doc(userId).get();
     
     if (!doc.exists) {
@@ -27,10 +35,24 @@ class StreakService {
 
   // Get streak stream for real-time updates
   Stream<Map<String, dynamic>> getStreakStream(String userId) {
+    if (userId.isEmpty) {
+      return Stream.value({
+        'currentStreak': 0,
+        'longestStreak': 0,
+        'lastCompletionDate': null,
+      });
+    }
     return _firestore
         .collection('streaks')
         .doc(userId)
         .snapshots()
+        .handleError((error) {
+          return {
+            'currentStreak': 0,
+            'longestStreak': 0,
+            'lastCompletionDate': null,
+          };
+        })
         .map((snapshot) {
       if (!snapshot.exists) {
         return {

@@ -199,7 +199,7 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
+      await _googleSignIn.signOut().timeout(const Duration(seconds: 2));
     } catch (_) {}
     await _auth.signOut();
   }
