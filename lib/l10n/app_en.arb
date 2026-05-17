@@ -1,0 +1,29 @@
+{
+  "@@locale": "en",
+  "appTitle": "Habit Spark",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "loginTitle": "HabitSpark",
+  "loginSubtitle": "Ignite your potential",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "signInButton": "Sign In",
+  "continueWithGoogle": "Continue with Google",
+  "newHere": "New here? ",
+  "createAccount": "Create Account",
+  "homeTab": "Home",
+  "habitTab": "Habit",
+  "statsTab": "Stats",
+  "profileTab": "Profile",
+  "logout": "Logout",
+  "logoutDescription": "Sign out from your account",
+  "logoutConfirmation": "Are you sure you want to logout?",
+  "cancel": "Cancel",
+  "accountSettings": "Account Settings",
+  "personalInformation": "Personal Information",
+  "personalInformationSubtitle": "Update your personal details",
+  "language": "Language",
+  "languageSubtitle": "Change application language",
+  "selectLanguage": "Select Language"
+}

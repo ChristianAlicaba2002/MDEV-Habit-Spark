@@ -18,6 +18,7 @@ import 'package:habit_spark/screens/habits/tabs/check_in_tab.dart';
 import 'package:habit_spark/screens/habits/tabs/stats_tab.dart';
 import 'package:habit_spark/screens/habits/tabs/profile_tab.dart';
 import 'package:habit_spark/widgets/skeleton_loaders.dart';
+import 'package:habit_spark/l10n/app_localizations.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -167,6 +168,7 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
@@ -199,28 +201,28 @@ class _BottomNav extends StatelessWidget {
                     _NavItem(
                       icon: CupertinoIcons.house,
                       activeIcon: CupertinoIcons.house_fill,
-                      label: 'Home',
+                      label: l10n.homeTab,
                       selected: selectedIndex == 0,
                       onTap: () => onTap(0),
                     ),
                     _NavItem(
                       icon: CupertinoIcons.checkmark_square,
                       activeIcon: CupertinoIcons.checkmark_square_fill,
-                      label: 'Habit',
+                      label: l10n.habitTab,
                       selected: selectedIndex == 1,
                       onTap: () => onTap(1),
                     ),
                     _NavItem(
                       icon: CupertinoIcons.chart_bar_square,
                       activeIcon: CupertinoIcons.chart_bar_square_fill,
-                      label: 'Stats',
+                      label: l10n.statsTab,
                       selected: selectedIndex == 2,
                       onTap: () => onTap(2),
                     ),
                     _NavItem(
                       icon: CupertinoIcons.person_crop_square,
                       activeIcon: CupertinoIcons.person_crop_square_fill,
-                      label: 'Profile',
+                      label: l10n.profileTab,
                       selected: selectedIndex == 3,
                       onTap: () => onTap(3),
                     ),
