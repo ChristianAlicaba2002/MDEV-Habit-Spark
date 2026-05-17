@@ -36,12 +36,14 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late ThemeService _themeService;
+  late AuthService _authService;
 
   @override
   void initState() {
     super.initState();
     _themeService = ThemeService();
     _themeService.addListener(_onThemeChanged);
+    _authService = AuthService();
   }
 
   @override
@@ -54,16 +56,18 @@ class _MyAppState extends State<MyApp> {
     setState(() {});
   }
 
-  Future<bool> _checkUserOnboarding(String userId) async {
-    final doc = await FirebaseFirestore.instance
+  Stream<bool> _checkUserOnboardingStream(String userId) {
+    return FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
-        .get();
-    
-    if (doc.exists) {
-      return doc.data()?['hasSeenOnboarding'] ?? false;
-    }
-    return false;
+        .snapshots()
+        .map((doc) {
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>?;
+        return data?['hasSeenOnboarding'] ?? false;
+      }
+      return false;
+    });
   }
 
   @override
@@ -75,7 +79,7 @@ class _MyAppState extends State<MyApp> {
       darkTheme: _buildDarkTheme(),
       themeMode: _themeService.themeMode,
       home: StreamBuilder(
-        stream: AuthService().authStateChanges,
+        stream: _authService.authStateChanges,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
@@ -86,10 +90,10 @@ class _MyAppState extends State<MyApp> {
           // If user is logged in, check if they've seen onboarding
           if (snapshot.hasData) {
             final userId = snapshot.data!.uid;
-            return FutureBuilder<bool>(
-              future: _checkUserOnboarding(userId),
+            return StreamBuilder<bool>(
+              stream: _checkUserOnboardingStream(userId),
               builder: (context, onboardingSnapshot) {
-                if (onboardingSnapshot.connectionState == ConnectionState.waiting) {
+                if (onboardingSnapshot.connectionState == ConnectionState.waiting && !onboardingSnapshot.hasData) {
                   return const Scaffold(
                     body: Center(child: CircularProgressIndicator()),
                   );

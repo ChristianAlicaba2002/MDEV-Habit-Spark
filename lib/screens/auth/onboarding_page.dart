@@ -66,11 +66,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         .doc(widget.userId)
         .update({'hasSeenOnboarding': true});
     
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
-    }
+    // Do NOT navigate manually here.
+    // main.dart's StreamBuilder is listening to this Firestore document
+    // and will automatically swap out this widget for HomePage.
   }
 
   @override

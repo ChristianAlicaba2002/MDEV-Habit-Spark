@@ -211,39 +211,19 @@ class _SignUpPageState extends State<SignUpPage>
               ),
               const SizedBox(height: 12),
               Text(
-                'Your account has been created successfully. Ready to start?',
+                'Your account has been created successfully. Please log in to continue.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(color: Colors.white70, fontSize: 15),
               ),
               const SizedBox(height: 32),
               _buildModernButton(
-                label: 'Start Journey',
+                label: 'Go to Login',
                 onPressed: () async {
-                  Navigator.of(context).pop();
-                  final userId = _authService.currentUser?.uid;
-                  if (userId != null) {
-                    final doc = await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(userId)
-                        .get();
-
-                    final hasSeenOnboarding =
-                        doc.data()?['hasSeenOnboarding'] ?? false;
-
-                    if (mounted) {
-                      if (!hasSeenOnboarding) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (_) => OnboardingPage(userId: userId)),
-                          (route) => false,
-                        );
-                      } else {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const HomePage()),
-                          (route) => false,
-                        );
-                      }
-                    }
+                  Navigator.of(context).pop(); // pop the success dialog
+                  await _authService.signOut(); // Ensure the auto-login session is cleared
+                  if (mounted) {
+                    // Return to the root route so the main.dart StreamBuilder can handle showing LoginPage
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                   }
                 },
               ),

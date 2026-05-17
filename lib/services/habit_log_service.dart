@@ -23,12 +23,17 @@ class HabitLogService {
 
   // Get all habit logs for a user
   Stream<List<HabitLog>> getUserLogsStream(String userId) {
+    if (userId.isEmpty) return Stream.value([]);
+    
     return _firestore
         .collection('habit_logs')
         .where('userId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) => HabitLog.fromMap(doc.data(), doc.id)).toList();
+    })
+    .handleError((error) {
+      return <HabitLog>[];
     });
   }
 

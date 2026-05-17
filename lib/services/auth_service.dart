@@ -75,10 +75,17 @@ class AuthService {
   
   // Get user data stream for real-time updates
   Stream<UserModel?> getUserDataStream(String userId) {
+    if (userId.isEmpty) {
+      return Stream.value(null);
+    }
     return _firestore
         .collection('users')
         .doc(userId)
         .snapshots()
+        .handleError((error) {
+          debugPrint('Error getting user data stream: $error');
+          return null; // Ignore permission denied on logout
+        })
         .map((snapshot) {
       if (snapshot.exists) {
         return UserModel.fromMap(snapshot.data()!, snapshot.id);
@@ -191,6 +198,9 @@ class AuthService {
 
   // Sign out
   Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut().timeout(const Duration(seconds: 2));
+    } catch (_) {}
     await _auth.signOut();
   }
 
