@@ -114,23 +114,7 @@ class _SignUpPageState extends State<SignUpPage>
     }
   }
 
-  bool _validateCurrentStep() {
-    switch (_currentStep) {
-      case 0:
-        return _firstNameController.text.isNotEmpty &&
-            _lastNameController.text.isNotEmpty;
-      case 1:
-        return _birthDateController.text.isNotEmpty &&
-            _addressController.text.isNotEmpty;
-      case 2:
-        return _emailController.text.isNotEmpty &&
-            _passwordController.text.isNotEmpty &&
-            _confirmPasswordController.text.isNotEmpty &&
-            _passwordController.text == _confirmPasswordController.text;
-      default:
-        return false;
-    }
-  }
+
 
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
@@ -470,9 +454,19 @@ class _SignUpPageState extends State<SignUpPage>
     return Column(
       key: const ValueKey(0),
       children: [
-        _buildTextField(controller: _firstNameController, label: 'First Name', icon: Icons.person_outline),
+        _buildTextField(
+          controller: _firstNameController,
+          label: 'First Name',
+          icon: Icons.person_outline,
+          validator: (value) => value == null || value.trim().isEmpty ? 'Please fill in your first name' : null,
+        ),
         const SizedBox(height: 16),
-        _buildTextField(controller: _lastNameController, label: 'Last Name', icon: Icons.person_outline),
+        _buildTextField(
+          controller: _lastNameController,
+          label: 'Last Name',
+          icon: Icons.person_outline,
+          validator: (value) => value == null || value.trim().isEmpty ? 'Please fill in your last name' : null,
+        ),
       ],
     );
   }
@@ -487,9 +481,15 @@ class _SignUpPageState extends State<SignUpPage>
           icon: Icons.calendar_today_outlined,
           readOnly: true,
           onTap: _selectBirthDate,
+          validator: (value) => value == null || value.trim().isEmpty ? 'Please complete your details' : null,
         ),
         const SizedBox(height: 16),
-        _buildTextField(controller: _addressController, label: 'Address', icon: Icons.location_on_outlined),
+        _buildTextField(
+          controller: _addressController,
+          label: 'Address',
+          icon: Icons.location_on_outlined,
+          validator: (value) => value == null || value.trim().isEmpty ? 'Please complete your details' : null,
+        ),
       ],
     );
   }
@@ -498,7 +498,13 @@ class _SignUpPageState extends State<SignUpPage>
     return Column(
       key: const ValueKey(2),
       children: [
-        _buildTextField(controller: _emailController, label: 'Email', icon: Icons.mail_outline, keyboardType: TextInputType.emailAddress),
+        _buildTextField(
+          controller: _emailController,
+          label: 'Email',
+          icon: Icons.mail_outline,
+          keyboardType: TextInputType.emailAddress,
+          validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your email' : null,
+        ),
         const SizedBox(height: 16),
         _buildTextField(
           controller: _passwordController,
@@ -509,6 +515,31 @@ class _SignUpPageState extends State<SignUpPage>
             icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.white38, size: 20),
             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
+          validator: (value) {
+            if (value == null || value.isEmpty) return 'Please enter your password';
+            if (value.length < 8) return 'Must be at least 8 characters long';
+            if (!RegExp(r'[A-Z]').hasMatch(value)) return 'Must contain at least one uppercase letter';
+            if (!RegExp(r'[a-z]').hasMatch(value)) return 'Must contain at least one lowercase letter';
+            if (!RegExp(r'[0-9]').hasMatch(value)) return 'Must contain at least one number';
+            if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) return 'Must contain at least one special character';
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _confirmPasswordController,
+          label: 'Confirm Password',
+          icon: Icons.lock_outline,
+          obscureText: _obscureConfirmPassword,
+          suffixIcon: IconButton(
+            icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: Colors.white38, size: 20),
+            onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) return 'Please confirm your password';
+            if (value != _passwordController.text) return 'Passwords do not match';
+            return null;
+          },
         ),
       ],
     );
@@ -523,6 +554,7 @@ class _SignUpPageState extends State<SignUpPage>
     bool obscureText = false,
     Widget? suffixIcon,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -530,6 +562,7 @@ class _SignUpPageState extends State<SignUpPage>
       onTap: onTap,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      validator: validator,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
@@ -540,6 +573,9 @@ class _SignUpPageState extends State<SignUpPage>
         fillColor: Colors.white.withAlpha(10),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF2D8A5B))),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.redAccent)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.redAccent)),
+        errorStyle: const TextStyle(color: Colors.redAccent),
       ),
     );
   }
@@ -604,12 +640,12 @@ class _SignUpPageState extends State<SignUpPage>
   }
 
   void _handleContinue() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     if (_currentStep < 2) {
-      if (_validateCurrentStep()) {
-        setState(() => _currentStep++);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please complete current step')));
-      }
+      setState(() => _currentStep++);
     } else {
       _signUp();
     }
