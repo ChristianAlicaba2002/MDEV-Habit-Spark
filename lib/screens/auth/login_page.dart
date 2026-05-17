@@ -4,6 +4,7 @@ import 'package:habit_spark/services/auth_service.dart';
 import 'package:habit_spark/screens/auth/signup_page.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:habit_spark/l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -234,6 +235,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Hero(
@@ -246,7 +248,7 @@ class _LoginPageState extends State<LoginPage>
         ),
         const SizedBox(height: 1),
         Text(
-          'HabitSpark',
+          l10n.loginTitle,
           style: GoogleFonts.outfit(
             fontSize: 35,
             fontWeight: FontWeight.w800,
@@ -255,7 +257,7 @@ class _LoginPageState extends State<LoginPage>
           ),
         ),
         Text(
-          'Ignite your potential',
+          l10n.loginSubtitle,
           style: GoogleFonts.inter(
             fontSize: 14,
             color: Colors.white70,
@@ -268,6 +270,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildSimpleForm() {
+    final l10n = AppLocalizations.of(context)!;
     return Form(
       key: _formKey,
       child: Column(
@@ -275,7 +278,7 @@ class _LoginPageState extends State<LoginPage>
         children: [
           _buildTextField(
             controller: _emailController,
-            label: 'Email',
+            label: l10n.emailLabel,
             icon: Icons.mail_outline_rounded,
             keyboardType: TextInputType.emailAddress,
             validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
@@ -283,7 +286,7 @@ class _LoginPageState extends State<LoginPage>
           const SizedBox(height: 16),
           _buildTextField(
             controller: _passwordController,
-            label: 'Password',
+            label: l10n.passwordLabel,
             icon: Icons.lock_outline_rounded,
             obscureText: _obscurePassword,
             suffixIcon: IconButton(
@@ -455,6 +458,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildPrimaryButton() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 48,
       decoration: BoxDecoration(
@@ -471,7 +475,7 @@ class _LoginPageState extends State<LoginPage>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(
-          'Sign In',
+          l10n.signInButton,
           style: GoogleFonts.outfit(
             fontSize: 16,
             fontWeight: FontWeight.w700,
@@ -483,6 +487,7 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildGoogleButton() {
+    final l10n = AppLocalizations.of(context)!;
     return OutlinedButton(
       onPressed: _isLoading ? null : _signInWithGoogle,
       style: OutlinedButton.styleFrom(
@@ -496,7 +501,7 @@ class _LoginPageState extends State<LoginPage>
           Image.asset('assets/images/google_icon.png', height: 20),
           const SizedBox(width: 10),
           Text(
-            'Continue with Google',
+            l10n.continueWithGoogle,
             style: GoogleFonts.inter(
               color: Colors.white,
               fontWeight: FontWeight.w600,
@@ -509,18 +514,19 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Widget _buildSignUpLink() {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
-          "New here? ",
-          style: TextStyle(color: Colors.white60),
+        Text(
+          l10n.newHere,
+          style: const TextStyle(color: Colors.white60),
         ),
         GestureDetector(
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignUpPage())),
-          child: const Text(
-            "Create Account",
-            style: TextStyle(
+          child: Text(
+            l10n.createAccount,
+            style: const TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.bold,
             ),

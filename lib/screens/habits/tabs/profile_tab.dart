@@ -19,6 +19,8 @@ import 'package:habit_spark/services/notification_service.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:habit_spark/l10n/app_localizations.dart';
+import 'package:habit_spark/services/language_service.dart';
 
 class ProfileTab extends StatefulWidget {
   final String userId;
@@ -213,15 +215,16 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   void _showLogoutConfirmation(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showCupertinoDialog(
       context: context,
       builder: (BuildContext context) => CupertinoAlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirmation),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
@@ -229,15 +232,63 @@ class _ProfileTabState extends State<ProfileTab> {
               Navigator.pop(context);
               await widget.authService.signOut();
             },
-            child: const Text('Logout'),
+            child: Text(l10n.logout),
           ),
         ],
       ),
     );
   }
 
+  void _showLanguageSelection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final languageService = LanguageService();
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GlassCard(
+        borderRadius: 32,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.selectLanguage,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildLanguageOption(context, 'en', 'English', '🇺🇸'),
+            _buildLanguageOption(context, 'es', 'Español', '🇪🇸'),
+            _buildLanguageOption(context, 'fr', 'Français', '🇫🇷'),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(BuildContext context, String code, String name, String flag) {
+    final languageService = LanguageService();
+    final isSelected = languageService.currentLocale.languageCode == code;
+    
+    return ListTile(
+      leading: Text(flag, style: const TextStyle(fontSize: 24)),
+      title: Text(name, style: TextStyle(color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+      trailing: isSelected ? const Icon(CupertinoIcons.checkmark_alt, color: AppColors.primary) : null,
+      onTap: () {
+        languageService.changeLanguage(code);
+        Navigator.pop(context);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<UserModel?>(
       stream: widget.authService.getUserDataStream(widget.userId),
       builder: (context, snapshot) {
@@ -285,8 +336,8 @@ class _ProfileTabState extends State<ProfileTab> {
                               outlined: true,
                               isSquare: true,
                             ),
-                            const Text(
-                              'Profile',
+                            Text(
+                              l10n.profileTab,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
@@ -509,15 +560,15 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
 
                     // ── Settings Sections
-                    const _SectionHeader(title: 'Account Settings'),
+                    _SectionHeader(title: l10n.accountSettings),
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           _GlassSettingTile(
                             icon: CupertinoIcons.person,
-                            title: 'Personal Information',
-                            subtitle: 'Update your personal details',
+                            title: l10n.personalInformation,
+                            subtitle: l10n.personalInformationSubtitle,
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -559,6 +610,12 @@ class _ProfileTabState extends State<ProfileTab> {
                               );
                             },
                           ),
+                          _GlassSettingTile(
+                            icon: CupertinoIcons.globe,
+                            title: l10n.language,
+                            subtitle: l10n.languageSubtitle,
+                            onTap: () => _showLanguageSelection(context),
+                          ),
                         ]),
                       ),
                     ),
@@ -591,16 +648,16 @@ class _ProfileTabState extends State<ProfileTab> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Logout',
-                                        style: TextStyle(
+                                      Text(
+                                        l10n.logout,
+                                        style: const TextStyle(
                                           color: Colors.red,
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                       Text(
-                                        'Sign out from your account',
+                                        l10n.logoutDescription,
                                         style: TextStyle(
                                           color: Colors.red.withOpacity(0.6),
                                           fontSize: 13,

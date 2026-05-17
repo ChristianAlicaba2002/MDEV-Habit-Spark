@@ -10,6 +10,9 @@ import 'package:habit_spark/screens/habits/home_page.dart';
 import 'package:habit_spark/screens/auth/onboarding_page.dart';
 import 'package:habit_spark/constants/app_colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:habit_spark/l10n/app_localizations.dart';
+import 'package:habit_spark/services/language_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +40,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late ThemeService _themeService;
   late AuthService _authService;
+  late LanguageService _languageService;
 
   @override
   void initState() {
@@ -44,6 +48,7 @@ class _MyAppState extends State<MyApp> {
     _themeService = ThemeService();
     _themeService.addListener(_onThemeChanged);
     _authService = AuthService();
+    _languageService = LanguageService();
   }
 
   @override
@@ -72,13 +77,24 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Habit Spark',
-      debugShowCheckedModeBanner: false,
-      theme: _buildLightTheme(),
-      darkTheme: _buildDarkTheme(),
-      themeMode: _themeService.themeMode,
-      home: StreamBuilder(
+    return ListenableBuilder(
+      listenable: _languageService,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Habit Spark',
+          debugShowCheckedModeBanner: false,
+          theme: _buildLightTheme(),
+          darkTheme: _buildDarkTheme(),
+          themeMode: _themeService.themeMode,
+          locale: _languageService.currentLocale,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: StreamBuilder(
         stream: _authService.authStateChanges,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -110,10 +126,12 @@ class _MyAppState extends State<MyApp> {
             );
           }
           
-          // If not logged in, show login page
-          return const LoginPage();
-        },
-      ),
+              // If not logged in, show login page
+              return const LoginPage();
+            },
+          ),
+        );
+      },
     );
   }
 
